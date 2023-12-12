@@ -1,0 +1,11 @@
+.env
+.vscode
+
+.DS_Store
+ui/.DS_Store
+ui/web
+
+# Elastic Beanstalk Files
+.elasticbeanstalk/*
+!.elasticbeanstalk/*.cfg.yml
+!.elasticbeanstalk/*.global.yml
