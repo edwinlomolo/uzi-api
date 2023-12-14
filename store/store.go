@@ -71,7 +71,7 @@ func runDatabaseMigration(db *sql.DB, logger *logrus.Logger, isDevelopment, forc
 		return err
 	}
 
-	// Drop stuff in dev mode
+	// Drop stuff in dev mode if forced
 	if isDevelopment && forceMigrate {
 		if err := m.Down(); err != nil && err != migrate.ErrNoChange {
 			logger.Errorf("%s: %s", migrationErr, err)

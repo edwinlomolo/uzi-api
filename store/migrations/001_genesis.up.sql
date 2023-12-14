@@ -8,3 +8,4 @@ CREATE TABLE IF NOT EXISTS users (
   updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 CREATE INDEX IF NOT EXISTS users_phone_idx ON users(phone);
+CREATE INDEX IF NOT EXISTS users_email_idx ON users(email);

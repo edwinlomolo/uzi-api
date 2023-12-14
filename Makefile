@@ -7,5 +7,7 @@
 # migrate-db:
 # 	sqlc generate
 # 
+server:
+	go run .
 test:
 	go test -v ./...
