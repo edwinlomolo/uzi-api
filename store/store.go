@@ -4,7 +4,7 @@ import (
 	"database/sql"
 	"fmt"
 
-	"github.com/3dw1nM0535/uzi-api/configuration"
+	"github.com/3dw1nM0535/uzi-api/config"
 	"github.com/golang-migrate/migrate/v4"
 	"github.com/golang-migrate/migrate/v4/database/postgres"
 	_ "github.com/golang-migrate/migrate/v4/source/file"
@@ -14,12 +14,12 @@ import (
 var dbClient *sql.DB
 
 func InitializeStorage(logger *logrus.Logger, migrationUrl string) (*sql.DB, error) {
-	configurations := configuration.GetConfig()
-	databaseConfigurations := configurations.Database.Rdbms
-	isDevelopment := configurations.Server.Env != "production"
-	forceMigrate := configurations.Database.ForceMigration
+	configs := config.GetConfig()
+	databaseconfigs := configs.Database.Rdbms
+	isDevelopment := configs.Server.Env != "production"
+	forceMigrate := configs.Database.ForceMigration
 
-	db, err := sql.Open(databaseConfigurations.Env.Driver, databaseConfigurations.Uri)
+	db, err := sql.Open(databaseconfigs.Env.Driver, databaseconfigs.Uri)
 	if err != nil {
 		logrus.Errorf("%s:%v", "DatabaseError", err)
 		return nil, err

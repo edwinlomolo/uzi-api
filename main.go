@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/3dw1nM0535/uzi-api/configuration"
+	"github.com/3dw1nM0535/uzi-api/config"
 	"github.com/3dw1nM0535/uzi-api/logger"
 	"github.com/3dw1nM0535/uzi-api/store"
 	"github.com/go-chi/chi/v5"
@@ -19,9 +19,9 @@ func main() {
 	// Logging
 	logger := logger.NewLogger()
 
-	// Configurations
-	configuration.LoadConfig()
-	configurations := configuration.GetConfig()
+	// configs
+	config.LoadConfig()
+	configs := config.GetConfig()
 
 	// Storage
 	_, err := store.InitializeStorage(logger, "./store/migrations")
@@ -30,7 +30,7 @@ func main() {
 	}
 
 	s := &http.Server{
-		Addr:    fmt.Sprintf("0.0.0.0:%s", configurations.Server.Port),
+		Addr:    fmt.Sprintf("0.0.0.0:%s", configs.Server.Port),
 		Handler: r,
 	}
 

@@ -1,4 +1,4 @@
-package configuration
+package config
 
 type Database struct {
 	Rdbms          RDBMS
