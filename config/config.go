@@ -11,6 +11,7 @@ import (
 type Configuration struct {
 	Server   Server
 	Database Database
+	Ipinfo   Ipinfo
 }
 
 // env - load env
@@ -30,6 +31,7 @@ func LoadConfig() {
 
 	configuration.Server = serverConfig()
 	configuration.Database = databaseConfig()
+	configuration.Ipinfo = ipinfoConfig()
 
 	configAll = &configuration
 }
@@ -71,6 +73,7 @@ func databaseConfig() Database {
 	env()
 
 	databaseConfig.Rdbms = rdbmsConfig()
+	databaseConfig.Redis = redisConfig()
 
 	forceMigration, err := strconv.ParseBool(os.Getenv("FORCE_MIGRATION"))
 	if err != nil {
@@ -80,4 +83,26 @@ func databaseConfig() Database {
 	databaseConfig.ForceMigration = forceMigration
 
 	return databaseConfig
+}
+
+// ipinfoConfig - load ipinfo config
+func ipinfoConfig() Ipinfo {
+	var ipInfo Ipinfo
+
+	env()
+
+	ipInfo.ApiKey = os.Getenv("IPINFO_API_KEY")
+
+	return ipInfo
+}
+
+// redisConfig - load redis configs
+func redisConfig() Redis {
+	var redis Redis
+
+	env()
+
+	redis.Url = os.Getenv("REDIS_ENDPOINT")
+
+	return redis
 }
