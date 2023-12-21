@@ -3,6 +3,7 @@ package config
 import (
 	"os"
 	"strconv"
+	"strings"
 
 	"github.com/joho/godotenv"
 	"github.com/sirupsen/logrus"
@@ -14,8 +15,8 @@ type Configuration struct {
 	Ipinfo   Ipinfo
 }
 
-// env - load env
-func env() {
+// Env - load env
+func Env() {
 	// Load os env
 	err := godotenv.Load()
 	if err != nil {
@@ -26,7 +27,7 @@ func env() {
 var configAll *Configuration
 
 // LoadConfig - load all configuration
-func LoadConfig() {
+func LoadConfig() *Configuration {
 	var configuration Configuration
 
 	configuration.Server = serverConfig()
@@ -34,6 +35,8 @@ func LoadConfig() {
 	configuration.Ipinfo = ipinfoConfig()
 
 	configAll = &configuration
+
+	return configAll
 }
 
 // GetConfig - get configurations
@@ -45,10 +48,10 @@ func GetConfig() *Configuration {
 func serverConfig() Server {
 	var serverConfig Server
 
-	env()
+	Env()
 
-	serverConfig.Env = os.Getenv("SERVERENV")
-	serverConfig.Port = os.Getenv("SERVERPORT")
+	serverConfig.Env = strings.TrimSpace(os.Getenv("SERVERENV"))
+	serverConfig.Port = strings.TrimSpace(os.Getenv("SERVERPORT"))
 
 	return serverConfig
 }
@@ -57,11 +60,11 @@ func serverConfig() Server {
 func rdbmsConfig() RDBMS {
 	var rdbmsConfig RDBMS
 
-	env()
+	Env()
 
-	rdbmsConfig.Postal.Uri = os.Getenv("POSTAL_DATABASE_URI")
-	rdbmsConfig.Uri = os.Getenv("DATABASE_URI")
-	rdbmsConfig.Env.Driver = os.Getenv("DBDRIVER")
+	rdbmsConfig.Postal.Uri = strings.TrimSpace(os.Getenv("POSTAL_DATABASE_URI"))
+	rdbmsConfig.Uri = strings.TrimSpace(os.Getenv("DATABASE_URI"))
+	rdbmsConfig.Env.Driver = strings.TrimSpace(os.Getenv("DBDRIVER"))
 
 	return rdbmsConfig
 }
@@ -70,12 +73,12 @@ func rdbmsConfig() RDBMS {
 func databaseConfig() Database {
 	var databaseConfig Database
 
-	env()
+	Env()
 
 	databaseConfig.Rdbms = rdbmsConfig()
 	databaseConfig.Redis = redisConfig()
 
-	forceMigration, err := strconv.ParseBool(os.Getenv("FORCE_MIGRATION"))
+	forceMigration, err := strconv.ParseBool(strings.TrimSpace(os.Getenv("FORCE_MIGRATION")))
 	if err != nil {
 		panic(err)
 	}
@@ -89,9 +92,9 @@ func databaseConfig() Database {
 func ipinfoConfig() Ipinfo {
 	var ipInfo Ipinfo
 
-	env()
+	Env()
 
-	ipInfo.ApiKey = os.Getenv("IPINFO_API_KEY")
+	ipInfo.ApiKey = strings.TrimSpace(os.Getenv("IPINFO_API_KEY"))
 
 	return ipInfo
 }
@@ -100,9 +103,9 @@ func ipinfoConfig() Ipinfo {
 func redisConfig() Redis {
 	var redis Redis
 
-	env()
+	Env()
 
-	redis.Url = os.Getenv("REDIS_ENDPOINT")
+	redis.Url = strings.TrimSpace(os.Getenv("REDIS_ENDPOINT"))
 
 	return redis
 }

@@ -20,20 +20,20 @@ import (
 )
 
 func main() {
+	// Chi router
 	r := chi.NewRouter()
 	r.Use(cors.AllowAll().Handler)
 
-	// Logging
+	// Configs
+	configs := config.LoadConfig()
+
+	// Logger
 	logger := logger.NewLogger()
 
-	// configs
-	config.LoadConfig()
-	configs := config.GetConfig()
-
-	// Storage
-	_, err := store.InitializeStorage(logger, "./store/migrations")
-	if err != nil {
-		logger.Fatalln(err)
+	// Store
+	store, storeErr := store.InitializeStorage(logger, "./store/migrations")
+	if storeErr != nil {
+		logger.Errorf("%s-%v", "ServerStorageInitializeErr", storeErr.Error())
 	}
 
 	// New context
@@ -50,16 +50,19 @@ func main() {
 	ctx = context.WithValue(ctx, "ipinfoService", ipinfoService)
 
 	// Graphql
-	srv := gqlHandler.NewDefaultServer(uzi.NewExecutableSchema(uzi.New()))
+	srv := gqlHandler.NewDefaultServer(uzi.NewExecutableSchema(uzi.New(store, cache, logger)))
 
+	// Routes
 	r.Handle("/ipinfo", handler.Context(ctx, handler.Logger(handler.Ipinfo())))
 	r.Handle("/", playground.Handler("GraphQL playground", "/query"))
 	r.Handle("/query", handler.Context(ctx, handler.Logger(srv)))
 
+	// Server
 	s := &http.Server{
 		Addr:    fmt.Sprintf("0.0.0.0:%s", configs.Server.Port),
 		Handler: r,
 	}
 
+	// Run server
 	logrus.Fatal(s.ListenAndServe())
 }

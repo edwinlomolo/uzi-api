@@ -11,9 +11,9 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-var dbClient *sql.DB
+var dbClient *Queries
 
-func InitializeStorage(logger *logrus.Logger, migrationUrl string) (*sql.DB, error) {
+func InitializeStorage(logger *logrus.Logger, migrationUrl string) (*Queries, error) {
 	configs := config.GetConfig()
 	databaseconfigs := configs.Database.Rdbms
 	isDevelopment := configs.Server.Env != "production"
@@ -35,10 +35,10 @@ func InitializeStorage(logger *logrus.Logger, migrationUrl string) (*sql.DB, err
 		logrus.Infoln("Database connected!")
 	}
 
-	dbClient = db
+	dbClient = New(db)
 
 	// Setup database schema
-	if err := runDatabaseMigration(dbClient, logger, isDevelopment, forceMigrate, migrationUrl); err != nil {
+	if err := runDatabaseMigration(db, logger, isDevelopment, forceMigrate, migrationUrl); err != nil {
 		logger.Errorf("%s:%v", "ApplyingMigrationErr", err.Error())
 		return nil, err
 	} else if err == nil {

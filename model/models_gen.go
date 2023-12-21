@@ -13,9 +13,15 @@ type Session struct {
 	IP        string     `json:"ip"`
 	Token     string     `json:"token"`
 	UserID    uuid.UUID  `json:"user_id"`
-	Expired   bool       `json:"expired"`
+	Expires   int        `json:"expires"`
 	CreatedAt *time.Time `json:"created_at,omitempty"`
 	UpdatedAt *time.Time `json:"updated_at,omitempty"`
+}
+
+type SigninInput struct {
+	FirstName string `json:"first_name"`
+	LastName  string `json:"last_name"`
+	Phone     string `json:"phone"`
 }
 
 type User struct {

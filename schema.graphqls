@@ -13,17 +13,28 @@ type Session {
   ip: String!
   token: String!
   user_id: UUID!
-  expired: Boolean!
+  expires: Int!
   created_at: Time
   updated_at: Time
+}
+
+input SigninInput {
+  first_name: String!
+  last_name: String!
+  phone: String!
 }
 
 type Query {
   hello: String!
 }
 
+type Mutation {
+  signIn(input: SigninInput!): User
+}
+
 schema {
   query: Query
+  mutation: Mutation
 }
 
 scalar Time

@@ -6,9 +6,10 @@ INSERT INTO users (
 )
 RETURNING *;
 
--- name: GetUser :one
-SELECT first_name, last_name, phone, created_at, updated_at
-FROM users;
+-- name: FindByPhone :one
+SELECT * FROM users
+WHERE phone = $1
+LIMIT 1;
 
 -- name: CreateSession :one
 INSERT INTO sessions (

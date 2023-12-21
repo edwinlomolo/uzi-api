@@ -6,6 +6,11 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
+type Cache interface {
+	Get(key string) (interface{}, error)
+	Set(key string, value interface{}) error
+}
+
 func NewCache(config config.Redis, logger *logrus.Logger) *redis.Client {
 	opts, err := redis.ParseURL(config.Url)
 	if err != nil {

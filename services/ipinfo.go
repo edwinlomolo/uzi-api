@@ -52,6 +52,7 @@ func (ipc *ipinfocacheClient) Get(key string) (interface{}, error) {
 	keyValue, err := ipc.redis.Get(context.Background(), key).Result()
 	if err == redis.Nil {
 		ipc.logger.Infoln("key doesn't exist")
+		return nil, nil
 	} else if err != nil {
 		ipc.logger.Errorf("%s-%v", "IpinfoGetValueErr", err.Error())
 		return nil, err
