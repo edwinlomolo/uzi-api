@@ -66,17 +66,12 @@ func runDatabaseMigration(db *sql.DB, logger *logrus.Logger, isDevelopment, forc
 	}
 
 	// Apply migration(s)
+	if forceMigrate {
+		db.Exec("DROP TABLE IF EXISTS schema_migrations WITH (FORCE);")
+	}
 	if err := m.Up(); err != nil && err != migrate.ErrNoChange {
 		logger.Errorf("%s: %s", migrationErr, err)
 		return err
-	}
-
-	// Drop stuff in dev mode if forced
-	if isDevelopment && forceMigrate {
-		if err := m.Down(); err != nil && err != migrate.ErrNoChange {
-			logger.Errorf("%s: %s", migrationErr, err)
-			return err
-		}
 	}
 
 	return nil

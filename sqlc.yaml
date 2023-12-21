@@ -1,0 +1,14 @@
+version: "2"
+sql:
+  - engine: "postgresql"
+    queries: "store/queries.sql"
+    schema: "store/migrations/001_genesis.up.sql"
+    gen:
+      go:
+        out: "store"
+        sql_package: "pgx/v5"
+        overrides:
+          - db_type: "inet"
+            go_type:
+              import: "github.com/jackc/pgtype"
+              type: "Inet"
