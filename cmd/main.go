@@ -9,6 +9,7 @@ import (
 	"github.com/3dw1nM0535/uzi-api/handler"
 	"github.com/3dw1nM0535/uzi-api/logger"
 	"github.com/3dw1nM0535/uzi-api/pkg/cache"
+	"github.com/3dw1nM0535/uzi-api/services"
 	"github.com/3dw1nM0535/uzi-api/store"
 	gqlHandler "github.com/99designs/gqlgen/graphql/handler"
 	"github.com/99designs/gqlgen/graphql/playground"
@@ -36,6 +37,9 @@ func main() {
 
 	// Cache
 	cache := cache.NewCache(configs.Database.Redis, logger)
+
+	// Services
+	services.NewIpinfoService(cache, configs.Ipinfo, logger)
 
 	// Graphql
 	srv := gqlHandler.NewDefaultServer(uzi.NewExecutableSchema(uzi.New(store, cache, logger, configs)))

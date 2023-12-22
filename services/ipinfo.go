@@ -13,6 +13,8 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
+var ipinfoServices IpInfo
+
 type IpInfo interface {
 	GetIpinfo(ip string) (*ipinfo.Core, error)
 }
@@ -23,12 +25,16 @@ type ipinfoClient struct {
 	client *ipinfo.Client
 }
 
-func NewIpinfoService(redis *redis.Client, config config.Ipinfo, logger *logrus.Logger) IpInfo {
+func NewIpinfoService(redis *redis.Client, config config.Ipinfo, logger *logrus.Logger) {
 	cache := newipinfocache(redis, logger, config)
 	c := ipinfo.NewCache(cache)
 	client := ipinfo.NewClient(nil, c, config.ApiKey)
 
-	return &ipinfoClient{config, logger, client}
+	ipinfoServices = &ipinfoClient{config, logger, client}
+}
+
+func GetIpinfoServices() IpInfo {
+	return ipinfoServices
 }
 
 func (ipc *ipinfoClient) GetIpinfo(ip string) (*ipinfo.Core, error) {
@@ -50,10 +56,7 @@ func (ipc *ipinfocacheClient) Get(key string) (interface{}, error) {
 	var res ipinfo.Core
 
 	keyValue, err := ipc.redis.Get(context.Background(), key).Result()
-	if err == redis.Nil {
-		ipc.logger.Infoln("key doesn't exist")
-		return nil, nil
-	} else if err != nil {
+	if err != redis.Nil && err != nil {
 		ipc.logger.Errorf("%s-%v", "IpinfoGetValueErr", err.Error())
 		return nil, err
 	}
