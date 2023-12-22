@@ -22,4 +22,4 @@ RETURNING *;
 -- name: GetSession :one
 SELECT * FROM
 sessions
-WHERE token = $1;
+WHERE user_id = $1;

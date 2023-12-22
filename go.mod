@@ -5,6 +5,7 @@ go 1.21.4
 require (
 	github.com/99designs/gqlgen v0.17.41
 	github.com/go-chi/chi/v5 v5.0.10
+	github.com/golang-jwt/jwt/v5 v5.2.0
 	github.com/golang-migrate/migrate/v4 v4.16.2
 	github.com/google/uuid v1.5.0
 	github.com/ipinfo/go/v2 v2.10.0

@@ -1,7 +1,6 @@
 package main
 
 import (
-	"context"
 	"fmt"
 	"net/http"
 
@@ -10,7 +9,6 @@ import (
 	"github.com/3dw1nM0535/uzi-api/handler"
 	"github.com/3dw1nM0535/uzi-api/logger"
 	"github.com/3dw1nM0535/uzi-api/pkg/cache"
-	"github.com/3dw1nM0535/uzi-api/services"
 	"github.com/3dw1nM0535/uzi-api/store"
 	gqlHandler "github.com/99designs/gqlgen/graphql/handler"
 	"github.com/99designs/gqlgen/graphql/playground"
@@ -36,26 +34,16 @@ func main() {
 		logger.Errorf("%s-%v", "ServerStorageInitializeErr", storeErr.Error())
 	}
 
-	// New context
-	ctx := context.Background()
-
 	// Cache
 	cache := cache.NewCache(configs.Database.Redis, logger)
 
-	// Services
-	ipinfoService := services.NewIpinfoService(cache, configs.Ipinfo, logger)
-
-	// App context
-	ctx = context.WithValue(ctx, "logger", logger)
-	ctx = context.WithValue(ctx, "ipinfoService", ipinfoService)
-
 	// Graphql
-	srv := gqlHandler.NewDefaultServer(uzi.NewExecutableSchema(uzi.New(store, cache, logger)))
+	srv := gqlHandler.NewDefaultServer(uzi.NewExecutableSchema(uzi.New(store, cache, logger, configs)))
 
 	// Routes
-	r.Handle("/ipinfo", handler.Context(ctx, handler.Logger(handler.Ipinfo())))
+	r.Handle("/ipinfo", handler.Context(handler.Logger(handler.Ipinfo())))
 	r.Handle("/", playground.Handler("GraphQL playground", "/query"))
-	r.Handle("/query", handler.Context(ctx, handler.Logger(srv)))
+	r.Handle("/query", handler.Context(handler.Logger(srv)))
 
 	// Server
 	s := &http.Server{

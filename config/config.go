@@ -4,6 +4,7 @@ import (
 	"os"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/joho/godotenv"
 	"github.com/sirupsen/logrus"
@@ -13,6 +14,7 @@ type Configuration struct {
 	Server   Server
 	Database Database
 	Ipinfo   Ipinfo
+	Jwt      Jwt
 }
 
 // Env - load env
@@ -33,6 +35,7 @@ func LoadConfig() *Configuration {
 	configuration.Server = serverConfig()
 	configuration.Database = databaseConfig()
 	configuration.Ipinfo = ipinfoConfig()
+	configuration.Jwt = jwtConfig()
 
 	configAll = &configuration
 
@@ -108,4 +111,21 @@ func redisConfig() Redis {
 	redis.Url = strings.TrimSpace(os.Getenv("REDIS_ENDPOINT"))
 
 	return redis
+}
+
+// jwtConfig - get jwt configs
+func jwtConfig() Jwt {
+	var jwtConfig Jwt
+
+	Env()
+
+	jwtExpires, err := time.ParseDuration(strings.TrimSpace(os.Getenv("JWTEXPIRE")))
+	if err != nil {
+		panic(err)
+	}
+
+	jwtConfig.Expires = jwtExpires
+	jwtConfig.Secret = strings.TrimSpace(os.Getenv("JWTSECRET"))
+
+	return jwtConfig
 }

@@ -24,8 +24,8 @@ RETURNING id, ip, token, expires, user_id, created_at, updated_at
 type CreateSessionParams struct {
 	Ip      netip.Addr
 	Token   string
-	UserID  uuid.NullUUID
-	Expires int64
+	UserID  uuid.UUID
+	Expires string
 }
 
 func (q *Queries) CreateSession(ctx context.Context, arg CreateSessionParams) (Session, error) {
@@ -100,11 +100,11 @@ func (q *Queries) FindByPhone(ctx context.Context, phone string) (User, error) {
 const getSession = `-- name: GetSession :one
 SELECT id, ip, token, expires, user_id, created_at, updated_at FROM
 sessions
-WHERE token = $1
+WHERE user_id = $1
 `
 
-func (q *Queries) GetSession(ctx context.Context, token string) (Session, error) {
-	row := q.db.QueryRowContext(ctx, getSession, token)
+func (q *Queries) GetSession(ctx context.Context, userID uuid.UUID) (Session, error) {
+	row := q.db.QueryRowContext(ctx, getSession, userID)
 	var i Session
 	err := row.Scan(
 		&i.ID,

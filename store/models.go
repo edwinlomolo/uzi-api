@@ -15,8 +15,8 @@ type Session struct {
 	ID        uuid.UUID
 	Ip        netip.Addr
 	Token     string
-	Expires   int64
-	UserID    uuid.NullUUID
+	Expires   string
+	UserID    uuid.UUID
 	CreatedAt time.Time
 	UpdatedAt time.Time
 }

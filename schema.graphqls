@@ -13,7 +13,7 @@ type Session {
   ip: String!
   token: String!
   user_id: UUID!
-  expires: Int!
+  expires: String!
   created_at: Time
   updated_at: Time
 }
@@ -29,7 +29,7 @@ type Query {
 }
 
 type Mutation {
-  signIn(input: SigninInput!): User
+  signIn(input: SigninInput!): Session!
 }
 
 schema {

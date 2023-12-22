@@ -12,9 +12,10 @@ CREATE TABLE IF NOT EXISTS sessions (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   ip INET NOT NULL,
   token TEXT NOT NULL,
-  expires BIGINT NOT NULL,
-  user_id UUID REFERENCES users ON DELETE SET NULL,
+  expires TEXT NOT NULL,
+  user_id UUID NOT NULL REFERENCES users ON DELETE CASCADE,
   created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 CREATE INDEX IF NOT EXISTS sessions_token_idx ON sessions(token);
+CREATE INDEX IF NOT EXISTS sessions_userid_idx ON sessions(user_id);
