@@ -29,7 +29,7 @@ type sessionClient struct {
 }
 
 func NewSessionService(store *store.Queries, logger *logrus.Logger, jwtConfig config.Jwt) Session {
-	return &sessionClient{jwt.NewJwtClient(), store, logger, jwtConfig}
+	return &sessionClient{jwt.NewJwtClient(logger, jwtConfig), store, logger, jwtConfig}
 }
 
 func (sc *sessionClient) FindOrCreate(userID uuid.UUID, ipAddress netip.Addr) (*model.Session, error) {
@@ -78,7 +78,7 @@ func (sc *sessionClient) FindOrCreate(userID uuid.UUID, ipAddress netip.Addr) (*
 }
 
 func (sc *sessionClient) Sign(secret []byte, claims jsonwebtoken.Claims) (string, error) {
-	token, signJwtErr := jsonwebtoken.NewWithClaims(jsonwebtoken.SigningMethodHS256, claims).SignedString(secret)
+	token, signJwtErr := sc.Sign(secret, claims)
 	if signJwtErr != nil {
 		sc.logger.Errorf("%s-%v", "SignJwtErr", signJwtErr.Error())
 		return "", signJwtErr
