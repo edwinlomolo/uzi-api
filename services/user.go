@@ -77,9 +77,7 @@ func (usc *usercacheclient) Get(key string) (interface{}, error) {
 	var res model.User
 
 	keyValue, err := usc.redis.Get(context.Background(), key).Result()
-	if err == redis.Nil {
-		return nil, nil
-	} else if err != nil {
+	if err != redis.Nil && err != nil {
 		usc.logger.Errorf("%s-%v", "UserServiceCacheGetErr", err.Error())
 		return nil, err
 	}
