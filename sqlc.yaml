@@ -11,7 +11,3 @@ sql:
             go_type:
               import: "github.com/google/uuid"
               type: "UUID"
-          - db_type: "inet"
-            go_type:
-              import: "net/netip"
-              type: "Addr"

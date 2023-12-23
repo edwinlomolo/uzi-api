@@ -4,5 +4,5 @@ import "time"
 
 type Jwt struct {
 	Secret  string
-	Expires time.Duration
+	Expires time.Time
 }

@@ -13,7 +13,7 @@ type Session {
   ip: String!
   token: String!
   user_id: UUID!
-  expires: String!
+  expires: Time!
   created_at: Time
   updated_at: Time
 }

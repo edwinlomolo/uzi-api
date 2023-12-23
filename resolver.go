@@ -2,8 +2,6 @@ package uzi
 
 import (
 	"context"
-	"fmt"
-	"net/netip"
 
 	"github.com/3dw1nM0535/uzi-api/config"
 	"github.com/3dw1nM0535/uzi-api/model"
@@ -39,12 +37,13 @@ func (r *mutationResolver) SignIn(ctx context.Context, input model.SigninInput) 
 		return nil, newUserErr
 	}
 
-	ip, ok := netip.AddrFromSlice([]byte(ctx.Value("ip").(string)))
-	if !ok {
-		return nil, fmt.Errorf("Error parsing ip from context")
+	isDev := config.IsDev()
+	userIp := ctx.Value("ip").(string)
+	if isDev {
+		userIp = "127.0.0.1"
 	}
 
-	newSession, newSessionErr := r.sessionService.FindOrCreate(newUser.ID, ip)
+	newSession, newSessionErr := r.sessionService.FindOrCreate(newUser.ID, userIp)
 	if newSessionErr != nil {
 		return nil, newSessionErr
 	}

@@ -4,8 +4,6 @@ import (
 	"context"
 	"database/sql"
 	"encoding/base64"
-	"fmt"
-	"net/netip"
 
 	"github.com/3dw1nM0535/uzi-api/config"
 	"github.com/3dw1nM0535/uzi-api/model"
@@ -17,8 +15,7 @@ import (
 )
 
 type Session interface {
-	jwt.Jwt
-	FindOrCreate(userID uuid.UUID, ipAddress netip.Addr) (*model.Session, error)
+	FindOrCreate(userID uuid.UUID, ipAddress string) (*model.Session, error)
 }
 
 type sessionClient struct {
@@ -32,7 +29,7 @@ func NewSessionService(store *store.Queries, logger *logrus.Logger, jwtConfig co
 	return &sessionClient{jwt.NewJwtClient(logger, jwtConfig), store, logger, jwtConfig}
 }
 
-func (sc *sessionClient) FindOrCreate(userID uuid.UUID, ipAddress netip.Addr) (*model.Session, error) {
+func (sc *sessionClient) FindOrCreate(userID uuid.UUID, ipAddress string) (*model.Session, error) {
 	foundSession, foundSessionErr := sc.store.GetSession(context.Background(), userID)
 	if foundSessionErr == sql.ErrNoRows {
 		claims := jsonwebtoken.MapClaims{
@@ -42,23 +39,29 @@ func (sc *sessionClient) FindOrCreate(userID uuid.UUID, ipAddress netip.Addr) (*
 			"iss":     "Uzi",
 		}
 
-		sessionJwt, sessionJwtErr := sc.Sign([]byte(sc.config.Secret), claims)
-		newSession, err := sc.store.CreateSession(context.Background(), store.CreateSessionParams{
+		sessionJwt, sessionJwtErr := sc.jwtClient.Sign([]byte(sc.config.Secret), claims)
+		if sessionJwtErr != nil {
+			sc.logger.Errorf("%s-%v", "SignSessionJwtErr", sessionJwtErr.Error())
+			return nil, sessionJwtErr
+		}
+
+		newSession, newSessionErr := sc.store.CreateSession(context.Background(), store.CreateSessionParams{
 			UserID:  userID,
 			Ip:      ipAddress,
 			Token:   sessionJwt,
-			Expires: sc.config.Expires.String(),
+			Expires: sc.config.Expires,
 		})
-		if sessionJwtErr != nil {
-			sc.logger.Errorf("%s-%v", "CreateNewSessionErr", err.Error())
-			return nil, err
+		if newSessionErr != nil {
+			sc.logger.Errorf("%s-%v", "CreateNewSessionErr", newSessionErr.Error())
+			return nil, newSessionErr
 		}
 
 		return &model.Session{
 			ID:        newSession.ID,
-			IP:        newSession.Ip.String(),
+			IP:        newSession.Ip,
 			Token:     newSession.Token,
 			UserID:    newSession.UserID,
+			Expires:   newSession.Expires,
 			CreatedAt: &newSession.CreatedAt,
 			UpdatedAt: &newSession.UpdatedAt,
 		}, nil
@@ -69,37 +72,11 @@ func (sc *sessionClient) FindOrCreate(userID uuid.UUID, ipAddress netip.Addr) (*
 
 	return &model.Session{
 		ID:        foundSession.ID,
-		IP:        foundSession.Ip.String(),
+		IP:        foundSession.Ip,
 		Token:     foundSession.Token,
 		UserID:    foundSession.UserID,
+		Expires:   foundSession.Expires,
 		CreatedAt: &foundSession.CreatedAt,
 		UpdatedAt: &foundSession.UpdatedAt,
 	}, nil
-}
-
-func (sc *sessionClient) Sign(secret []byte, claims jsonwebtoken.Claims) (string, error) {
-	token, signJwtErr := sc.Sign(secret, claims)
-	if signJwtErr != nil {
-		sc.logger.Errorf("%s-%v", "SignJwtErr", signJwtErr.Error())
-		return "", signJwtErr
-	}
-
-	return token, nil
-}
-
-func (sc *sessionClient) Validate(jwt string) (*jsonwebtoken.Token, error) {
-	token, tokenErr := jsonwebtoken.Parse(jwt, func(tkn *jsonwebtoken.Token) (interface{}, error) {
-		if _, ok := tkn.Method.(*jsonwebtoken.SigningMethodHMAC); !ok {
-			sc.logger.Errorf("%s-%v", "TokenParseErr", "invalid signing algorithm")
-			return nil, fmt.Errorf("%s-%v", "invalid signing algorithm", tkn.Header["alg"])
-		}
-
-		return []byte(sc.config.Secret), nil
-	})
-	if tokenErr != nil {
-		sc.logger.Errorf("%s-%v", "TokenParseErr", tokenErr.Error())
-		return nil, tokenErr
-	}
-
-	return token, nil
 }

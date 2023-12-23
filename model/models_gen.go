@@ -13,7 +13,7 @@ type Session struct {
 	IP        string     `json:"ip"`
 	Token     string     `json:"token"`
 	UserID    uuid.UUID  `json:"user_id"`
-	Expires   string     `json:"expires"`
+	Expires   time.Time  `json:"expires"`
 	CreatedAt *time.Time `json:"created_at,omitempty"`
 	UpdatedAt *time.Time `json:"updated_at,omitempty"`
 }

@@ -5,7 +5,6 @@
 package store
 
 import (
-	"net/netip"
 	"time"
 
 	"github.com/google/uuid"
@@ -13,9 +12,9 @@ import (
 
 type Session struct {
 	ID        uuid.UUID
-	Ip        netip.Addr
+	Ip        string
 	Token     string
-	Expires   string
+	Expires   time.Time
 	UserID    uuid.UUID
 	CreatedAt time.Time
 	UpdatedAt time.Time

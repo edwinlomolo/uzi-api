@@ -7,7 +7,7 @@ package store
 
 import (
 	"context"
-	"net/netip"
+	"time"
 
 	"github.com/google/uuid"
 )
@@ -22,10 +22,10 @@ RETURNING id, ip, token, expires, user_id, created_at, updated_at
 `
 
 type CreateSessionParams struct {
-	Ip      netip.Addr
+	Ip      string
 	Token   string
 	UserID  uuid.UUID
-	Expires string
+	Expires time.Time
 }
 
 func (q *Queries) CreateSession(ctx context.Context, arg CreateSessionParams) (Session, error) {

@@ -4,8 +4,8 @@ import (
 	"os"
 	"strconv"
 	"strings"
-	"time"
 
+	"github.com/3dw1nM0535/uzi-api/pkg/util"
 	"github.com/joho/godotenv"
 	"github.com/sirupsen/logrus"
 )
@@ -119,7 +119,7 @@ func jwtConfig() Jwt {
 
 	Env()
 
-	jwtExpires, err := time.ParseDuration(strings.TrimSpace(os.Getenv("JWTEXPIRE")))
+	jwtExpires, err := util.ParseDuration(strings.TrimSpace(os.Getenv("JWTEXPIRE")))
 	if err != nil {
 		panic(err)
 	}
@@ -128,4 +128,16 @@ func jwtConfig() Jwt {
 	jwtConfig.Secret = strings.TrimSpace(os.Getenv("JWTSECRET"))
 
 	return jwtConfig
+}
+
+func IsDev() bool {
+	return configAll.Server.Env == "development"
+}
+
+func IsProd() bool {
+	return configAll.Server.Env == "production"
+}
+
+func IsStaging() bool {
+	return configAll.Server.Env == "staging"
 }
