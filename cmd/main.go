@@ -47,7 +47,8 @@ func main() {
 	// Routes
 	r.Handle("/ipinfo", handler.Context(handler.Logger(handler.Ipinfo())))
 	r.Handle("/", playground.Handler("GraphQL playground", "/query"))
-	r.Handle("/query", handler.Context(handler.Logger(srv)))
+	r.Handle("/api", handler.Context(handler.Logger(srv)))
+	r.Handle("/login", handler.Context(handler.Logger(handler.Login())))
 
 	// Server
 	s := &http.Server{
