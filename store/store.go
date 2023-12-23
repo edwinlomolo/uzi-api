@@ -46,7 +46,6 @@ func InitializeStorage(logger *logrus.Logger, migrationUrl string) (*Queries, er
 	}
 
 	return dbClient, nil
-
 }
 
 // runDbMigration - setup database tables
