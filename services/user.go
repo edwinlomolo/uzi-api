@@ -13,23 +13,30 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-type UserService interface {
+var userService User
+
+type User interface {
 	FindOrCreate(user model.SigninInput) (*model.User, error)
 }
 
-type userService struct {
+type userClient struct {
 	store  *store.Queries
 	logger *logrus.Logger
 	ctx    context.Context
 	cache  cache.Cache
 }
 
-func NewUserService(store *store.Queries, redis *redis.Client, logger *logrus.Logger) UserService {
-	c := newusercache(redis, logger)
-	return &userService{store, logger, context.TODO(), c}
+func GetUserService() User {
+	return userService
 }
 
-func (u *userService) FindOrCreate(user model.SigninInput) (*model.User, error) {
+func NewUserService(store *store.Queries, redis *redis.Client, logger *logrus.Logger) User {
+	c := newusercache(redis, logger)
+	userService = &userClient{store, logger, context.TODO(), c}
+	return userService
+}
+
+func (u *userClient) FindOrCreate(user model.SigninInput) (*model.User, error) {
 	foundUser, foundUserErr := u.store.FindByPhone(context.Background(), user.Phone)
 	if foundUserErr == sql.ErrNoRows {
 		newUser, newUserErr := u.store.CreateUser(context.Background(), store.CreateUserParams{

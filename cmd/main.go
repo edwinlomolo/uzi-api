@@ -40,15 +40,17 @@ func main() {
 
 	// Services
 	services.NewIpinfoService(cache, configs.Ipinfo, logger)
+	services.NewUserService(store, cache, logger)
+	services.NewSessionService(store, logger, configs.Jwt)
 
 	// Graphql
-	srv := gqlHandler.NewDefaultServer(uzi.NewExecutableSchema(uzi.New(store, cache, logger, configs)))
+	srv := gqlHandler.NewDefaultServer(uzi.NewExecutableSchema(uzi.New()))
 
 	// Routes
 	r.Handle("/ipinfo", handler.Context(handler.Logger(handler.Ipinfo())))
 	r.Handle("/", playground.Handler("GraphQL playground", "/query"))
 	r.Handle("/api", handler.Context(handler.Logger(srv)))
-	r.Handle("/login", handler.Context(handler.Logger(handler.Login())))
+	r.Handle("/login", handler.Context(handler.Logger(handler.Signin())))
 
 	// Server
 	s := &http.Server{

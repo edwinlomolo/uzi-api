@@ -14,8 +14,10 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
+var sessionService Session
+
 type Session interface {
-	FindOrCreate(userID uuid.UUID, ipAddress string) (*model.Session, error)
+	FindOrCreate(uuid.UUID, string) (*model.Session, error)
 }
 
 type sessionClient struct {
@@ -25,8 +27,13 @@ type sessionClient struct {
 	config    config.Jwt
 }
 
+func GetSessionService() Session {
+	return sessionService
+}
+
 func NewSessionService(store *store.Queries, logger *logrus.Logger, jwtConfig config.Jwt) Session {
-	return &sessionClient{jwt.NewJwtClient(logger, jwtConfig), store, logger, jwtConfig}
+	sessionService = &sessionClient{jwt.NewJwtClient(logger, jwtConfig), store, logger, jwtConfig}
+	return sessionService
 }
 
 func (sc *sessionClient) FindOrCreate(userID uuid.UUID, ipAddress string) (*model.Session, error) {

@@ -18,23 +18,12 @@ type Session {
   updated_at: Time
 }
 
-input SigninInput {
-  first_name: String!
-  last_name: String!
-  phone: String!
-}
-
 type Query {
   hello: String!
 }
 
-type Mutation {
-  signIn(input: SigninInput!): Session!
-}
-
 schema {
   query: Query
-  mutation: Mutation
 }
 
 scalar Time

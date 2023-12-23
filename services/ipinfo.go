@@ -13,7 +13,7 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-var ipinfoServices IpInfo
+var ipinfoService IpInfo
 
 type IpInfo interface {
 	GetIpinfo(ip string) (*ipinfo.Core, error)
@@ -30,11 +30,11 @@ func NewIpinfoService(redis *redis.Client, config config.Ipinfo, logger *logrus.
 	c := ipinfo.NewCache(cache)
 	client := ipinfo.NewClient(nil, c, config.ApiKey)
 
-	ipinfoServices = &ipinfoClient{config, logger, client}
+	ipinfoService = &ipinfoClient{config, logger, client}
 }
 
-func GetIpinfoServices() IpInfo {
-	return ipinfoServices
+func GetIpinfoService() IpInfo {
+	return ipinfoService
 }
 
 func (ipc *ipinfoClient) GetIpinfo(ip string) (*ipinfo.Core, error) {
