@@ -7,9 +7,9 @@ gql:
 # Sqlc
 sqlc:
 	sqlc generate
-# Run server
-server:
-	go run cmd/main.go
 # Test
 test:
 	go test -v ./...
+# Run server
+server:
+	go run cmd/main.go
