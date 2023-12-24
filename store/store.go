@@ -16,7 +16,7 @@ var dbClient *Queries
 func InitializeStorage(logger *logrus.Logger, migrationUrl string) (*Queries, error) {
 	configs := config.GetConfig()
 	databaseconfigs := configs.Database.Rdbms
-	isDevelopment := configs.Server.Env != "production"
+	isDevelopment := config.IsDev()
 	forceMigrate := configs.Database.ForceMigration
 
 	db, err := sql.Open(databaseconfigs.Env.Driver, databaseconfigs.Uri)
@@ -32,7 +32,7 @@ func InitializeStorage(logger *logrus.Logger, migrationUrl string) (*Queries, er
 	if err := db.Ping(); err != nil {
 		logrus.Errorf("%s:%v", "DatabasePingError", err.Error())
 	} else if err == nil {
-		logrus.Infoln("Database connected!")
+		logrus.Infoln("Database connected")
 	}
 
 	dbClient = New(db)
