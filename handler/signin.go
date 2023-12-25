@@ -7,18 +7,17 @@ import (
 	"net/http"
 
 	"github.com/3dw1nM0535/uzi-api/config"
+	"github.com/3dw1nM0535/uzi-api/logger"
 	"github.com/3dw1nM0535/uzi-api/model"
 	"github.com/3dw1nM0535/uzi-api/services"
-	"github.com/sirupsen/logrus"
 )
 
 func Signin() http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		var loginInput model.SigninInput
-		ctx := r.Context()
-		logger := ctx.Value("logger").(*logrus.Logger)
-		userService := ctx.Value("userService").(services.User)
-		sessionService := ctx.Value("sessionService").(services.Session)
+		logger := logger.GetLogger()
+		userService := services.GetUserService()
+		sessionService := services.GetSessionService()
 		userIp := GetIp(r)
 
 		if r.Method != http.MethodPost {

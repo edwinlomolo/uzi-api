@@ -35,14 +35,16 @@ func (jwtc *jwtclient) Sign(secret []byte, claims jwt.Claims) (string, error) {
 }
 
 func (jwtc *jwtclient) Validate(jwt string) (*jwt.Token, error) {
-	token, tokenErr := jsonwebtoken.Parse(jwt, func(tkn *jsonwebtoken.Token) (interface{}, error) {
+	keyFunc := func(tkn *jsonwebtoken.Token) (interface{}, error) {
 		if _, ok := tkn.Method.(*jsonwebtoken.SigningMethodHMAC); !ok {
 			jwtc.logger.Errorf("%s-%v", "TokenParseErr", "invalid signing algorithm")
 			return nil, fmt.Errorf("%s-%v", "invalid signing algorithm", tkn.Header["alg"])
 		}
 
 		return []byte(jwtc.config.Secret), nil
-	})
+	}
+
+	token, tokenErr := jsonwebtoken.Parse(jwt, keyFunc)
 	if tokenErr != nil {
 		jwtc.logger.Errorf("%s-%v", "TokenParseErr", tokenErr.Error())
 		return nil, tokenErr

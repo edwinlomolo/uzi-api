@@ -4,17 +4,16 @@ import (
 	"encoding/json"
 	"net/http"
 
+	"github.com/3dw1nM0535/uzi-api/logger"
 	"github.com/3dw1nM0535/uzi-api/services"
-	"github.com/sirupsen/logrus"
 )
 
 func Ipinfo() http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		ctx := r.Context()
-		logger := ctx.Value("logger").(*logrus.Logger)
+		logger := logger.GetLogger()
 		ip := GetIp(r)
 
-		ipinfo, err := ctx.Value("ipinfoService").(services.IpInfo).GetIpinfo(ip)
+		ipinfo, err := services.GetIpinfoService().GetIpinfo(ip)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return

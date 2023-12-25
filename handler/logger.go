@@ -3,14 +3,13 @@ package handler
 import (
 	"net/http"
 
-	"github.com/sirupsen/logrus"
+	"github.com/3dw1nM0535/uzi-api/logger"
 )
 
 func Logger(h http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		ctx := r.Context()
 		ip := GetIp(r)
-		log := ctx.Value("logger").(*logrus.Logger)
+		log := logger.GetLogger()
 		// Some info on what is happening with request(s)
 		log.Infof("%s-%s-%s-%s", ip, r.Method, r.URL, r.Proto)
 		h.ServeHTTP(w, r)
