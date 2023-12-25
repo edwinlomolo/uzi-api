@@ -50,7 +50,7 @@ func main() {
 	r.Handle("/ipinfo", handler.Logger(handler.Ipinfo()))
 	r.Handle("/", playground.Handler("GraphQL playground", "/query"))
 	r.Handle("/api", handler.Logger(srv))
-	r.Handle("/login", handler.Logger(handler.Signin()))
+	r.Handle("/signin", handler.Logger(handler.Signin()))
 
 	// Server
 	s := &http.Server{
