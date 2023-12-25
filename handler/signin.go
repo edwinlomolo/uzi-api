@@ -6,7 +6,6 @@ import (
 	"io"
 	"net/http"
 
-	"github.com/3dw1nM0535/uzi-api/config"
 	"github.com/3dw1nM0535/uzi-api/logger"
 	"github.com/3dw1nM0535/uzi-api/model"
 	"github.com/3dw1nM0535/uzi-api/services"
@@ -41,10 +40,6 @@ func Signin() http.Handler {
 		if findUserErr != nil {
 			http.Error(w, findUserErr.Error(), http.StatusInternalServerError)
 			return
-		}
-
-		if config.IsDev() {
-			userIp = "127.0.0.1"
 		}
 
 		findSession, findSessionErr := sessionService.FindOrCreate(findUser.ID, userIp)
