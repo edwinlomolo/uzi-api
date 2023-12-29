@@ -16,6 +16,7 @@ type Session {
   token: String!
   user_id: UUID!
   is_courier: Boolean!
+  has_onboared: Boolean!
   status: CourierStatus
   expires: Time!
   created_at: Time

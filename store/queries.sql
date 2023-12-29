@@ -11,6 +11,18 @@ SELECT * FROM users
 WHERE phone = $1
 LIMIT 1;
 
+-- name: UserHasOnboarded :one
+SELECT has_onboarded FROM
+users
+WHERE phone = $1
+LIMIT 1;
+
+-- name: SetHasOnboardStatus :one
+UPDATE users
+SET has_onboarded = $1
+WHERE phone = $2
+RETURNING *;
+
 -- name: CreateSession :one
 INSERT INTO sessions (
   ip, token, user_id, expires
