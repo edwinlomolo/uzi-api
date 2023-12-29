@@ -11,15 +11,15 @@ SELECT * FROM users
 WHERE phone = $1
 LIMIT 1;
 
--- name: UserHasOnboarded :one
-SELECT has_onboarded FROM
+-- name: IsUserOnboarding :one
+SELECT onboarding FROM
 users
 WHERE phone = $1
 LIMIT 1;
 
--- name: SetHasOnboardStatus :one
+-- name: SetOnboardingStatus :one
 UPDATE users
-SET has_onboarded = $1
+SET onboarding = $1
 WHERE phone = $2
 RETURNING *;
 

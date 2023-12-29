@@ -236,7 +236,7 @@ INSERT INTO users (
 ) VALUES (
   $1, $2, $3
 )
-RETURNING id, first_name, last_name, phone, has_onboarded, created_at, updated_at
+RETURNING id, first_name, last_name, phone, onboarding, created_at, updated_at
 `
 
 type CreateUserParams struct {
@@ -253,7 +253,7 @@ func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (User, e
 		&i.FirstName,
 		&i.LastName,
 		&i.Phone,
-		&i.HasOnboarded,
+		&i.Onboarding,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 	)
@@ -312,7 +312,7 @@ func (q *Queries) CreateVehicle(ctx context.Context, productID uuid.UUID) (Vehic
 }
 
 const findByPhone = `-- name: FindByPhone :one
-SELECT id, first_name, last_name, phone, has_onboarded, created_at, updated_at FROM users
+SELECT id, first_name, last_name, phone, onboarding, created_at, updated_at FROM users
 WHERE phone = $1
 LIMIT 1
 `
@@ -325,7 +325,7 @@ func (q *Queries) FindByPhone(ctx context.Context, phone string) (User, error) {
 		&i.FirstName,
 		&i.LastName,
 		&i.Phone,
-		&i.HasOnboarded,
+		&i.Onboarding,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 	)
@@ -366,27 +366,41 @@ func (q *Queries) IsCourier(ctx context.Context, userID uuid.NullUUID) (sql.Null
 	return verified, err
 }
 
-const setHasOnboardStatus = `-- name: SetHasOnboardStatus :one
-UPDATE users
-SET has_onboarded = $1
-WHERE phone = $2
-RETURNING id, first_name, last_name, phone, has_onboarded, created_at, updated_at
+const isUserOnboarding = `-- name: IsUserOnboarding :one
+SELECT onboarding FROM
+users
+WHERE phone = $1
+LIMIT 1
 `
 
-type SetHasOnboardStatusParams struct {
-	HasOnboarded bool
-	Phone        string
+func (q *Queries) IsUserOnboarding(ctx context.Context, phone string) (bool, error) {
+	row := q.db.QueryRowContext(ctx, isUserOnboarding, phone)
+	var onboarding bool
+	err := row.Scan(&onboarding)
+	return onboarding, err
 }
 
-func (q *Queries) SetHasOnboardStatus(ctx context.Context, arg SetHasOnboardStatusParams) (User, error) {
-	row := q.db.QueryRowContext(ctx, setHasOnboardStatus, arg.HasOnboarded, arg.Phone)
+const setOnboardingStatus = `-- name: SetOnboardingStatus :one
+UPDATE users
+SET onboarding = $1
+WHERE phone = $2
+RETURNING id, first_name, last_name, phone, onboarding, created_at, updated_at
+`
+
+type SetOnboardingStatusParams struct {
+	Onboarding bool
+	Phone      string
+}
+
+func (q *Queries) SetOnboardingStatus(ctx context.Context, arg SetOnboardingStatusParams) (User, error) {
+	row := q.db.QueryRowContext(ctx, setOnboardingStatus, arg.Onboarding, arg.Phone)
 	var i User
 	err := row.Scan(
 		&i.ID,
 		&i.FirstName,
 		&i.LastName,
 		&i.Phone,
-		&i.HasOnboarded,
+		&i.Onboarding,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 	)
@@ -417,18 +431,4 @@ func (q *Queries) UpdateProductLocation(ctx context.Context, arg UpdateProductLo
 		&i.UpdatedAt,
 	)
 	return i, err
-}
-
-const userHasOnboarded = `-- name: UserHasOnboarded :one
-SELECT has_onboarded FROM
-users
-WHERE phone = $1
-LIMIT 1
-`
-
-func (q *Queries) UserHasOnboarded(ctx context.Context, phone string) (bool, error) {
-	row := q.db.QueryRowContext(ctx, userHasOnboarded, phone)
-	var has_onboarded bool
-	err := row.Scan(&has_onboarded)
-	return has_onboarded, err
 }

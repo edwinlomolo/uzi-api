@@ -77,13 +77,13 @@ type Upload struct {
 }
 
 type User struct {
-	ID           uuid.UUID
-	FirstName    string
-	LastName     string
-	Phone        string
-	HasOnboarded bool
-	CreatedAt    time.Time
-	UpdatedAt    time.Time
+	ID         uuid.UUID
+	FirstName  string
+	LastName   string
+	Phone      string
+	Onboarding bool
+	CreatedAt  time.Time
+	UpdatedAt  time.Time
 }
 
 type Vehicle struct {

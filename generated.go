@@ -89,16 +89,16 @@ type ComplexityRoot struct {
 	}
 
 	Session struct {
-		CreatedAt   func(childComplexity int) int
-		Expires     func(childComplexity int) int
-		HasOnboared func(childComplexity int) int
-		ID          func(childComplexity int) int
-		IP          func(childComplexity int) int
-		IsCourier   func(childComplexity int) int
-		Status      func(childComplexity int) int
-		Token       func(childComplexity int) int
-		UpdatedAt   func(childComplexity int) int
-		UserID      func(childComplexity int) int
+		CreatedAt  func(childComplexity int) int
+		Expires    func(childComplexity int) int
+		ID         func(childComplexity int) int
+		IP         func(childComplexity int) int
+		IsCourier  func(childComplexity int) int
+		Onboarding func(childComplexity int) int
+		Status     func(childComplexity int) int
+		Token      func(childComplexity int) int
+		UpdatedAt  func(childComplexity int) int
+		UserID     func(childComplexity int) int
 	}
 
 	Trip struct {
@@ -348,13 +348,6 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Session.Expires(childComplexity), true
 
-	case "Session.has_onboared":
-		if e.complexity.Session.HasOnboared == nil {
-			break
-		}
-
-		return e.complexity.Session.HasOnboared(childComplexity), true
-
 	case "Session.id":
 		if e.complexity.Session.ID == nil {
 			break
@@ -375,6 +368,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Session.IsCourier(childComplexity), true
+
+	case "Session.onboarding":
+		if e.complexity.Session.Onboarding == nil {
+			break
+		}
+
+		return e.complexity.Session.Onboarding(childComplexity), true
 
 	case "Session.status":
 		if e.complexity.Session.Status == nil {
@@ -2165,8 +2165,8 @@ func (ec *executionContext) fieldContext_Session_is_courier(ctx context.Context,
 	return fc, nil
 }
 
-func (ec *executionContext) _Session_has_onboared(ctx context.Context, field graphql.CollectedField, obj *model.Session) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Session_has_onboared(ctx, field)
+func (ec *executionContext) _Session_onboarding(ctx context.Context, field graphql.CollectedField, obj *model.Session) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Session_onboarding(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -2179,7 +2179,7 @@ func (ec *executionContext) _Session_has_onboared(ctx context.Context, field gra
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.HasOnboared, nil
+		return obj.Onboarding, nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -2196,7 +2196,7 @@ func (ec *executionContext) _Session_has_onboared(ctx context.Context, field gra
 	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Session_has_onboared(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Session_onboarding(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Session",
 		Field:      field,
@@ -5606,8 +5606,8 @@ func (ec *executionContext) _Session(ctx context.Context, sel ast.SelectionSet, 
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
-		case "has_onboared":
-			out.Values[i] = ec._Session_has_onboared(ctx, field, obj)
+		case "onboarding":
+			out.Values[i] = ec._Session_onboarding(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
