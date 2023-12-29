@@ -42,6 +42,7 @@ func main() {
 	services.NewIpinfoService(cache, configs.Ipinfo, logger)
 	services.NewUserService(store, cache, logger)
 	services.NewSessionService(store, logger, configs.Jwt)
+	services.NewCourierService(logger, store)
 
 	// Graphql
 	srv := gqlHandler.NewDefaultServer(uzi.NewExecutableSchema(uzi.New()))

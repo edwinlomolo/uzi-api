@@ -14,7 +14,7 @@ LIMIT 1;
 -- name: IsUserOnboarding :one
 SELECT onboarding FROM
 users
-WHERE phone = $1
+WHERE id = $1
 LIMIT 1;
 
 -- name: SetOnboardingStatus :one
@@ -60,6 +60,18 @@ INSERT INTO couriers (
 )
 RETURNING *;
 
+-- name: SetCourierStatus :one
+UPDATE couriers
+SET status = $1
+WHERE user_id = $2
+RETURNING *;
+
+-- name: GetCourierStatus :one
+SELECT status FROM
+couriers
+WHERE user_id = $1
+LIMIT 1;
+
 -- name: AssignTripToCourier :one
 UPDATE couriers
 SET trip_id = $1
@@ -69,7 +81,14 @@ RETURNING *;
 -- name: IsCourier :one
 SELECT verified FROM
 couriers
-WHERE user_id = $1;
+WHERE user_id = $1
+LIMIT 1;
+
+-- name: GetCourier :one
+SELECT * FROM
+couriers
+WHERE user_id = $1
+LIMIT 1;
 
 -- name: CreateVehicle :one
 INSERT INTO vehicles (

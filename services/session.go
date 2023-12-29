@@ -37,6 +37,21 @@ func NewSessionService(store *store.Queries, logger *logrus.Logger, jwtConfig co
 }
 
 func (sc *sessionClient) FindOrCreate(userID uuid.UUID, ipAddress string) (*model.Session, error) {
+	isUserOnboarding, isUserOnboardingErr := sc.store.IsUserOnboarding(context.Background(), userID)
+	if isUserOnboardingErr != nil {
+		return nil, isUserOnboardingErr
+	}
+
+	isCourier, isCourierErr := GetCourierService().IsCourier(userID)
+	if isUserOnboardingErr != nil {
+		return nil, isCourierErr
+	}
+
+	courierStatus, courierStatusErr := GetCourierService().GetCourierStatus(userID)
+	if isUserOnboardingErr != nil {
+		return nil, courierStatusErr
+	}
+
 	foundSession, foundSessionErr := sc.store.GetSession(context.Background(), userID)
 	if foundSessionErr == sql.ErrNoRows {
 		claims := jsonwebtoken.MapClaims{
@@ -64,13 +79,16 @@ func (sc *sessionClient) FindOrCreate(userID uuid.UUID, ipAddress string) (*mode
 		}
 
 		return &model.Session{
-			ID:        newSession.ID,
-			IP:        newSession.Ip,
-			Token:     newSession.Token,
-			UserID:    newSession.UserID,
-			Expires:   newSession.Expires,
-			CreatedAt: &newSession.CreatedAt,
-			UpdatedAt: &newSession.UpdatedAt,
+			ID:         newSession.ID,
+			IP:         newSession.Ip,
+			Token:      newSession.Token,
+			UserID:     newSession.UserID,
+			Onboarding: isUserOnboarding,
+			IsCourier:  isCourier,
+			Status:     &courierStatus,
+			Expires:    newSession.Expires,
+			CreatedAt:  &newSession.CreatedAt,
+			UpdatedAt:  &newSession.UpdatedAt,
 		}, nil
 	} else if foundSessionErr != nil {
 		sc.logger.Errorf("%s-%v", "GetActiveSessionErr", foundSessionErr.Error())
@@ -78,12 +96,15 @@ func (sc *sessionClient) FindOrCreate(userID uuid.UUID, ipAddress string) (*mode
 	}
 
 	return &model.Session{
-		ID:        foundSession.ID,
-		IP:        foundSession.Ip,
-		Token:     foundSession.Token,
-		UserID:    foundSession.UserID,
-		Expires:   foundSession.Expires,
-		CreatedAt: &foundSession.CreatedAt,
-		UpdatedAt: &foundSession.UpdatedAt,
+		ID:         foundSession.ID,
+		IP:         foundSession.Ip,
+		Token:      foundSession.Token,
+		UserID:     foundSession.UserID,
+		Onboarding: isUserOnboarding,
+		IsCourier:  isCourier,
+		Status:     &courierStatus,
+		Expires:    foundSession.Expires,
+		CreatedAt:  &foundSession.CreatedAt,
+		UpdatedAt:  &foundSession.UpdatedAt,
 	}, nil
 }

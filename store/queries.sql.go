@@ -332,6 +332,46 @@ func (q *Queries) FindByPhone(ctx context.Context, phone string) (User, error) {
 	return i, err
 }
 
+const getCourier = `-- name: GetCourier :one
+SELECT id, verified, status, location, rating, points, vehicle_id, user_id, trip_id, created_at, updated_at FROM
+couriers
+WHERE user_id = $1
+LIMIT 1
+`
+
+func (q *Queries) GetCourier(ctx context.Context, userID uuid.NullUUID) (Courier, error) {
+	row := q.db.QueryRowContext(ctx, getCourier, userID)
+	var i Courier
+	err := row.Scan(
+		&i.ID,
+		&i.Verified,
+		&i.Status,
+		&i.Location,
+		&i.Rating,
+		&i.Points,
+		&i.VehicleID,
+		&i.UserID,
+		&i.TripID,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
+const getCourierStatus = `-- name: GetCourierStatus :one
+SELECT status FROM
+couriers
+WHERE user_id = $1
+LIMIT 1
+`
+
+func (q *Queries) GetCourierStatus(ctx context.Context, userID uuid.NullUUID) (string, error) {
+	row := q.db.QueryRowContext(ctx, getCourierStatus, userID)
+	var status string
+	err := row.Scan(&status)
+	return status, err
+}
+
 const getSession = `-- name: GetSession :one
 SELECT id, ip, token, expires, user_id, created_at, updated_at FROM
 sessions
@@ -357,6 +397,7 @@ const isCourier = `-- name: IsCourier :one
 SELECT verified FROM
 couriers
 WHERE user_id = $1
+LIMIT 1
 `
 
 func (q *Queries) IsCourier(ctx context.Context, userID uuid.NullUUID) (sql.NullBool, error) {
@@ -369,15 +410,46 @@ func (q *Queries) IsCourier(ctx context.Context, userID uuid.NullUUID) (sql.Null
 const isUserOnboarding = `-- name: IsUserOnboarding :one
 SELECT onboarding FROM
 users
-WHERE phone = $1
+WHERE id = $1
 LIMIT 1
 `
 
-func (q *Queries) IsUserOnboarding(ctx context.Context, phone string) (bool, error) {
-	row := q.db.QueryRowContext(ctx, isUserOnboarding, phone)
+func (q *Queries) IsUserOnboarding(ctx context.Context, id uuid.UUID) (bool, error) {
+	row := q.db.QueryRowContext(ctx, isUserOnboarding, id)
 	var onboarding bool
 	err := row.Scan(&onboarding)
 	return onboarding, err
+}
+
+const setCourierStatus = `-- name: SetCourierStatus :one
+UPDATE couriers
+SET status = $1
+WHERE user_id = $2
+RETURNING id, verified, status, location, rating, points, vehicle_id, user_id, trip_id, created_at, updated_at
+`
+
+type SetCourierStatusParams struct {
+	Status string
+	UserID uuid.NullUUID
+}
+
+func (q *Queries) SetCourierStatus(ctx context.Context, arg SetCourierStatusParams) (Courier, error) {
+	row := q.db.QueryRowContext(ctx, setCourierStatus, arg.Status, arg.UserID)
+	var i Courier
+	err := row.Scan(
+		&i.ID,
+		&i.Verified,
+		&i.Status,
+		&i.Location,
+		&i.Rating,
+		&i.Points,
+		&i.VehicleID,
+		&i.UserID,
+		&i.TripID,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
 }
 
 const setOnboardingStatus = `-- name: SetOnboardingStatus :one
