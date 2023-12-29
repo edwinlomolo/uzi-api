@@ -23,3 +23,69 @@ RETURNING *;
 SELECT * FROM
 sessions
 WHERE user_id = $1;
+
+-- name: CreateCourierUpload :one
+INSERT INTO uploads (
+  type, uri, courier_id
+) VALUES (
+  $1, $2, $3
+)
+RETURNING *;
+
+-- name: CreateUserUpload :one
+INSERT INTO uploads (
+  type, uri, user_id
+) VALUES (
+  $1, $2, $3
+)
+RETURNING *;
+
+-- name: CreateCourier :one
+INSERT INTO couriers (
+  user_id
+) VALUES (
+  $1
+)
+RETURNING *;
+
+-- name: AssignTripToCourier :one
+UPDATE couriers
+SET trip_id = $1
+WHERE id = $2
+RETURNING *;
+
+-- name: CreateVehicle :one
+INSERT INTO vehicles (
+  product_id, courier_id
+) VALUES (
+  $1, $2
+)
+RETURNING *;
+
+-- name: UpdateProductLocation :one
+UPDATE products
+SET location = $1
+WHERE id = $2
+RETURNING *;
+
+-- name: CreateTrip :one
+INSERT INTO trips (
+  user_id, start_location, end_location
+) VALUES (
+  $1, sqlc.arg(start_location), sqlc.arg(end_location)
+)
+RETURNING *;
+
+-- name: AssignRouteToTrip :one
+UPDATE trips
+SET route_id = $1
+WHERE id = $2
+RETURNING *;
+
+-- name: CreateRoute :one
+INSERT INTO routes (
+  distance, eta, trip_id, polyline
+) VALUES (
+  $1, $2, $3, ST_GeographyFromText(sqlc.arg(polyline))
+)
+RETURNING *;

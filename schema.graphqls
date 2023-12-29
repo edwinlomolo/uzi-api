@@ -4,6 +4,8 @@ type User {
   first_name: String!
   last_name: String!
   phone: String!
+  courier_id: UUID
+  courier: Courier
   created_at: Time
   updated_at: Time
 }
@@ -14,6 +16,85 @@ type Session {
   token: String!
   user_id: UUID!
   expires: Time!
+  created_at: Time
+  updated_at: Time
+}
+
+enum UploadFile {
+  DP
+  DL
+  ID
+  PC
+  LB
+  VI
+}
+
+type Uploads {
+  type: String!
+  uri: String!
+  courier_id: UUID
+  user_id: UUID
+  created_at: Time
+  updated_at: Time
+}
+
+enum CourierStatus {
+  OFFLINE
+  ONLINE
+}
+
+type Courier {
+  id: UUID!
+  user_id: UUID!
+  verified: Boolean!
+  status: CourierStatus!
+  rating: Float!
+  trip_id: UUID
+  completedTrips: Int!
+  points: Int!
+  upload_id: UUID
+  created_at: Time
+  updated_at: Time
+}
+
+type Gps {
+  lat: Float!
+  lng: Float!
+}
+
+enum TripStatus {
+  ARRIVING
+  EN_ROUTE
+  COMPLETE
+}
+
+type Trip {
+  id: UUID!
+  courier_id: UUID!
+  user_id: UUID!
+  start_location: Gps!
+  end_location: Gps!
+  status: TripStatus!
+  cost: String
+  route_id: UUID
+  route: Route
+  created_at: Time
+  updated_at: Time
+}
+
+type Route {
+  id: UUID!
+  distance: String!
+  eta: Time!
+  created_at: Time
+  updated_at: Time
+}
+
+type Product {
+  id: UUID!
+  name: String!
+  description: String!
+  price: Int!
   created_at: Time
   updated_at: Time
 }
