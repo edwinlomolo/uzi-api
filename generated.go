@@ -369,7 +369,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Session.IP(childComplexity), true
 
-	case "Session.is_courier":
+	case "Session.isCourier":
 		if e.complexity.Session.IsCourier == nil {
 			break
 		}
@@ -2121,8 +2121,8 @@ func (ec *executionContext) fieldContext_Session_user_id(ctx context.Context, fi
 	return fc, nil
 }
 
-func (ec *executionContext) _Session_is_courier(ctx context.Context, field graphql.CollectedField, obj *model.Session) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Session_is_courier(ctx, field)
+func (ec *executionContext) _Session_isCourier(ctx context.Context, field graphql.CollectedField, obj *model.Session) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Session_isCourier(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -2152,7 +2152,7 @@ func (ec *executionContext) _Session_is_courier(ctx context.Context, field graph
 	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Session_is_courier(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Session_isCourier(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Session",
 		Field:      field,
@@ -5601,8 +5601,8 @@ func (ec *executionContext) _Session(ctx context.Context, sel ast.SelectionSet, 
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
-		case "is_courier":
-			out.Values[i] = ec._Session_is_courier(ctx, field, obj)
+		case "isCourier":
+			out.Values[i] = ec._Session_isCourier(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}

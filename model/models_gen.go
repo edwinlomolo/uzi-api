@@ -52,7 +52,7 @@ type Session struct {
 	IP            string         `json:"ip"`
 	Token         string         `json:"token"`
 	UserID        uuid.UUID      `json:"user_id"`
-	IsCourier     bool           `json:"is_courier"`
+	IsCourier     bool           `json:"isCourier"`
 	Onboarding    bool           `json:"onboarding"`
 	CourierStatus *CourierStatus `json:"courierStatus,omitempty"`
 	Expires       time.Time      `json:"expires"`

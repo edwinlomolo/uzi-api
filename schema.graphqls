@@ -15,7 +15,7 @@ type Session {
   ip: String!
   token: String!
   user_id: UUID!
-  is_courier: Boolean!
+  isCourier: Boolean!
   onboarding: Boolean!
   courierStatus: CourierStatus
   expires: Time!
