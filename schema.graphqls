@@ -17,7 +17,7 @@ type Session {
   user_id: UUID!
   is_courier: Boolean!
   onboarding: Boolean!
-  status: CourierStatus
+  courierStatus: CourierStatus
   expires: Time!
   created_at: Time
   updated_at: Time

@@ -79,16 +79,16 @@ func (sc *sessionClient) FindOrCreate(userID uuid.UUID, ipAddress string) (*mode
 		}
 
 		return &model.Session{
-			ID:         newSession.ID,
-			IP:         newSession.Ip,
-			Token:      newSession.Token,
-			UserID:     newSession.UserID,
-			Onboarding: isUserOnboarding,
-			IsCourier:  isCourier,
-			Status:     &courierStatus,
-			Expires:    newSession.Expires,
-			CreatedAt:  &newSession.CreatedAt,
-			UpdatedAt:  &newSession.UpdatedAt,
+			ID:            newSession.ID,
+			IP:            newSession.Ip,
+			Token:         newSession.Token,
+			UserID:        newSession.UserID,
+			Onboarding:    isUserOnboarding,
+			IsCourier:     isCourier,
+			CourierStatus: &courierStatus,
+			Expires:       newSession.Expires,
+			CreatedAt:     &newSession.CreatedAt,
+			UpdatedAt:     &newSession.UpdatedAt,
 		}, nil
 	} else if foundSessionErr != nil {
 		sc.logger.Errorf("%s-%v", "GetActiveSessionErr", foundSessionErr.Error())
@@ -96,15 +96,15 @@ func (sc *sessionClient) FindOrCreate(userID uuid.UUID, ipAddress string) (*mode
 	}
 
 	return &model.Session{
-		ID:         foundSession.ID,
-		IP:         foundSession.Ip,
-		Token:      foundSession.Token,
-		UserID:     foundSession.UserID,
-		Onboarding: isUserOnboarding,
-		IsCourier:  isCourier,
-		Status:     &courierStatus,
-		Expires:    foundSession.Expires,
-		CreatedAt:  &foundSession.CreatedAt,
-		UpdatedAt:  &foundSession.UpdatedAt,
+		ID:            foundSession.ID,
+		IP:            foundSession.Ip,
+		Token:         foundSession.Token,
+		UserID:        foundSession.UserID,
+		Onboarding:    isUserOnboarding,
+		IsCourier:     isCourier,
+		CourierStatus: &courierStatus,
+		Expires:       foundSession.Expires,
+		CreatedAt:     &foundSession.CreatedAt,
+		UpdatedAt:     &foundSession.UpdatedAt,
 	}, nil
 }

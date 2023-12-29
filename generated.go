@@ -89,16 +89,16 @@ type ComplexityRoot struct {
 	}
 
 	Session struct {
-		CreatedAt  func(childComplexity int) int
-		Expires    func(childComplexity int) int
-		ID         func(childComplexity int) int
-		IP         func(childComplexity int) int
-		IsCourier  func(childComplexity int) int
-		Onboarding func(childComplexity int) int
-		Status     func(childComplexity int) int
-		Token      func(childComplexity int) int
-		UpdatedAt  func(childComplexity int) int
-		UserID     func(childComplexity int) int
+		CourierStatus func(childComplexity int) int
+		CreatedAt     func(childComplexity int) int
+		Expires       func(childComplexity int) int
+		ID            func(childComplexity int) int
+		IP            func(childComplexity int) int
+		IsCourier     func(childComplexity int) int
+		Onboarding    func(childComplexity int) int
+		Token         func(childComplexity int) int
+		UpdatedAt     func(childComplexity int) int
+		UserID        func(childComplexity int) int
 	}
 
 	Trip struct {
@@ -334,6 +334,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Route.UpdatedAt(childComplexity), true
 
+	case "Session.courierStatus":
+		if e.complexity.Session.CourierStatus == nil {
+			break
+		}
+
+		return e.complexity.Session.CourierStatus(childComplexity), true
+
 	case "Session.created_at":
 		if e.complexity.Session.CreatedAt == nil {
 			break
@@ -375,13 +382,6 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Session.Onboarding(childComplexity), true
-
-	case "Session.status":
-		if e.complexity.Session.Status == nil {
-			break
-		}
-
-		return e.complexity.Session.Status(childComplexity), true
 
 	case "Session.token":
 		if e.complexity.Session.Token == nil {
@@ -2209,8 +2209,8 @@ func (ec *executionContext) fieldContext_Session_onboarding(ctx context.Context,
 	return fc, nil
 }
 
-func (ec *executionContext) _Session_status(ctx context.Context, field graphql.CollectedField, obj *model.Session) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Session_status(ctx, field)
+func (ec *executionContext) _Session_courierStatus(ctx context.Context, field graphql.CollectedField, obj *model.Session) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Session_courierStatus(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -2223,7 +2223,7 @@ func (ec *executionContext) _Session_status(ctx context.Context, field graphql.C
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.Status, nil
+		return obj.CourierStatus, nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -2237,7 +2237,7 @@ func (ec *executionContext) _Session_status(ctx context.Context, field graphql.C
 	return ec.marshalOCourierStatus2ᚖgithubᚗcomᚋ3dw1nM0535ᚋuziᚑapiᚋmodelᚐCourierStatus(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Session_status(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Session_courierStatus(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Session",
 		Field:      field,
@@ -5611,8 +5611,8 @@ func (ec *executionContext) _Session(ctx context.Context, sel ast.SelectionSet, 
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
-		case "status":
-			out.Values[i] = ec._Session_status(ctx, field, obj)
+		case "courierStatus":
+			out.Values[i] = ec._Session_courierStatus(ctx, field, obj)
 		case "expires":
 			out.Values[i] = ec._Session_expires(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
