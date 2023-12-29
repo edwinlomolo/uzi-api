@@ -54,11 +54,16 @@ SET trip_id = $1
 WHERE id = $2
 RETURNING *;
 
+-- name: IsCourier :one
+SELECT verified FROM
+couriers
+WHERE user_id = $1;
+
 -- name: CreateVehicle :one
 INSERT INTO vehicles (
-  product_id, courier_id
+  product_id
 ) VALUES (
-  $1, $2
+  $1
 )
 RETURNING *;
 
@@ -84,8 +89,8 @@ RETURNING *;
 
 -- name: CreateRoute :one
 INSERT INTO routes (
-  distance, eta, trip_id, polyline
+  distance, eta, polyline
 ) VALUES (
-  $1, $2, $3, ST_GeographyFromText(sqlc.arg(polyline))
+  $1, $2, ST_GeographyFromText(sqlc.arg(polyline))
 )
 RETURNING *;

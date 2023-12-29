@@ -134,34 +134,27 @@ func (q *Queries) CreateCourierUpload(ctx context.Context, arg CreateCourierUplo
 
 const createRoute = `-- name: CreateRoute :one
 INSERT INTO routes (
-  distance, eta, trip_id, polyline
+  distance, eta, polyline
 ) VALUES (
-  $1, $2, $3, ST_GeographyFromText($4)
+  $1, $2, ST_GeographyFromText($3)
 )
-RETURNING id, distance, polyline, eta, trip_id, created_at, updated_at
+RETURNING id, distance, polyline, eta, created_at, updated_at
 `
 
 type CreateRouteParams struct {
 	Distance string
 	Eta      time.Time
-	TripID   uuid.NullUUID
 	Polyline interface{}
 }
 
 func (q *Queries) CreateRoute(ctx context.Context, arg CreateRouteParams) (Route, error) {
-	row := q.db.QueryRowContext(ctx, createRoute,
-		arg.Distance,
-		arg.Eta,
-		arg.TripID,
-		arg.Polyline,
-	)
+	row := q.db.QueryRowContext(ctx, createRoute, arg.Distance, arg.Eta, arg.Polyline)
 	var i Route
 	err := row.Scan(
 		&i.ID,
 		&i.Distance,
 		&i.Polyline,
 		&i.Eta,
-		&i.TripID,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 	)
@@ -298,25 +291,19 @@ func (q *Queries) CreateUserUpload(ctx context.Context, arg CreateUserUploadPara
 
 const createVehicle = `-- name: CreateVehicle :one
 INSERT INTO vehicles (
-  product_id, courier_id
+  product_id
 ) VALUES (
-  $1, $2
+  $1
 )
-RETURNING id, product_id, courier_id, created_at, updated_at
+RETURNING id, product_id, created_at, updated_at
 `
 
-type CreateVehicleParams struct {
-	ProductID uuid.UUID
-	CourierID uuid.UUID
-}
-
-func (q *Queries) CreateVehicle(ctx context.Context, arg CreateVehicleParams) (Vehicle, error) {
-	row := q.db.QueryRowContext(ctx, createVehicle, arg.ProductID, arg.CourierID)
+func (q *Queries) CreateVehicle(ctx context.Context, productID uuid.UUID) (Vehicle, error) {
+	row := q.db.QueryRowContext(ctx, createVehicle, productID)
 	var i Vehicle
 	err := row.Scan(
 		&i.ID,
 		&i.ProductID,
-		&i.CourierID,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 	)
@@ -362,6 +349,19 @@ func (q *Queries) GetSession(ctx context.Context, userID uuid.UUID) (Session, er
 		&i.UpdatedAt,
 	)
 	return i, err
+}
+
+const isCourier = `-- name: IsCourier :one
+SELECT verified FROM
+couriers
+WHERE user_id = $1
+`
+
+func (q *Queries) IsCourier(ctx context.Context, userID uuid.NullUUID) (sql.NullBool, error) {
+	row := q.db.QueryRowContext(ctx, isCourier, userID)
+	var verified sql.NullBool
+	err := row.Scan(&verified)
+	return verified, err
 }
 
 const updateProductLocation = `-- name: UpdateProductLocation :one

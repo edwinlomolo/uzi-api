@@ -39,7 +39,6 @@ type Route struct {
 	Distance  string
 	Polyline  interface{}
 	Eta       time.Time
-	TripID    uuid.NullUUID
 	CreatedAt time.Time
 	UpdatedAt time.Time
 }
@@ -89,7 +88,6 @@ type User struct {
 type Vehicle struct {
 	ID        uuid.UUID
 	ProductID uuid.UUID
-	CourierID uuid.UUID
 	CreatedAt time.Time
 	UpdatedAt time.Time
 }
