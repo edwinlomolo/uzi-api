@@ -9,18 +9,6 @@ CREATE TABLE IF NOT EXISTS users (
 );
 CREATE INDEX IF NOT EXISTS users_phone_idx ON users(phone);
 
-CREATE TABLE IF NOT EXISTS sessions (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-  ip TEXT NOT NULL,
-  token TEXT NOT NULL,
-  expires TIMESTAMP NOT NULL,
-  user_id UUID NOT NULL REFERENCES users ON DELETE CASCADE,
-  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
-);
-CREATE INDEX IF NOT EXISTS sessions_token_idx ON sessions(token);
-CREATE INDEX IF NOT EXISTS sessions_userid_idx ON sessions(user_id);
-
 CREATE TABLE IF NOT EXISTS products (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   name VARCHAR(100) NOT NULL,
