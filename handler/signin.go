@@ -42,7 +42,7 @@ func Signin() http.Handler {
 			return
 		}
 
-		findSession, findSessionErr := sessionService.FindOrCreate(findUser.ID, userIp)
+		findSession, findSessionErr := sessionService.SignIn(findUser.ID, userIp)
 		if findSessionErr != nil {
 			http.Error(w, findSessionErr.Error(), http.StatusInternalServerError)
 			return

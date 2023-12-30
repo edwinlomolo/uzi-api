@@ -48,16 +48,10 @@ type Route struct {
 }
 
 type Session struct {
-	ID            uuid.UUID      `json:"id"`
-	IP            string         `json:"ip"`
 	Token         string         `json:"token"`
-	UserID        uuid.UUID      `json:"user_id"`
 	IsCourier     bool           `json:"isCourier"`
 	Onboarding    bool           `json:"onboarding"`
 	CourierStatus *CourierStatus `json:"courierStatus,omitempty"`
-	Expires       time.Time      `json:"expires"`
-	CreatedAt     *time.Time     `json:"created_at,omitempty"`
-	UpdatedAt     *time.Time     `json:"updated_at,omitempty"`
 }
 
 type Trip struct {

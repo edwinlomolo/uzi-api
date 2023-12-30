@@ -11,16 +11,10 @@ type User {
 }
 
 type Session {
-  id: UUID!
-  ip: String!
   token: String!
-  user_id: UUID!
   isCourier: Boolean!
   onboarding: Boolean!
   courierStatus: CourierStatus
-  expires: Time!
-  created_at: Time
-  updated_at: Time
 }
 
 enum UploadFile {

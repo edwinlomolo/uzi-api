@@ -2,7 +2,6 @@ package services
 
 import (
 	"context"
-	"database/sql"
 	"encoding/base64"
 
 	"github.com/3dw1nM0535/uzi-api/config"
@@ -17,7 +16,7 @@ import (
 var sessionService Session
 
 type Session interface {
-	FindOrCreate(uuid.UUID, string) (*model.Session, error)
+	SignIn(userID uuid.UUID, ip string) (*model.Session, error)
 }
 
 type sessionClient struct {
@@ -36,7 +35,26 @@ func NewSessionService(store *store.Queries, logger *logrus.Logger, jwtConfig co
 	return sessionService
 }
 
-func (sc *sessionClient) FindOrCreate(userID uuid.UUID, ipAddress string) (*model.Session, error) {
+func (sc *sessionClient) SignIn(userID uuid.UUID, ip string) (*model.Session, error) {
+	return sc.createSession(userID, ip)
+}
+
+func (sc *sessionClient) createSession(userID uuid.UUID, ip string) (*model.Session, error) {
+	var session model.Session
+
+	claims := jsonwebtoken.MapClaims{
+		"user_id": base64.StdEncoding.EncodeToString([]byte(userID.String())),
+		"ip":      ip,
+		"exp":     sc.config.Expires,
+		"iss":     "Uzi",
+	}
+
+	sessionJwt, signJwtErr := sc.jwtClient.Sign([]byte(sc.config.Secret), claims)
+	if signJwtErr != nil {
+		sc.logger.Errorf("%s-%v", "SignSessionJwtErr", signJwtErr.Error())
+		return nil, signJwtErr
+	}
+
 	isUserOnboarding, isUserOnboardingErr := sc.store.IsUserOnboarding(context.Background(), userID)
 	if isUserOnboardingErr != nil {
 		return nil, isUserOnboardingErr
@@ -52,59 +70,10 @@ func (sc *sessionClient) FindOrCreate(userID uuid.UUID, ipAddress string) (*mode
 		return nil, courierStatusErr
 	}
 
-	foundSession, foundSessionErr := sc.store.GetSession(context.Background(), userID)
-	if foundSessionErr == sql.ErrNoRows {
-		claims := jsonwebtoken.MapClaims{
-			"user_id": base64.StdEncoding.EncodeToString([]byte(userID.String())),
-			"ip":      ipAddress,
-			"exp":     sc.config.Expires,
-			"iss":     "Uzi",
-		}
+	session.Token = sessionJwt
+	session.IsCourier = isCourier
+	session.Onboarding = isUserOnboarding
+	session.CourierStatus = &courierStatus
 
-		sessionJwt, sessionJwtErr := sc.jwtClient.Sign([]byte(sc.config.Secret), claims)
-		if sessionJwtErr != nil {
-			sc.logger.Errorf("%s-%v", "SignSessionJwtErr", sessionJwtErr.Error())
-			return nil, sessionJwtErr
-		}
-
-		newSession, newSessionErr := sc.store.CreateSession(context.Background(), store.CreateSessionParams{
-			UserID:  userID,
-			Ip:      ipAddress,
-			Token:   sessionJwt,
-			Expires: sc.config.Expires,
-		})
-		if newSessionErr != nil {
-			sc.logger.Errorf("%s-%v", "CreateNewSessionErr", newSessionErr.Error())
-			return nil, newSessionErr
-		}
-
-		return &model.Session{
-			ID:            newSession.ID,
-			IP:            newSession.Ip,
-			Token:         newSession.Token,
-			UserID:        newSession.UserID,
-			Onboarding:    isUserOnboarding,
-			IsCourier:     isCourier,
-			CourierStatus: &courierStatus,
-			Expires:       newSession.Expires,
-			CreatedAt:     &newSession.CreatedAt,
-			UpdatedAt:     &newSession.UpdatedAt,
-		}, nil
-	} else if foundSessionErr != nil {
-		sc.logger.Errorf("%s-%v", "GetActiveSessionErr", foundSessionErr.Error())
-		return nil, foundSessionErr
-	}
-
-	return &model.Session{
-		ID:            foundSession.ID,
-		IP:            foundSession.Ip,
-		Token:         foundSession.Token,
-		UserID:        foundSession.UserID,
-		Onboarding:    isUserOnboarding,
-		IsCourier:     isCourier,
-		CourierStatus: &courierStatus,
-		Expires:       foundSession.Expires,
-		CreatedAt:     &foundSession.CreatedAt,
-		UpdatedAt:     &foundSession.UpdatedAt,
-	}, nil
+	return &session, nil
 }
