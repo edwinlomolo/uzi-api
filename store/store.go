@@ -13,7 +13,7 @@ import (
 
 var dbClient *Queries
 
-func InitializeStorage(logger *logrus.Logger, migrationUrl string) (*Queries, error) {
+func InitializeStorage(logger *logrus.Logger, migrationUrl string) error {
 	configs := config.GetConfig()
 	databaseconfigs := configs.Database.Rdbms
 	isDevelopment := config.IsDev()
@@ -22,7 +22,7 @@ func InitializeStorage(logger *logrus.Logger, migrationUrl string) (*Queries, er
 	db, err := sql.Open(databaseconfigs.Env.Driver, databaseconfigs.Uri)
 	if err != nil {
 		logrus.Errorf("%s:%v", "DatabaseError", err)
-		return nil, err
+		return err
 	}
 	db.Exec(fmt.Sprintf("CREATE EXTENSION IF NOT EXISTS %q;", "uuid-ossp"))
 	db.Exec("CREATE EXTENSION IF NOT EXISTS postgis;")
@@ -31,6 +31,7 @@ func InitializeStorage(logger *logrus.Logger, migrationUrl string) (*Queries, er
 
 	if err := db.Ping(); err != nil {
 		logrus.Errorf("%s:%v", "DatabasePingError", err.Error())
+		return err
 	} else if err == nil {
 		logrus.Infoln("Database connected")
 	}
@@ -40,13 +41,14 @@ func InitializeStorage(logger *logrus.Logger, migrationUrl string) (*Queries, er
 	// Setup database schema
 	if err := runDatabaseMigration(db, logger, isDevelopment, forceMigrate, migrationUrl); err != nil {
 		logger.Errorf("%s:%v", "ApplyingMigrationErr", err.Error())
-		return nil, err
 	} else if err == nil {
 		logger.Infoln("Database migration applied")
 	}
 
-	return dbClient, nil
+	return nil
 }
+
+func GetDatabase() *Queries { return dbClient }
 
 // runDbMigration - setup database tables
 func runDatabaseMigration(db *sql.DB, logger *logrus.Logger, isDevelopment, forceMigrate bool, migrationUrl string) error {

@@ -30,19 +30,16 @@ func main() {
 	logger := logger.NewLogger()
 
 	// Store
-	store, storeErr := store.InitializeStorage(logger, "./store/migrations")
-	if storeErr != nil {
-		logger.Errorf("%s-%v", "ServerStorageInitializeErr", storeErr.Error())
-	}
+	store.InitializeStorage(logger, "./store/migrations")
 
 	// Cache
 	cache := cache.NewCache(configs.Database.Redis, logger)
 
 	// Services
 	services.NewIpinfoService(cache, configs.Ipinfo, logger)
-	services.NewUserService(store, cache, logger)
-	services.NewSessionService(store, logger, configs.Jwt)
-	services.NewCourierService(logger, store)
+	services.NewUserService(store.GetDatabase(), cache, logger)
+	services.NewSessionService(store.GetDatabase(), logger, configs.Jwt)
+	services.NewCourierService(logger, store.GetDatabase())
 
 	// Graphql
 	srv := gqlHandler.NewDefaultServer(uzi.NewExecutableSchema(uzi.New()))
