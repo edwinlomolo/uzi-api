@@ -24,6 +24,10 @@ func InitializeStorage(logger *logrus.Logger, migrationUrl string) error {
 		logrus.Errorf("%s:%v", "DatabaseError", err)
 		return err
 	}
+	// Apply migration(s)
+	if forceMigrate {
+		db.Exec("DROP TABLE IF EXISTS schema_migrations WITH (FORCE);")
+	}
 	db.Exec(fmt.Sprintf("CREATE EXTENSION IF NOT EXISTS %q;", "uuid-ossp"))
 	db.Exec("CREATE EXTENSION IF NOT EXISTS postgis;")
 	db.Exec("CREATE EXTENSION IF NOT EXISTS postgis_rasters; --OPTIONAL")
@@ -39,7 +43,7 @@ func InitializeStorage(logger *logrus.Logger, migrationUrl string) error {
 	dbClient = New(db)
 
 	// Setup database schema
-	if err := runDatabaseMigration(db, logger, isDevelopment, forceMigrate, migrationUrl); err != nil {
+	if err := runDatabaseMigration(db, logger, isDevelopment, migrationUrl); err != nil {
 		logger.Errorf("%s:%v", "ApplyingMigrationErr", err.Error())
 	} else if err == nil {
 		logger.Infoln("Database migration applied")
@@ -51,7 +55,7 @@ func InitializeStorage(logger *logrus.Logger, migrationUrl string) error {
 func GetDatabase() *Queries { return dbClient }
 
 // runDbMigration - setup database tables
-func runDatabaseMigration(db *sql.DB, logger *logrus.Logger, isDevelopment, forceMigrate bool, migrationUrl string) error {
+func runDatabaseMigration(db *sql.DB, logger *logrus.Logger, isDevelopment bool, migrationUrl string) error {
 	migrationErr := "DatabaseMigrationErr"
 
 	driver, err := postgres.WithInstance(db, &postgres.Config{})
@@ -66,10 +70,6 @@ func runDatabaseMigration(db *sql.DB, logger *logrus.Logger, isDevelopment, forc
 		return err
 	}
 
-	// Apply migration(s)
-	if forceMigrate {
-		db.Exec("DROP TABLE IF EXISTS schema_migrations WITH (FORCE);")
-	}
 	if err := m.Up(); err != nil && err != migrate.ErrNoChange {
 		logger.Errorf("%s: %s", migrationErr, err)
 		return err
