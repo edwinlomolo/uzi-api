@@ -26,12 +26,12 @@ func Signin() http.Handler {
 
 		body, bodyErr := io.ReadAll(r.Body)
 		if bodyErr != nil {
-			logger.Errorf("%s-%v", "ReadRequestBodyErr", bodyErr.Error())
+			logger.Errorf("%s-%v", "ReadingSigninRequestBodyErr", bodyErr.Error())
 			http.Error(w, bodyErr.Error(), http.StatusInternalServerError)
 			return
 		}
 		if marshalErr := json.Unmarshal(body, &loginInput); marshalErr != nil {
-			logger.Errorf("%s-%v", "RequestBodyMarshalErr", marshalErr.Error())
+			logger.Errorf("%s-%v", "SigninRequestBodyMarshalErr", marshalErr.Error())
 			http.Error(w, marshalErr.Error(), http.StatusInternalServerError)
 			return
 		}
@@ -50,7 +50,7 @@ func Signin() http.Handler {
 
 		jsonRes, jsonErr := json.Marshal(findSession)
 		if jsonErr != nil {
-			logger.Errorf("%s-%v", "JsonResponseMarshalErr", jsonErr.Error())
+			logger.Errorf("%s-%v", "SigninResponseMarshalErr", jsonErr.Error())
 			http.Error(w, jsonErr.Error(), http.StatusInternalServerError)
 			return
 		}
