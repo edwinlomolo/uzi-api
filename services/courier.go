@@ -65,10 +65,10 @@ func (c *courierClient) IsCourier(userID uuid.UUID) (bool, error) {
 func (c *courierClient) GetCourierStatus(userID uuid.UUID) (model.CourierStatus, error) {
 	status, err := c.store.GetCourierStatus(context.Background(), uuid.NullUUID{UUID: userID, Valid: true})
 	if err == sql.ErrNoRows {
-		return model.CourierStatus("OFFLINE"), nil
+		return model.CourierStatusOffline, nil
 	} else if err != nil {
 		c.logger.Errorf("%s-%v", "GetCourierStatusErr", err.Error())
-		return model.CourierStatus("OFFLINE"), err
+		return model.CourierStatusOffline, err
 	}
 
 	return model.CourierStatus(status), nil
