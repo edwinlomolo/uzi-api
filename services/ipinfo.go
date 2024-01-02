@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/3dw1nM0535/uzi-api/config"
+	"github.com/3dw1nM0535/uzi-api/model"
 	"github.com/ipinfo/go/v2/ipinfo"
 	"github.com/ipinfo/go/v2/ipinfo/cache"
 	"github.com/redis/go-redis/v9"
@@ -16,7 +17,7 @@ import (
 var ipinfoService IpInfo
 
 type IpInfo interface {
-	GetIpinfo(ip string) (*ipinfo.Core, error)
+	GetIpinfo(ip string) (*ipinfo.Core, *model.UziErr)
 }
 
 type ipinfoClient struct {
@@ -37,11 +38,12 @@ func GetIpinfoService() IpInfo {
 	return ipinfoService
 }
 
-func (ipc *ipinfoClient) GetIpinfo(ip string) (*ipinfo.Core, error) {
+func (ipc *ipinfoClient) GetIpinfo(ip string) (*ipinfo.Core, *model.UziErr) {
 	info, err := ipc.client.GetIPInfo(net.ParseIP(ip))
 	if err != nil {
-		ipc.logger.Errorf("%s-%v", "IPInfoErr", err.Error())
-		return nil, err
+		ipErr := &model.UziErr{Error: err, Message: "IpinfoErr", Code: 500}
+		ipc.logger.Errorf(ipErr.ErrorString())
+		return nil, ipErr
 	}
 
 	return info, nil

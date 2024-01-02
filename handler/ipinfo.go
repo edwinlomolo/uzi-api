@@ -15,14 +15,14 @@ func Ipinfo() http.Handler {
 
 		ipinfo, err := services.GetIpinfoService().GetIpinfo(ip)
 		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
+			http.Error(w, err.ErrorString(), err.Code)
 			return
 		}
 
-		res, err := json.Marshal(ipinfo)
-		if err != nil {
-			logger.Errorf("%s-%v", "JsonMarshalErr", err.Error())
-			http.Error(w, err.Error(), http.StatusInternalServerError)
+		res, jsonErr := json.Marshal(ipinfo)
+		if jsonErr != nil {
+			logger.Errorf("%s-%v", "JsonMarshalErr", jsonErr.Error())
+			http.Error(w, jsonErr.Error(), http.StatusInternalServerError)
 			return
 		}
 

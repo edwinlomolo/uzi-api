@@ -1,4 +1,3 @@
-DROP INDEX IF EXISTS users_phone_idx;
 DROP INDEX IF EXISTS products_gix;
 DROP INDEX IF EXISTS couriers_gix;
 

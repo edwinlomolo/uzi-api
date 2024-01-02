@@ -161,42 +161,6 @@ func (q *Queries) CreateRoute(ctx context.Context, arg CreateRouteParams) (Route
 	return i, err
 }
 
-const createSession = `-- name: CreateSession :one
-INSERT INTO sessions (
-  ip, token, user_id, expires
-) VALUES (
-  $1, $2, $3, $4
-)
-RETURNING id, ip, token, expires, user_id, created_at, updated_at
-`
-
-type CreateSessionParams struct {
-	Ip      string
-	Token   string
-	UserID  uuid.UUID
-	Expires time.Time
-}
-
-func (q *Queries) CreateSession(ctx context.Context, arg CreateSessionParams) (Session, error) {
-	row := q.db.QueryRowContext(ctx, createSession,
-		arg.Ip,
-		arg.Token,
-		arg.UserID,
-		arg.Expires,
-	)
-	var i Session
-	err := row.Scan(
-		&i.ID,
-		&i.Ip,
-		&i.Token,
-		&i.Expires,
-		&i.UserID,
-		&i.CreatedAt,
-		&i.UpdatedAt,
-	)
-	return i, err
-}
-
 const createTrip = `-- name: CreateTrip :one
 INSERT INTO trips (
   user_id, start_location, end_location
@@ -372,27 +336,6 @@ func (q *Queries) GetCourierStatus(ctx context.Context, userID uuid.NullUUID) (s
 	return status, err
 }
 
-const getSession = `-- name: GetSession :one
-SELECT id, ip, token, expires, user_id, created_at, updated_at FROM
-sessions
-WHERE user_id = $1
-`
-
-func (q *Queries) GetSession(ctx context.Context, userID uuid.UUID) (Session, error) {
-	row := q.db.QueryRowContext(ctx, getSession, userID)
-	var i Session
-	err := row.Scan(
-		&i.ID,
-		&i.Ip,
-		&i.Token,
-		&i.Expires,
-		&i.UserID,
-		&i.CreatedAt,
-		&i.UpdatedAt,
-	)
-	return i, err
-}
-
 const isCourier = `-- name: IsCourier :one
 SELECT verified FROM
 couriers
@@ -499,6 +442,34 @@ func (q *Queries) UpdateProductLocation(ctx context.Context, arg UpdateProductLo
 		&i.Name,
 		&i.Description,
 		&i.Location,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
+const updateUserName = `-- name: UpdateUserName :one
+UPDATE users
+SET first_name = COALESCE($1, first_name), last_name = COALESCE($2, last_name)
+WHERE phone = $3
+RETURNING id, first_name, last_name, phone, onboarding, created_at, updated_at
+`
+
+type UpdateUserNameParams struct {
+	FirstName string
+	LastName  string
+	Phone     string
+}
+
+func (q *Queries) UpdateUserName(ctx context.Context, arg UpdateUserNameParams) (User, error) {
+	row := q.db.QueryRowContext(ctx, updateUserName, arg.FirstName, arg.LastName, arg.Phone)
+	var i User
+	err := row.Scan(
+		&i.ID,
+		&i.FirstName,
+		&i.LastName,
+		&i.Phone,
+		&i.Onboarding,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 	)

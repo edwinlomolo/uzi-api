@@ -43,16 +43,6 @@ type Route struct {
 	UpdatedAt time.Time
 }
 
-type Session struct {
-	ID        uuid.UUID
-	Ip        string
-	Token     string
-	Expires   time.Time
-	UserID    uuid.UUID
-	CreatedAt time.Time
-	UpdatedAt time.Time
-}
-
 type Trip struct {
 	ID            uuid.UUID
 	StartLocation interface{}

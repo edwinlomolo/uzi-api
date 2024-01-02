@@ -2,7 +2,6 @@ package handler
 
 import (
 	"encoding/json"
-	"errors"
 	"io"
 	"net/http"
 
@@ -19,32 +18,27 @@ func Signin() http.Handler {
 		sessionService := services.GetSessionService()
 		userIp := GetIp(r)
 
-		if r.Method != http.MethodPost {
-			http.Error(w, errors.New("Only POST method supported").Error(), http.StatusMethodNotAllowed)
-			return
-		}
-
 		body, bodyErr := io.ReadAll(r.Body)
 		if bodyErr != nil {
 			logger.Errorf("%s-%v", "ReadingSigninRequestBodyErr", bodyErr.Error())
-			http.Error(w, bodyErr.Error(), http.StatusInternalServerError)
+			http.Error(w, bodyErr.Error(), http.StatusBadRequest)
 			return
 		}
 		if marshalErr := json.Unmarshal(body, &loginInput); marshalErr != nil {
 			logger.Errorf("%s-%v", "SigninRequestBodyMarshalErr", marshalErr.Error())
-			http.Error(w, marshalErr.Error(), http.StatusInternalServerError)
+			http.Error(w, marshalErr.Error(), http.StatusBadRequest)
 			return
 		}
 
 		findUser, findUserErr := userService.FindOrCreate(loginInput)
 		if findUserErr != nil {
-			http.Error(w, findUserErr.Error(), http.StatusInternalServerError)
+			http.Error(w, findUserErr.ErrorString(), findUserErr.Code)
 			return
 		}
 
-		findSession, findSessionErr := sessionService.SignIn(findUser.ID, userIp)
+		findSession, findSessionErr := sessionService.SignIn(findUser.ID, userIp, findUser.Phone)
 		if findSessionErr != nil {
-			http.Error(w, findSessionErr.Error(), http.StatusInternalServerError)
+			http.Error(w, findSessionErr.ErrorString(), findSessionErr.Code)
 			return
 		}
 
@@ -58,6 +52,5 @@ func Signin() http.Handler {
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusOK)
 		w.Write(jsonRes)
-		return
 	})
 }

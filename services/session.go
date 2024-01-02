@@ -16,7 +16,7 @@ import (
 var sessionService Session
 
 type Session interface {
-	SignIn(userID uuid.UUID, ip string) (*model.Session, error)
+	SignIn(userID uuid.UUID, ip, phone string) (*model.Session, *model.UziErr)
 }
 
 type sessionClient struct {
@@ -35,11 +35,11 @@ func NewSessionService(store *store.Queries, logger *logrus.Logger, jwtConfig co
 	return sessionService
 }
 
-func (sc *sessionClient) SignIn(userID uuid.UUID, ip string) (*model.Session, error) {
-	return sc.createSession(userID, ip)
+func (sc *sessionClient) SignIn(userID uuid.UUID, ip, phone string) (*model.Session, *model.UziErr) {
+	return sc.createSession(userID, ip, phone)
 }
 
-func (sc *sessionClient) createSession(userID uuid.UUID, ip string) (*model.Session, error) {
+func (sc *sessionClient) createSession(userID uuid.UUID, ip, phone string) (*model.Session, *model.UziErr) {
 	var session model.Session
 
 	claims := jsonwebtoken.MapClaims{
@@ -51,13 +51,12 @@ func (sc *sessionClient) createSession(userID uuid.UUID, ip string) (*model.Sess
 
 	sessionJwt, signJwtErr := sc.jwtClient.Sign([]byte(sc.config.Secret), claims)
 	if signJwtErr != nil {
-		sc.logger.Errorf("%s-%v", "SignSessionJwtErr", signJwtErr.Error())
 		return nil, signJwtErr
 	}
 
 	isUserOnboarding, isUserOnboardingErr := sc.store.IsUserOnboarding(context.Background(), userID)
 	if isUserOnboardingErr != nil {
-		return nil, isUserOnboardingErr
+		return nil, &model.UziErr{Error: isUserOnboardingErr, Message: "isuseronboarding", Code: 500}
 	}
 
 	isCourier, isCourierErr := GetCourierService().IsCourier(userID)
@@ -72,6 +71,7 @@ func (sc *sessionClient) createSession(userID uuid.UUID, ip string) (*model.Sess
 
 	session.Token = sessionJwt
 	session.IsCourier = isCourier
+	session.Phone = phone
 	session.Onboarding = isUserOnboarding
 	session.CourierStatus = &courierStatus
 

@@ -51,6 +51,7 @@ type Session struct {
 	Token         string         `json:"token"`
 	IsCourier     bool           `json:"isCourier"`
 	Onboarding    bool           `json:"onboarding"`
+	Phone         string         `json:"phone"`
 	CourierStatus *CourierStatus `json:"courierStatus,omitempty"`
 }
 

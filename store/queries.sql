@@ -23,18 +23,11 @@ SET onboarding = $1
 WHERE phone = $2
 RETURNING *;
 
--- name: CreateSession :one
-INSERT INTO sessions (
-  ip, token, user_id, expires
-) VALUES (
-  $1, $2, $3, $4
-)
+-- name: UpdateUserName :one
+UPDATE users
+SET first_name = COALESCE($1, first_name), last_name = COALESCE($2, last_name)
+WHERE phone = $3
 RETURNING *;
-
--- name: GetSession :one
-SELECT * FROM
-sessions
-WHERE user_id = $1;
 
 -- name: CreateCourierUpload :one
 INSERT INTO uploads (

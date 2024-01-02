@@ -45,10 +45,11 @@ func main() {
 	srv := gqlHandler.NewDefaultServer(uzi.NewExecutableSchema(uzi.New()))
 
 	// Routes
-	r.Handle("/ipinfo", handler.Logger(handler.Ipinfo()))
+	r.Get("/ipinfo", handler.Logger(handler.Ipinfo()))
 	r.Handle("/", playground.Handler("GraphQL playground", "/query"))
 	r.Handle("/api", handler.Logger(srv))
-	r.Handle("/signin", handler.Logger(handler.Signin()))
+	r.Post("/signin", handler.Logger(handler.Signin()))
+	r.Post("/courier/onboard", handler.Logger(handler.CourierOnboarding()))
 
 	// Server
 	s := &http.Server{
