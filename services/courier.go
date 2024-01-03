@@ -38,14 +38,14 @@ func (c *courierClient) FindOrCreate(userID uuid.UUID) (*model.Courier, *model.U
 		newCourier, err := c.store.CreateCourier(context.Background(), uuid.NullUUID{UUID: userID, Valid: true})
 		if err != nil {
 			courierErr := &model.UziErr{Error: err, Message: "create courier error", Code: 400}
-			c.logger.Errorf(courierErr.ErrorString())
+			c.logger.Errorf("%s: %s", courierErr.Message, courierErr.ErrorString())
 			return nil, courierErr
 		}
 
 		return &model.Courier{ID: newCourier.ID}, nil
 	} else if err != nil {
 		courierErr := &model.UziErr{Error: err, Message: "get courier error", Code: 404}
-		c.logger.Errorf(courierErr.ErrorString())
+		c.logger.Errorf("%s: %s", courierErr.Message, courierErr.ErrorString())
 		return nil, courierErr
 	}
 
@@ -58,7 +58,7 @@ func (c *courierClient) IsCourier(userID uuid.UUID) (bool, *model.UziErr) {
 		return false, nil
 	} else if err != nil {
 		courierErr := &model.UziErr{Error: err, Message: "check user courier status err", Code: 400}
-		c.logger.Errorf(courierErr.ErrorString())
+		c.logger.Errorf("%s: %s", courierErr.Message, courierErr.ErrorString())
 		return false, courierErr
 	}
 
@@ -71,7 +71,7 @@ func (c *courierClient) GetCourierStatus(userID uuid.UUID) (model.CourierStatus,
 		return model.CourierStatusOffline, nil
 	} else if err != nil {
 		courierErr := &model.UziErr{Error: err, Message: "get courier verification status error", Code: 500}
-		c.logger.Errorf(courierErr.ErrorString())
+		c.logger.Errorf("%s: %s", courierErr.Message, courierErr.ErrorString())
 		return model.CourierStatusOffline, courierErr
 	}
 

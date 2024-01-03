@@ -42,7 +42,7 @@ func (ipc *ipinfoClient) GetIpinfo(ip string) (*ipinfo.Core, *model.UziErr) {
 	info, err := ipc.client.GetIPInfo(net.ParseIP(ip))
 	if err != nil {
 		ipErr := &model.UziErr{Error: err, Message: "IpinfoErr", Code: 500}
-		ipc.logger.Errorf(ipErr.ErrorString())
+		ipc.logger.Errorf("%s: %s", ipErr.Message, ipErr.ErrorString())
 		return nil, ipErr
 	}
 
@@ -59,7 +59,7 @@ func (ipc *ipinfocacheClient) Get(key string) (interface{}, error) {
 
 	keyValue, err := ipc.redis.Get(context.Background(), key).Result()
 	if err != redis.Nil && err != nil {
-		ipc.logger.Errorf("%s-%v", "IpinfoGetValueErr", err.Error())
+		ipc.logger.Errorf("%s: %v", "IpinfoGetValueErr", err.Error())
 		return nil, err
 	}
 
@@ -78,7 +78,7 @@ func (ipc *ipinfocacheClient) Set(key string, value interface{}) error {
 	}
 
 	if err := ipc.redis.Set(context.Background(), key, data, time.Hour*24*7).Err(); err != nil {
-		ipc.logger.Errorf("%s-%v", "IpinfoCacheSetErr", err.Error())
+		ipc.logger.Errorf("%s: %v", "IpinfoCacheSetErr", err.Error())
 		return err
 	}
 

@@ -63,7 +63,7 @@ func (u *userClient) createUser(user model.SigninInput) (*model.User, *model.Uzi
 		})
 		if newUserErr != nil {
 			err := &model.UziErr{Error: newUserErr, Message: "create user error", Code: 500}
-			u.logger.Errorf(err.Error.Error())
+			u.logger.Errorf("%s: %s", err.Message, err.Error.Error())
 			return nil, err
 		}
 
@@ -75,7 +75,7 @@ func (u *userClient) createUser(user model.SigninInput) (*model.User, *model.Uzi
 		return &res, nil
 	} else if getUserErr != nil {
 		err := &model.UziErr{Error: getUserErr, Message: "get user", Code: 500}
-		u.logger.Errorf(err.Error.Error())
+		u.logger.Errorf("%s: %s", err.Message, err.Error.Error())
 		return nil, err
 	}
 
@@ -93,7 +93,7 @@ func (u *userClient) getUser(phone string) (*model.User, *model.UziErr) {
 		return nil, nil
 	} else if cacheErr != nil {
 		err := &model.UziErr{Error: cacheErr, Message: "user cache get", Code: 500}
-		u.logger.Errorf(err.Error.Error())
+		u.logger.Errorf("%s: %s", err.Message, err.Error.Error())
 		return nil, err
 	}
 
@@ -105,7 +105,7 @@ func (u *userClient) OnboardUser(user model.SigninInput) (*model.User, *model.Uz
 
 	if len(user.FirstName) == 0 || len(user.LastName) == 0 {
 		inputErr := &model.UziErr{Error: errors.New("name can't be empty"), Message: "name can't be empty", Code: 400}
-		u.logger.Errorf(inputErr.Error.Error())
+		u.logger.Errorf("%s: %s", inputErr.Message, inputErr.Error.Error())
 		return nil, inputErr
 	}
 
@@ -115,8 +115,8 @@ func (u *userClient) OnboardUser(user model.SigninInput) (*model.User, *model.Uz
 		Phone:     user.Phone,
 	})
 	if onboardErr != nil {
-		err := &model.UziErr{Error: onboardErr, Message: onboardErr.Error(), Code: 500}
-		u.logger.Errorf(err.Error.Error())
+		err := &model.UziErr{Error: onboardErr, Message: "updateusername", Code: 500}
+		u.logger.Errorf("%s: %v", err.Message, err.Error.Error())
 		return nil, err
 	}
 
@@ -124,8 +124,8 @@ func (u *userClient) OnboardUser(user model.SigninInput) (*model.User, *model.Uz
 		Phone:      user.Phone,
 		Onboarding: false,
 	}); err != nil {
-		onboardingErr := &model.UziErr{Error: err, Message: err.Error(), Code: 500}
-		u.logger.Errorf(onboardingErr.ErrorString())
+		onboardingErr := &model.UziErr{Error: err, Message: "setuseronboarding", Code: 500}
+		u.logger.Errorf("%s: %v", onboardingErr.Message, onboardingErr.ErrorString())
 		return nil, onboardingErr
 	}
 
@@ -157,14 +157,14 @@ func (usc *usercacheclient) Get(key string) (interface{}, error) {
 	if err == redis.Nil {
 		return nil, nil
 	} else if err != nil {
-		cacheErr := &model.UziErr{Error: err, Message: err.Error(), Code: 500}
-		usc.logger.Errorf(cacheErr.Error.Error())
+		cacheErr := &model.UziErr{Error: err, Message: "getusercache", Code: 500}
+		usc.logger.Errorf("%s: %s", cacheErr.Message, cacheErr.Error.Error())
 		return nil, cacheErr.Error
 	}
 
 	if err := json.Unmarshal([]byte(keyValue), &res); err != nil {
-		jsonErr := &model.UziErr{Error: err, Message: err.Error(), Code: 400}
-		usc.logger.Errorf(jsonErr.Error.Error())
+		jsonErr := &model.UziErr{Error: err, Message: "getusercachemarshal", Code: 400}
+		usc.logger.Errorf("%s: %s", jsonErr.Message, jsonErr.Error.Error())
 		return nil, jsonErr.Error
 	}
 
@@ -175,14 +175,14 @@ func (usc *usercacheclient) Set(key string, value interface{}) error {
 	userinfo := value.(*model.User)
 	data, err := json.Marshal(userinfo)
 	if err != nil {
-		cacheErr := &model.UziErr{Error: err, Message: err.Error(), Code: 500}
-		usc.logger.Errorf(cacheErr.Error.Error())
+		cacheErr := &model.UziErr{Error: err, Message: "setusercachemarshal", Code: 500}
+		usc.logger.Errorf("%s: %s", cacheErr.Message, cacheErr.Error.Error())
 		return cacheErr.Error
 	}
 
 	if err := usc.redis.Set(context.Background(), key, data, time.Minute*1).Err(); err != nil {
-		cacheErr := &model.UziErr{Error: err, Message: err.Error(), Code: 500}
-		usc.logger.Errorf(cacheErr.Error.Error())
+		cacheErr := &model.UziErr{Error: err, Message: "setusercache", Code: 500}
+		usc.logger.Errorf("%s: %s", cacheErr.Message, cacheErr.Error.Error())
 		return cacheErr.Error
 	}
 
