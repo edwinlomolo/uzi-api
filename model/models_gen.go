@@ -92,18 +92,28 @@ type User struct {
 type CourierStatus string
 
 const (
-	CourierStatusOffline CourierStatus = "OFFLINE"
-	CourierStatusOnline  CourierStatus = "ONLINE"
+	CourierStatusOffline    CourierStatus = "OFFLINE"
+	CourierStatusOnline     CourierStatus = "ONLINE"
+	CourierStatusOnboarding CourierStatus = "ONBOARDING"
+	CourierStatusDl         CourierStatus = "DL"
+	CourierStatusPc         CourierStatus = "PC"
+	CourierStatusID         CourierStatus = "ID"
+	CourierStatusDp         CourierStatus = "DP"
 )
 
 var AllCourierStatus = []CourierStatus{
 	CourierStatusOffline,
 	CourierStatusOnline,
+	CourierStatusOnboarding,
+	CourierStatusDl,
+	CourierStatusPc,
+	CourierStatusID,
+	CourierStatusDp,
 }
 
 func (e CourierStatus) IsValid() bool {
 	switch e {
-	case CourierStatusOffline, CourierStatusOnline:
+	case CourierStatusOffline, CourierStatusOnline, CourierStatusOnboarding, CourierStatusDl, CourierStatusPc, CourierStatusID, CourierStatusDp:
 		return true
 	}
 	return false
