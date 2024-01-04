@@ -19,8 +19,8 @@ var (
 )
 
 type User interface {
-	FindOrCreate(user model.SigninInput) (*model.User, *model.UziErr)
-	OnboardUser(user model.SigninInput) (*model.User, *model.UziErr)
+	FindOrCreate(user model.SigninInput) (*model.User, error)
+	OnboardUser(user model.SigninInput) (*model.User, error)
 }
 
 type userClient struct {
@@ -40,7 +40,7 @@ func NewUserService(store *store.Queries, redis *redis.Client, logger *logrus.Lo
 	return userService
 }
 
-func (u *userClient) FindOrCreate(user model.SigninInput) (*model.User, *model.UziErr) {
+func (u *userClient) FindOrCreate(user model.SigninInput) (*model.User, error) {
 	foundUser, foundUserErr := u.getUser(user.Phone)
 	if foundUser == nil && foundUserErr == nil {
 		return u.createUser(user)
@@ -51,7 +51,7 @@ func (u *userClient) FindOrCreate(user model.SigninInput) (*model.User, *model.U
 	return foundUser, nil
 }
 
-func (u *userClient) createUser(user model.SigninInput) (*model.User, *model.UziErr) {
+func (u *userClient) createUser(user model.SigninInput) (*model.User, error) {
 	var res model.User
 
 	foundUser, getUserErr := u.store.FindByPhone(context.Background(), user.Phone)
@@ -62,8 +62,8 @@ func (u *userClient) createUser(user model.SigninInput) (*model.User, *model.Uzi
 			Phone:     user.Phone,
 		})
 		if newUserErr != nil {
-			err := &model.UziErr{Error: newUserErr, Message: "create user error", Code: 500}
-			u.logger.Errorf("%s: %s", err.Message, err.Error.Error())
+			err := model.UziErr{Err: newUserErr.Error(), Message: "create user error", Code: 500}
+			u.logger.Errorf("%s: %s", err.Message, err.Err)
 			return nil, err
 		}
 
@@ -74,8 +74,8 @@ func (u *userClient) createUser(user model.SigninInput) (*model.User, *model.Uzi
 
 		return &res, nil
 	} else if getUserErr != nil {
-		err := &model.UziErr{Error: getUserErr, Message: "get user", Code: 500}
-		u.logger.Errorf("%s: %s", err.Message, err.Error.Error())
+		err := model.UziErr{Err: getUserErr.Error(), Message: "get user", Code: 500}
+		u.logger.Errorf("%s: %s", err.Message, err.Err)
 		return nil, err
 	}
 
@@ -87,25 +87,25 @@ func (u *userClient) createUser(user model.SigninInput) (*model.User, *model.Uzi
 	return &res, nil
 }
 
-func (u *userClient) getUser(phone string) (*model.User, *model.UziErr) {
+func (u *userClient) getUser(phone string) (*model.User, error) {
 	cacheUser, cacheErr := u.cache.Get(phone)
 	if cacheErr == nil && cacheUser == nil {
 		return nil, nil
 	} else if cacheErr != nil {
-		err := &model.UziErr{Error: cacheErr, Message: "user cache get", Code: 500}
-		u.logger.Errorf("%s: %s", err.Message, err.Error.Error())
+		err := model.UziErr{Err: cacheErr.Error(), Message: "user cache get", Code: 500}
+		u.logger.Errorf("%s: %s", err.Message, err.Err)
 		return nil, err
 	}
 
 	return (cacheUser).(*model.User), nil
 }
 
-func (u *userClient) OnboardUser(user model.SigninInput) (*model.User, *model.UziErr) {
+func (u *userClient) OnboardUser(user model.SigninInput) (*model.User, error) {
 	var updatedUser model.User
 
 	if len(user.FirstName) == 0 || len(user.LastName) == 0 {
-		inputErr := &model.UziErr{Error: errors.New("name can't be empty"), Message: "name can't be empty", Code: 400}
-		u.logger.Errorf("%s: %s", inputErr.Message, inputErr.Error.Error())
+		inputErr := model.UziErr{Err: errors.New("name can't be empty").Error(), Message: "name can't be empty", Code: 400}
+		u.logger.Errorf("%s: %s", inputErr.Message, inputErr.Err)
 		return nil, inputErr
 	}
 
@@ -115,8 +115,8 @@ func (u *userClient) OnboardUser(user model.SigninInput) (*model.User, *model.Uz
 		Phone:     user.Phone,
 	})
 	if onboardErr != nil {
-		err := &model.UziErr{Error: onboardErr, Message: "updateusername", Code: 500}
-		u.logger.Errorf("%s: %v", err.Message, err.Error.Error())
+		err := model.UziErr{Err: onboardErr.Error(), Message: "updateusername", Code: 500}
+		u.logger.Errorf("%s: %v", err.Message, err.Err)
 		return nil, err
 	}
 
@@ -124,8 +124,8 @@ func (u *userClient) OnboardUser(user model.SigninInput) (*model.User, *model.Uz
 		Phone:      user.Phone,
 		Onboarding: false,
 	}); err != nil {
-		onboardingErr := &model.UziErr{Error: err, Message: "setuseronboarding", Code: 500}
-		u.logger.Errorf("%s: %v", onboardingErr.Message, onboardingErr.ErrorString())
+		onboardingErr := model.UziErr{Err: err.Error(), Message: "setuseronboarding", Code: 500}
+		u.logger.Errorf("%s: %v", onboardingErr.Message, onboardingErr.Err)
 		return nil, onboardingErr
 	}
 
@@ -135,7 +135,7 @@ func (u *userClient) OnboardUser(user model.SigninInput) (*model.User, *model.Uz
 	updatedUser.Phone = newUser.Phone
 
 	if err := u.cache.Set(user.Phone, &updatedUser); err != nil {
-		return nil, &model.UziErr{Error: err, Message: "cache set err", Code: 500}
+		return nil, model.UziErr{Err: err.Error(), Message: "cache set err", Code: 500}
 	}
 
 	return &updatedUser, nil
@@ -157,15 +157,15 @@ func (usc *usercacheclient) Get(key string) (interface{}, error) {
 	if err == redis.Nil {
 		return nil, nil
 	} else if err != nil {
-		cacheErr := &model.UziErr{Error: err, Message: "getusercache", Code: 500}
-		usc.logger.Errorf("%s: %s", cacheErr.Message, cacheErr.Error.Error())
-		return nil, cacheErr.Error
+		cacheErr := model.UziErr{Err: err.Error(), Message: "getusercache", Code: 500}
+		usc.logger.Errorf("%s: %s", cacheErr.Message, cacheErr.Err)
+		return nil, cacheErr
 	}
 
 	if err := json.Unmarshal([]byte(keyValue), &res); err != nil {
-		jsonErr := &model.UziErr{Error: err, Message: "getusercachemarshal", Code: 400}
-		usc.logger.Errorf("%s: %s", jsonErr.Message, jsonErr.Error.Error())
-		return nil, jsonErr.Error
+		jsonErr := model.UziErr{Err: err.Error(), Message: "getusercachemarshal", Code: 400}
+		usc.logger.Errorf("%s: %s", jsonErr.Message, jsonErr.Err)
+		return nil, jsonErr
 	}
 
 	return &res, nil
@@ -175,15 +175,15 @@ func (usc *usercacheclient) Set(key string, value interface{}) error {
 	userinfo := value.(*model.User)
 	data, err := json.Marshal(userinfo)
 	if err != nil {
-		cacheErr := &model.UziErr{Error: err, Message: "setusercachemarshal", Code: 500}
-		usc.logger.Errorf("%s: %s", cacheErr.Message, cacheErr.Error.Error())
-		return cacheErr.Error
+		cacheErr := model.UziErr{Err: err.Error(), Message: "setusercachemarshal", Code: 500}
+		usc.logger.Errorf("%s: %s", cacheErr.Message, cacheErr.Err)
+		return cacheErr
 	}
 
 	if err := usc.redis.Set(context.Background(), key, data, time.Minute*1).Err(); err != nil {
-		cacheErr := &model.UziErr{Error: err, Message: "setusercache", Code: 500}
-		usc.logger.Errorf("%s: %s", cacheErr.Message, cacheErr.Error.Error())
-		return cacheErr.Error
+		cacheErr := model.UziErr{Err: err.Error(), Message: "setusercache", Code: 500}
+		usc.logger.Errorf("%s: %s", cacheErr.Message, cacheErr.Err)
+		return cacheErr
 	}
 
 	return nil

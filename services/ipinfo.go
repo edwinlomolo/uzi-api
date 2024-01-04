@@ -17,7 +17,7 @@ import (
 var ipinfoService IpInfo
 
 type IpInfo interface {
-	GetIpinfo(ip string) (*ipinfo.Core, *model.UziErr)
+	GetIpinfo(ip string) (*ipinfo.Core, error)
 }
 
 type ipinfoClient struct {
@@ -38,11 +38,11 @@ func GetIpinfoService() IpInfo {
 	return ipinfoService
 }
 
-func (ipc *ipinfoClient) GetIpinfo(ip string) (*ipinfo.Core, *model.UziErr) {
+func (ipc *ipinfoClient) GetIpinfo(ip string) (*ipinfo.Core, error) {
 	info, err := ipc.client.GetIPInfo(net.ParseIP(ip))
 	if err != nil {
-		ipErr := &model.UziErr{Error: err, Message: "IpinfoErr", Code: 500}
-		ipc.logger.Errorf("%s: %s", ipErr.Message, ipErr.ErrorString())
+		ipErr := model.UziErr{Err: err.Error(), Message: "IpinfoErr", Code: 500}
+		ipc.logger.Errorf("%s: %s", ipErr.Message, ipErr.Err)
 		return nil, ipErr
 	}
 
@@ -77,7 +77,7 @@ func (ipc *ipinfocacheClient) Set(key string, value interface{}) error {
 		return err
 	}
 
-	if err := ipc.redis.Set(context.Background(), key, data, time.Hour*24*7).Err(); err != nil {
+	if err := ipc.redis.Set(context.Background(), key, data, time.Hour*24*365).Err(); err != nil {
 		ipc.logger.Errorf("%s: %v", "IpinfoCacheSetErr", err.Error())
 		return err
 	}

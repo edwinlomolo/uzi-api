@@ -33,13 +33,13 @@ func CourierOnboarding() http.HandlerFunc {
 
 		updatedUser, onboardErr := userService.OnboardUser(bodyReq)
 		if onboardErr != nil {
-			http.Error(w, onboardErr.ErrorString(), onboardErr.Code)
+			http.Error(w, onboardErr.Error(), http.StatusInternalServerError)
 			return
 		}
 
 		session, sessionErr := sessionService.SignIn(updatedUser.ID, ip, updatedUser.Phone)
 		if sessionErr != nil {
-			http.Error(w, sessionErr.ErrorString(), sessionErr.Code)
+			http.Error(w, sessionErr.Error(), http.StatusInternalServerError)
 			return
 		}
 

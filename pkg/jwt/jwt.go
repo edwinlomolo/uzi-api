@@ -11,8 +11,8 @@ import (
 )
 
 type Jwt interface {
-	Sign(secret []byte, claims jwt.Claims) (string, *model.UziErr)
-	Validate(token string) (*jwt.Token, *model.UziErr)
+	Sign(secret []byte, claims jwt.Claims) (string, error)
+	Validate(token string) (*jwt.Token, error)
 }
 
 type jwtclient struct {
@@ -24,18 +24,17 @@ func NewJwtClient(logger *logrus.Logger, config config.Jwt) Jwt {
 	return &jwtclient{logger, config}
 }
 
-func (jwtc *jwtclient) Sign(secret []byte, claims jwt.Claims) (string, *model.UziErr) {
+func (jwtc *jwtclient) Sign(secret []byte, claims jwt.Claims) (string, error) {
 	token, signJwtErr := jsonwebtoken.NewWithClaims(jsonwebtoken.SigningMethodHS256, claims).SignedString(secret)
 	if signJwtErr != nil {
 		jwtc.logger.Errorf("%s-%v", "SignJwtErr", signJwtErr.Error())
-		return "", &model.UziErr{Error: signJwtErr, Message: "sign jwt error", Code: 401}
+		return "", &model.UziErr{Err: signJwtErr.Error(), Message: "signjwt", Code: 401}
 	}
 
 	return token, nil
-
 }
 
-func (jwtc *jwtclient) Validate(jwt string) (*jwt.Token, *model.UziErr) {
+func (jwtc *jwtclient) Validate(jwt string) (*jwt.Token, error) {
 	keyFunc := func(tkn *jsonwebtoken.Token) (interface{}, error) {
 		if _, ok := tkn.Method.(*jsonwebtoken.SigningMethodHMAC); !ok {
 			jwtc.logger.Errorf("%s-%v", "TokenParseErr", "invalid signing algorithm")
@@ -48,7 +47,7 @@ func (jwtc *jwtclient) Validate(jwt string) (*jwt.Token, *model.UziErr) {
 	token, tokenErr := jsonwebtoken.Parse(jwt, keyFunc)
 	if tokenErr != nil {
 		jwtc.logger.Errorf("%s-%v", "TokenParseErr", tokenErr.Error())
-		return nil, &model.UziErr{Error: tokenErr, Message: "invalid token", Code: 401}
+		return nil, &model.UziErr{Err: tokenErr.Error(), Message: "invalid token", Code: 401}
 	}
 
 	return token, nil

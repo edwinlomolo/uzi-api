@@ -32,13 +32,13 @@ func Signin() http.Handler {
 
 		findUser, findUserErr := userService.FindOrCreate(loginInput)
 		if findUserErr != nil {
-			http.Error(w, findUserErr.ErrorString(), findUserErr.Code)
+			http.Error(w, findUserErr.Error(), http.StatusInternalServerError)
 			return
 		}
 
 		findSession, findSessionErr := sessionService.SignIn(findUser.ID, userIp, findUser.Phone)
 		if findSessionErr != nil {
-			http.Error(w, findSessionErr.ErrorString(), findSessionErr.Code)
+			http.Error(w, findSessionErr.Error(), http.StatusInternalServerError)
 			return
 		}
 

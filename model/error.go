@@ -3,11 +3,11 @@ package model
 import "fmt"
 
 type UziErr struct {
-	Error   error       `json:"error"`
+	Err     string      `json:"err"`
 	Message interface{} `json:"message"`
 	Code    int         `json:"code"`
 }
 
-func (u UziErr) ErrorString() string {
-	return fmt.Sprintf("%s: %s", u.Message, u.Error.Error())
+func (u UziErr) Error() string {
+	return fmt.Sprintf("%v: %v", u.Message, u.Err)
 }

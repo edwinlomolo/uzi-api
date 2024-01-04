@@ -15,7 +15,7 @@ func Ipinfo() http.Handler {
 
 		ipinfo, err := services.GetIpinfoService().GetIpinfo(ip)
 		if err != nil {
-			http.Error(w, err.ErrorString(), err.Code)
+			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
 
