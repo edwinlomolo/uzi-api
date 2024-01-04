@@ -22,6 +22,7 @@ func main() {
 	// Chi router
 	r := chi.NewRouter()
 	r.Use(cors.AllowAll().Handler)
+	r.Use(handler.Logger)
 
 	// Configs
 	configs := config.LoadConfig()
@@ -45,11 +46,12 @@ func main() {
 	srv := gqlHandler.NewDefaultServer(uzi.NewExecutableSchema(uzi.New()))
 
 	// Routes
-	r.Get("/ipinfo", handler.Logger(handler.Ipinfo()))
+	r.Get("/ipinfo", handler.Ipinfo())
 	r.Get("/", playground.Handler("GraphQL playground", "/query"))
-	r.Post("/api", handler.Logger(srv))
-	r.Post("/signin", handler.Logger(handler.Signin()))
-	r.Post("/courier/onboard", handler.Logger(handler.CourierOnboarding()))
+	r.Handle("/api", srv)
+	r.Post("/signin", handler.Signin())
+	r.Post("/courier/onboard", handler.CourierOnboarding())
+	r.Post("/upload/document", handler.UploadDocument())
 
 	// Server
 	s := &http.Server{
