@@ -3,6 +3,7 @@ package services
 import (
 	"context"
 	"database/sql"
+	"errors"
 
 	"github.com/3dw1nM0535/uzi-api/model"
 	"github.com/3dw1nM0535/uzi-api/store"
@@ -38,14 +39,14 @@ func (c *courierClient) FindOrCreate(userID uuid.UUID) (*model.Courier, error) {
 	if err == sql.ErrNoRows {
 		newCourier, err := c.store.CreateCourier(context.Background(), uuid.NullUUID{UUID: userID, Valid: true})
 		if err != nil {
-			courierErr := model.UziErr{Err: err.Error(), Message: "create courier error", Code: 400}
+			courierErr := model.UziErr{Err: err.Error(), Message: "createcourier", Code: 400}
 			c.logger.Errorf("%s: %s", courierErr.Message, courierErr.Err)
 			return nil, courierErr
 		}
 
 		return &model.Courier{ID: newCourier.ID}, nil
 	} else if err != nil {
-		courierErr := model.UziErr{Err: err.Error(), Message: "get courier error", Code: 404}
+		courierErr := model.UziErr{Err: err.Error(), Message: "getcourier", Code: 404}
 		c.logger.Errorf("%s: %s", courierErr.Message, courierErr.Err)
 		return nil, courierErr
 	}
@@ -58,7 +59,7 @@ func (c *courierClient) IsCourier(userID uuid.UUID) (bool, error) {
 	if err == sql.ErrNoRows {
 		return false, nil
 	} else if err != nil {
-		courierErr := model.UziErr{Err: err.Error(), Message: "check user courier status err", Code: 400}
+		courierErr := model.UziErr{Err: err.Error(), Message: "checkusercourierstatus", Code: 400}
 		c.logger.Errorf("%s: %s", courierErr.Message, courierErr.Err)
 		return false, courierErr
 	}
@@ -71,10 +72,29 @@ func (c *courierClient) GetCourierStatus(userID uuid.UUID) (model.CourierStatus,
 	if err == sql.ErrNoRows {
 		return model.CourierStatusOffline, nil
 	} else if err != nil {
-		courierErr := model.UziErr{Err: err.Error(), Message: "get courier verification status error", Code: 500}
+		courierErr := model.UziErr{Err: err.Error(), Message: "getcourierverificationstatus", Code: 500}
 		c.logger.Errorf("%s: %s", courierErr.Message, courierErr.Err)
 		return model.CourierStatusOffline, courierErr
 	}
 
 	return model.CourierStatus(status), nil
+}
+
+func (c *courierClient) getCourier(userID uuid.UUID) (*model.Courier, error) {
+	var courier model.Courier
+	foundCourier, err := c.store.GetCourier(context.Background(), uuid.NullUUID{UUID: userID, Valid: true})
+	if err == sql.ErrNoRows {
+		noCourierErr := model.UziErr{Err: errors.New("no courier found").Error(), Message: "nocourier", Code: 404}
+		c.logger.Errorf(noCourierErr.Error())
+		return nil, noCourierErr
+	} else if err != nil {
+		courierErr := model.UziErr{Err: err.Error(), Message: "getcourier", Code: 500}
+		c.logger.Errorf(courierErr.Error())
+		return nil, courierErr
+	}
+
+	courier.ID = foundCourier.ID
+	courier.UserID = foundCourier.UserID.UUID
+
+	return &courier, nil
 }

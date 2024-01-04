@@ -2,9 +2,11 @@ package handler
 
 import (
 	"encoding/json"
+	"errors"
 	"net/http"
 
 	"github.com/3dw1nM0535/uzi-api/logger"
+	"github.com/3dw1nM0535/uzi-api/model"
 	"github.com/3dw1nM0535/uzi-api/pkg/aws"
 )
 
@@ -12,22 +14,28 @@ func UploadDocument() http.HandlerFunc {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		maxSize := int64(6000000)
 		logger := logger.GetLogger()
-		s3Service := aws.GetAwsService()
+		s3Service := aws.GetS3Service()
 
-		logger.Infoln(r.FormValue("reason"))
+		if r.FormValue("reason") == "" {
+			uziErr := model.UziErr{Err: errors.New("provide reason for upload").Error(), Message: "uploadimage", Code: http.StatusBadRequest}
+			logger.Errorf(uziErr.Error())
+			http.Error(w, uziErr.Error(), uziErr.Code)
+			return
+		}
+
 		err := r.ParseMultipartForm(maxSize)
 		if err != nil {
-			errMsg := "FileTooLarge"
-			logger.Errorf("%s: %v", errMsg, err.Error())
-			http.Error(w, err.Error(), http.StatusBadRequest)
+			uziErr := model.UziErr{Err: errors.New("FileTooLarge").Error(), Message: "uploadimage", Code: http.StatusBadRequest}
+			logger.Errorf(uziErr.Error())
+			http.Error(w, uziErr.Error(), uziErr.Code)
 			return
 		}
 
 		file, fileHeader, err := r.FormFile("file")
 		if err != nil {
-			errMsg := "ExpectedFile"
-			logger.Errorf("%s: %v", errMsg, err.Error())
-			http.Error(w, err.Error(), http.StatusBadRequest)
+			uziErr := model.UziErr{Err: errors.New("ExpectedFile").Error(), Message: "nofile", Code: http.StatusBadRequest}
+			logger.Errorf(uziErr.Error())
+			http.Error(w, uziErr.Error(), uziErr.Code)
 			return
 		}
 		defer file.Close()
@@ -42,9 +50,9 @@ func UploadDocument() http.HandlerFunc {
 			ImageUri string `json:"imageUri"`
 		}{ImageUri: imageUri})
 		if marshalErr != nil {
-			errMsg := "UploadImageMarshalResErr"
-			logger.Errorf("%s: %v", errMsg, marshalErr.Error())
-			http.Error(w, marshalErr.Error(), http.StatusInternalServerError)
+			uziErr := model.UziErr{Err: errors.New("UploadImageMarshal").Error(), Message: "marshal", Code: http.StatusBadRequest}
+			logger.Errorf(uziErr.Error())
+			http.Error(w, uziErr.Error(), uziErr.Code)
 			return
 		}
 

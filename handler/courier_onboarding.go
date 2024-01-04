@@ -2,6 +2,7 @@ package handler
 
 import (
 	"encoding/json"
+	"errors"
 	"io"
 	"net/http"
 
@@ -20,14 +21,16 @@ func CourierOnboarding() http.HandlerFunc {
 
 		body, bodyErr := io.ReadAll(r.Body)
 		if bodyErr != nil {
-			logger.Errorf("%s-%v", "courierOnboardingBodyErr", bodyErr.Error())
-			http.Error(w, bodyErr.Error(), http.StatusBadRequest)
+			uziErr := model.UziErr{Err: errors.New("CourierOnboardingBodyErr").Error(), Message: "ioread", Code: http.StatusBadRequest}
+			logger.Errorf(uziErr.Error())
+			http.Error(w, uziErr.Error(), uziErr.Code)
 			return
 		}
 
 		if err := json.Unmarshal(body, &bodyReq); err != nil {
-			logger.Errorf("%s-%v", "unmarshalCourierBodyErr", err.Error())
-			http.Error(w, err.Error(), http.StatusBadRequest)
+			uziErr := model.UziErr{Err: errors.New("UmarshalCourierBody").Error(), Message: "unmarshal", Code: http.StatusBadRequest}
+			logger.Errorf(uziErr.Error())
+			http.Error(w, uziErr.Error(), uziErr.Code)
 			return
 		}
 
@@ -45,8 +48,9 @@ func CourierOnboarding() http.HandlerFunc {
 
 		res, resErr := json.Marshal(session)
 		if resErr != nil {
-			logger.Errorf("%s-%v", "marshalOnboardResErr", resErr.Error())
-			http.Error(w, resErr.Error(), http.StatusInternalServerError)
+			uziErr := model.UziErr{Err: errors.New("MarshalOnboardRes").Error(), Message: "unmarshal", Code: http.StatusInternalServerError}
+			logger.Errorf(uziErr.Error())
+			http.Error(w, uziErr.Error(), uziErr.Code)
 			return
 		}
 

@@ -43,6 +43,7 @@ func main() {
 	services.NewSessionService(store.GetDatabase(), logger, configs.Jwt)
 	services.NewCourierService(logger, store.GetDatabase())
 	aws.NewAwsS3Service(configs.Aws, logger)
+	services.NewUploadService(aws.GetS3Service(), logger, store.GetDatabase())
 
 	// Graphql
 	srv := gqlHandler.NewDefaultServer(uzi.NewExecutableSchema(uzi.New()))
@@ -53,7 +54,7 @@ func main() {
 	r.Handle("/api", srv)
 	r.Post("/signin", handler.Signin())
 	r.Post("/courier/onboard", handler.CourierOnboarding())
-	r.Post("/upload/document", handler.UploadDocument())
+	r.Post("/courier/upload/document", handler.UploadDocument())
 
 	// Server
 	s := &http.Server{

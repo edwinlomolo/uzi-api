@@ -112,7 +112,7 @@ RETURNING id, type, uri, courier_id, user_id, created_at, updated_at
 `
 
 type CreateCourierUploadParams struct {
-	Type      sql.NullString
+	Type      string
 	Uri       string
 	CourierID uuid.NullUUID
 }
@@ -234,7 +234,7 @@ RETURNING id, type, uri, courier_id, user_id, created_at, updated_at
 `
 
 type CreateUserUploadParams struct {
-	Type   sql.NullString
+	Type   string
 	Uri    string
 	UserID uuid.NullUUID
 }
@@ -334,6 +334,33 @@ func (q *Queries) GetCourierStatus(ctx context.Context, userID uuid.NullUUID) (s
 	var status string
 	err := row.Scan(&status)
 	return status, err
+}
+
+const getCourierUpload = `-- name: GetCourierUpload :one
+SELECT id, type, uri, courier_id, user_id, created_at, updated_at FROM
+uploads
+WHERE courier_id = $1 AND type = $2
+LIMIT 1
+`
+
+type GetCourierUploadParams struct {
+	CourierID uuid.NullUUID
+	Type      string
+}
+
+func (q *Queries) GetCourierUpload(ctx context.Context, arg GetCourierUploadParams) (Upload, error) {
+	row := q.db.QueryRowContext(ctx, getCourierUpload, arg.CourierID, arg.Type)
+	var i Upload
+	err := row.Scan(
+		&i.ID,
+		&i.Type,
+		&i.Uri,
+		&i.CourierID,
+		&i.UserID,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
 }
 
 const isCourier = `-- name: IsCourier :one
@@ -442,6 +469,33 @@ func (q *Queries) UpdateProductLocation(ctx context.Context, arg UpdateProductLo
 		&i.Name,
 		&i.Description,
 		&i.Location,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
+const updateUpload = `-- name: UpdateUpload :one
+UPDATE uploads
+SET uri = COALESCE($1, uri)
+WHERE id = $2
+RETURNING id, type, uri, courier_id, user_id, created_at, updated_at
+`
+
+type UpdateUploadParams struct {
+	Uri string
+	ID  uuid.UUID
+}
+
+func (q *Queries) UpdateUpload(ctx context.Context, arg UpdateUploadParams) (Upload, error) {
+	row := q.db.QueryRowContext(ctx, updateUpload, arg.Uri, arg.ID)
+	var i Upload
+	err := row.Scan(
+		&i.ID,
+		&i.Type,
+		&i.Uri,
+		&i.CourierID,
+		&i.UserID,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 	)

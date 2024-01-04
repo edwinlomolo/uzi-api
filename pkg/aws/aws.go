@@ -27,7 +27,7 @@ type awsClient struct {
 	logger *logrus.Logger
 }
 
-func GetAwsService() Aws { return awsService }
+func GetS3Service() Aws { return awsService }
 
 func NewAwsS3Service(config config.Aws, logger *logrus.Logger) Aws {
 	cfg, err := awsConfig.LoadDefaultConfig(context.TODO(), awsConfig.WithRegion("eu-west-2"), awsConfig.WithCredentialsProvider(credentials.NewStaticCredentialsProvider(config.AccessKey, config.SecretAccessKey, "")))

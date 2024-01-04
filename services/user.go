@@ -21,6 +21,7 @@ var (
 type User interface {
 	FindOrCreate(user model.SigninInput) (*model.User, error)
 	OnboardUser(user model.SigninInput) (*model.User, error)
+	GetUser(phone string) (*model.User, error)
 }
 
 type userClient struct {
@@ -99,6 +100,10 @@ func (u *userClient) getUser(phone string) (*model.User, error) {
 	}
 
 	return (cacheUser).(*model.User), nil
+}
+
+func (u *userClient) GetUser(phone string) (*model.User, error) {
+	return u.getUser(phone)
 }
 
 func (u *userClient) OnboardUser(user model.SigninInput) (*model.User, error) {

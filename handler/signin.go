@@ -2,6 +2,7 @@ package handler
 
 import (
 	"encoding/json"
+	"errors"
 	"io"
 	"net/http"
 
@@ -20,13 +21,16 @@ func Signin() http.HandlerFunc {
 
 		body, bodyErr := io.ReadAll(r.Body)
 		if bodyErr != nil {
-			logger.Errorf("%s-%v", "ReadingSigninRequestBodyErr", bodyErr.Error())
-			http.Error(w, bodyErr.Error(), http.StatusBadRequest)
+			uziErr := model.UziErr{Err: errors.New("ReadingSigninRequestBody").Error(), Message: "ioread", Code: http.StatusInternalServerError}
+			logger.Errorf(uziErr.Error())
+			http.Error(w, uziErr.Error(), uziErr.Code)
 			return
 		}
+
 		if marshalErr := json.Unmarshal(body, &loginInput); marshalErr != nil {
-			logger.Errorf("%s-%v", "SigninRequestBodyMarshalErr", marshalErr.Error())
-			http.Error(w, marshalErr.Error(), http.StatusBadRequest)
+			uziErr := model.UziErr{Err: errors.New("SigninRequestBodyMarshal").Error(), Message: "marshal", Code: http.StatusInternalServerError}
+			logger.Errorf(uziErr.Error())
+			http.Error(w, marshalErr.Error(), uziErr.Code)
 			return
 		}
 
@@ -44,8 +48,9 @@ func Signin() http.HandlerFunc {
 
 		jsonRes, jsonErr := json.Marshal(findSession)
 		if jsonErr != nil {
-			logger.Errorf("%s-%v", "SigninResponseMarshalErr", jsonErr.Error())
-			http.Error(w, jsonErr.Error(), http.StatusInternalServerError)
+			uziErr := model.UziErr{Err: errors.New("SigninResponseMarshal").Error(), Message: "marshal", Code: http.StatusInternalServerError}
+			logger.Errorf(uziErr.Error())
+			http.Error(w, uziErr.Error(), uziErr.Code)
 			return
 		}
 

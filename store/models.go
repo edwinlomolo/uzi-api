@@ -58,7 +58,7 @@ type Trip struct {
 
 type Upload struct {
 	ID        uuid.UUID
-	Type      sql.NullString
+	Type      string
 	Uri       string
 	CourierID uuid.NullUUID
 	UserID    uuid.NullUUID

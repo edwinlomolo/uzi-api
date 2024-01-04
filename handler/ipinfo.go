@@ -2,9 +2,11 @@ package handler
 
 import (
 	"encoding/json"
+	"errors"
 	"net/http"
 
 	"github.com/3dw1nM0535/uzi-api/logger"
+	"github.com/3dw1nM0535/uzi-api/model"
 	"github.com/3dw1nM0535/uzi-api/services"
 )
 
@@ -21,8 +23,9 @@ func Ipinfo() http.HandlerFunc {
 
 		res, jsonErr := json.Marshal(ipinfo)
 		if jsonErr != nil {
-			logger.Errorf("%s-%v", "JsonMarshalErr", jsonErr.Error())
-			http.Error(w, jsonErr.Error(), http.StatusInternalServerError)
+			uziErr := model.UziErr{Err: errors.New("JsonMarshalErr").Error(), Message: "marshal", Code: http.StatusInternalServerError}
+			logger.Errorf(uziErr.Error())
+			http.Error(w, uziErr.Error(), uziErr.Code)
 			return
 		}
 
