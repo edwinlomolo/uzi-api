@@ -31,6 +31,7 @@ func NewIpinfoService(redis *redis.Client, config config.Ipinfo, logger *logrus.
 	c := ipinfo.NewCache(cache)
 	client := ipinfo.NewClient(nil, c, config.ApiKey)
 
+	logger.Infoln("Ipinfo service...OK")
 	ipinfoService = &ipinfoClient{config, logger, client}
 }
 

@@ -32,6 +32,7 @@ func GetSessionService() Session {
 
 func NewSessionService(store *store.Queries, logger *logrus.Logger, jwtConfig config.Jwt) Session {
 	sessionService = &sessionClient{jwt.NewJwtClient(logger, jwtConfig), store, logger, jwtConfig}
+	logger.Infoln("Session service...OK")
 	return sessionService
 }
 

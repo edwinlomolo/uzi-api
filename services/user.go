@@ -37,6 +37,7 @@ func GetUserService() User {
 func NewUserService(store *store.Queries, redis *redis.Client, logger *logrus.Logger) User {
 	c := newusercache(redis, logger)
 	userService = &userClient{store, logger, context.TODO(), c}
+	logger.Infoln("User service...OK")
 	return userService
 }
 

@@ -29,6 +29,7 @@ func GetCourierService() Courier {
 
 func NewCourierService(logger *logrus.Logger, store *store.Queries) Courier {
 	courierService = &courierClient{logger, store}
+	logger.Infoln("Courier sevice...OK")
 	return courierService
 }
 

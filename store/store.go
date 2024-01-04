@@ -37,7 +37,7 @@ func InitializeStorage(logger *logrus.Logger, migrationUrl string) error {
 		logrus.Errorf("%s:%v", "DatabasePingError", err.Error())
 		return err
 	} else if err == nil {
-		logrus.Infoln("Database connected")
+		logrus.Infoln("Database connection...OK")
 	}
 
 	dbClient = New(db)
@@ -46,7 +46,7 @@ func InitializeStorage(logger *logrus.Logger, migrationUrl string) error {
 	if err := runDatabaseMigration(db, logger, isDevelopment, migrationUrl); err != nil {
 		logger.Errorf("%s:%v", "ApplyingMigrationErr", err.Error())
 	} else if err == nil {
-		logger.Infoln("Database migration applied")
+		logger.Infoln("Database migration...OK")
 	}
 
 	return nil

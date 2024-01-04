@@ -8,6 +8,7 @@ import (
 	"github.com/3dw1nM0535/uzi-api/config"
 	"github.com/3dw1nM0535/uzi-api/handler"
 	"github.com/3dw1nM0535/uzi-api/logger"
+	"github.com/3dw1nM0535/uzi-api/pkg/aws"
 	"github.com/3dw1nM0535/uzi-api/pkg/cache"
 	"github.com/3dw1nM0535/uzi-api/services"
 	"github.com/3dw1nM0535/uzi-api/store"
@@ -41,6 +42,7 @@ func main() {
 	services.NewUserService(store.GetDatabase(), cache, logger)
 	services.NewSessionService(store.GetDatabase(), logger, configs.Jwt)
 	services.NewCourierService(logger, store.GetDatabase())
+	aws.NewAwsS3Service(configs.Aws, logger)
 
 	// Graphql
 	srv := gqlHandler.NewDefaultServer(uzi.NewExecutableSchema(uzi.New()))

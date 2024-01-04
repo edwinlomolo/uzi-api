@@ -15,6 +15,7 @@ type Configuration struct {
 	Database Database
 	Ipinfo   Ipinfo
 	Jwt      Jwt
+	Aws      Aws
 }
 
 // Env - load env
@@ -36,6 +37,7 @@ func LoadConfig() *Configuration {
 	configuration.Database = databaseConfig()
 	configuration.Ipinfo = ipinfoConfig()
 	configuration.Jwt = jwtConfig()
+	configuration.Aws = awsConfig()
 
 	configAll = &configuration
 
@@ -128,6 +130,19 @@ func jwtConfig() Jwt {
 	jwtConfig.Secret = strings.TrimSpace(os.Getenv("JWTSECRET"))
 
 	return jwtConfig
+}
+
+// awsConfig - get aws config
+func awsConfig() Aws {
+	var awsConfig Aws
+
+	Env()
+
+	awsConfig.AccessKey = strings.TrimSpace(os.Getenv("ACCESS_KEY"))
+	awsConfig.SecretAccessKey = strings.TrimSpace(os.Getenv("SECRET_ACCESS_KEY"))
+	awsConfig.S3.Buckets.Media = strings.TrimSpace(os.Getenv("S3_BUCKET"))
+
+	return awsConfig
 }
 
 func IsDev() bool {
