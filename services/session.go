@@ -9,14 +9,13 @@ import (
 	"github.com/3dw1nM0535/uzi-api/pkg/jwt"
 	"github.com/3dw1nM0535/uzi-api/store"
 	jsonwebtoken "github.com/golang-jwt/jwt/v5"
-	"github.com/google/uuid"
 	"github.com/sirupsen/logrus"
 )
 
 var sessionService Session
 
 type Session interface {
-	SignIn(userID uuid.UUID, ip, phone string) (*model.Session, error)
+	SignIn(user model.User, ip string) (*model.Session, error)
 }
 
 type sessionClient struct {
@@ -36,15 +35,15 @@ func NewSessionService(store *store.Queries, logger *logrus.Logger, jwtConfig co
 	return sessionService
 }
 
-func (sc *sessionClient) SignIn(userID uuid.UUID, ip, phone string) (*model.Session, error) {
-	return sc.createSession(userID, ip, phone)
+func (sc *sessionClient) SignIn(user model.User, ip string) (*model.Session, error) {
+	return sc.createSession(user, ip)
 }
 
-func (sc *sessionClient) createSession(userID uuid.UUID, ip, phone string) (*model.Session, error) {
+func (sc *sessionClient) createSession(user model.User, ip string) (*model.Session, error) {
 	var session model.Session
 
 	claims := jsonwebtoken.MapClaims{
-		"user_id": base64.StdEncoding.EncodeToString([]byte(userID.String())),
+		"user_id": base64.StdEncoding.EncodeToString([]byte(user.ID.String())),
 		"ip":      ip,
 		"exp":     sc.config.Expires,
 		"iss":     "Uzi",
@@ -55,24 +54,24 @@ func (sc *sessionClient) createSession(userID uuid.UUID, ip, phone string) (*mod
 		return nil, signJwtErr
 	}
 
-	isUserOnboarding, isUserOnboardingErr := sc.store.IsUserOnboarding(context.Background(), userID)
+	isUserOnboarding, isUserOnboardingErr := sc.store.IsUserOnboarding(context.Background(), user.ID)
 	if isUserOnboardingErr != nil {
 		return nil, model.UziErr{Err: isUserOnboardingErr.Error(), Message: "isuseronboarding", Code: 500}
 	}
 
-	isCourier, isCourierErr := GetCourierService().IsCourier(userID)
+	isCourier, isCourierErr := GetCourierService().IsCourier(user.ID)
 	if isUserOnboardingErr != nil {
 		return nil, isCourierErr
 	}
 
-	courierStatus, courierStatusErr := GetCourierService().GetCourierStatus(userID)
+	courierStatus, courierStatusErr := GetCourierService().GetCourierStatus(user.ID)
 	if isUserOnboardingErr != nil {
 		return nil, courierStatusErr
 	}
 
 	session.Token = sessionJwt
 	session.IsCourier = isCourier
-	session.Phone = phone
+	session.Phone = user.Phone
 	session.Onboarding = isUserOnboarding
 	session.CourierStatus = &courierStatus
 

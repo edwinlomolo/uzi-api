@@ -40,7 +40,7 @@ func CourierOnboarding() http.HandlerFunc {
 			return
 		}
 
-		session, sessionErr := sessionService.SignIn(updatedUser.ID, ip, updatedUser.Phone)
+		session, sessionErr := sessionService.SignIn(*updatedUser, ip)
 		if sessionErr != nil {
 			http.Error(w, sessionErr.Error(), http.StatusInternalServerError)
 			return

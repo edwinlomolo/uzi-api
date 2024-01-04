@@ -70,7 +70,7 @@ func (c *courierClient) IsCourier(userID uuid.UUID) (bool, error) {
 func (c *courierClient) GetCourierStatus(userID uuid.UUID) (model.CourierStatus, error) {
 	status, err := c.store.GetCourierStatus(context.Background(), uuid.NullUUID{UUID: userID, Valid: true})
 	if err == sql.ErrNoRows {
-		return model.CourierStatusOffline, nil
+		return model.CourierStatusOnboarding, nil
 	} else if err != nil {
 		courierErr := model.UziErr{Err: err.Error(), Message: "getcourierverificationstatus", Code: 500}
 		c.logger.Errorf("%s: %s", courierErr.Message, courierErr.Err)

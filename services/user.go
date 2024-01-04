@@ -110,8 +110,8 @@ func (u *userClient) OnboardUser(user model.SigninInput) (*model.User, error) {
 	var updatedUser model.User
 
 	if len(user.FirstName) == 0 || len(user.LastName) == 0 {
-		inputErr := model.UziErr{Err: errors.New("name can't be empty").Error(), Message: "name can't be empty", Code: 400}
-		u.logger.Errorf("%s: %s", inputErr.Message, inputErr.Err)
+		inputErr := model.UziErr{Err: errors.New("name can't be empty").Error(), Message: "onboarduser", Code: 400}
+		u.logger.Errorf(inputErr.Error())
 		return nil, inputErr
 	}
 
@@ -122,7 +122,7 @@ func (u *userClient) OnboardUser(user model.SigninInput) (*model.User, error) {
 	})
 	if onboardErr != nil {
 		err := model.UziErr{Err: onboardErr.Error(), Message: "updateusername", Code: 500}
-		u.logger.Errorf("%s: %v", err.Message, err.Err)
+		u.logger.Errorf(err.Error())
 		return nil, err
 	}
 
@@ -131,7 +131,7 @@ func (u *userClient) OnboardUser(user model.SigninInput) (*model.User, error) {
 		Onboarding: false,
 	}); err != nil {
 		onboardingErr := model.UziErr{Err: err.Error(), Message: "setuseronboarding", Code: 500}
-		u.logger.Errorf("%s: %v", onboardingErr.Message, onboardingErr.Err)
+		u.logger.Errorf(onboardingErr.Error())
 		return nil, onboardingErr
 	}
 
@@ -141,7 +141,7 @@ func (u *userClient) OnboardUser(user model.SigninInput) (*model.User, error) {
 	updatedUser.Phone = newUser.Phone
 
 	if err := u.cache.Set(user.Phone, &updatedUser); err != nil {
-		return nil, model.UziErr{Err: err.Error(), Message: "cache set err", Code: 500}
+		return nil, model.UziErr{Err: err.Error(), Message: "usercacheset", Code: 500}
 	}
 
 	return &updatedUser, nil
