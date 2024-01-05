@@ -40,10 +40,6 @@ enum CourierStatus {
   OFFLINE
   ONLINE
   ONBOARDING
-  DL
-  PC
-  ID
-  DP
 }
 
 type Courier {
