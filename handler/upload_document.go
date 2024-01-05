@@ -16,13 +16,6 @@ func UploadDocument() http.HandlerFunc {
 		logger := logger.GetLogger()
 		s3Service := aws.GetS3Service()
 
-		if r.FormValue("reason") == "" {
-			uziErr := model.UziErr{Err: errors.New("provide reason for upload").Error(), Message: "uploadimage", Code: http.StatusBadRequest}
-			logger.Errorf(uziErr.Error())
-			http.Error(w, uziErr.Error(), uziErr.Code)
-			return
-		}
-
 		err := r.ParseMultipartForm(maxSize)
 		if err != nil {
 			uziErr := model.UziErr{Err: errors.New("FileTooLarge").Error(), Message: "uploadimage", Code: http.StatusBadRequest}
