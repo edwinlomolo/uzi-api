@@ -72,6 +72,7 @@ type Trip struct {
 type Uploads struct {
 	Type      string     `json:"type"`
 	URI       string     `json:"uri"`
+	Verified  bool       `json:"verified"`
 	CourierID *uuid.UUID `json:"courier_id,omitempty"`
 	UserID    *uuid.UUID `json:"user_id,omitempty"`
 	CreatedAt *time.Time `json:"created_at,omitempty"`
@@ -178,17 +179,17 @@ func (e TripStatus) MarshalGQL(w io.Writer) {
 type UploadFile string
 
 const (
-	UploadFileDp UploadFile = "DP"
-	UploadFileDl UploadFile = "DL"
-	UploadFileID UploadFile = "ID"
-	UploadFilePc UploadFile = "PC"
-	UploadFileLb UploadFile = "LB"
-	UploadFileVi UploadFile = "VI"
+	UploadFileDp  UploadFile = "DP"
+	UploadFileMcr UploadFile = "MCR"
+	UploadFileID  UploadFile = "ID"
+	UploadFilePc  UploadFile = "PC"
+	UploadFileLb  UploadFile = "LB"
+	UploadFileVi  UploadFile = "VI"
 )
 
 var AllUploadFile = []UploadFile{
 	UploadFileDp,
-	UploadFileDl,
+	UploadFileMcr,
 	UploadFileID,
 	UploadFilePc,
 	UploadFileLb,
@@ -197,7 +198,7 @@ var AllUploadFile = []UploadFile{
 
 func (e UploadFile) IsValid() bool {
 	switch e {
-	case UploadFileDp, UploadFileDl, UploadFileID, UploadFilePc, UploadFileLb, UploadFileVi:
+	case UploadFileDp, UploadFileMcr, UploadFileID, UploadFilePc, UploadFileLb, UploadFileVi:
 		return true
 	}
 	return false

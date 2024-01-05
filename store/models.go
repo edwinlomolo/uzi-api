@@ -60,6 +60,7 @@ type Upload struct {
 	ID        uuid.UUID
 	Type      string
 	Uri       string
+	Verified  bool
 	CourierID uuid.NullUUID
 	UserID    uuid.NullUUID
 	CreatedAt time.Time

@@ -108,7 +108,7 @@ INSERT INTO uploads (
 ) VALUES (
   $1, $2, $3
 )
-RETURNING id, type, uri, courier_id, user_id, created_at, updated_at
+RETURNING id, type, uri, verified, courier_id, user_id, created_at, updated_at
 `
 
 type CreateCourierUploadParams struct {
@@ -124,6 +124,7 @@ func (q *Queries) CreateCourierUpload(ctx context.Context, arg CreateCourierUplo
 		&i.ID,
 		&i.Type,
 		&i.Uri,
+		&i.Verified,
 		&i.CourierID,
 		&i.UserID,
 		&i.CreatedAt,
@@ -230,7 +231,7 @@ INSERT INTO uploads (
 ) VALUES (
   $1, $2, $3
 )
-RETURNING id, type, uri, courier_id, user_id, created_at, updated_at
+RETURNING id, type, uri, verified, courier_id, user_id, created_at, updated_at
 `
 
 type CreateUserUploadParams struct {
@@ -246,6 +247,7 @@ func (q *Queries) CreateUserUpload(ctx context.Context, arg CreateUserUploadPara
 		&i.ID,
 		&i.Type,
 		&i.Uri,
+		&i.Verified,
 		&i.CourierID,
 		&i.UserID,
 		&i.CreatedAt,
@@ -337,7 +339,7 @@ func (q *Queries) GetCourierStatus(ctx context.Context, userID uuid.NullUUID) (s
 }
 
 const getCourierUpload = `-- name: GetCourierUpload :one
-SELECT id, type, uri, courier_id, user_id, created_at, updated_at FROM
+SELECT id, type, uri, verified, courier_id, user_id, created_at, updated_at FROM
 uploads
 WHERE courier_id = $1 AND type = $2
 LIMIT 1
@@ -355,6 +357,7 @@ func (q *Queries) GetCourierUpload(ctx context.Context, arg GetCourierUploadPara
 		&i.ID,
 		&i.Type,
 		&i.Uri,
+		&i.Verified,
 		&i.CourierID,
 		&i.UserID,
 		&i.CreatedAt,
@@ -479,7 +482,7 @@ const updateUpload = `-- name: UpdateUpload :one
 UPDATE uploads
 SET uri = COALESCE($1, uri)
 WHERE id = $2
-RETURNING id, type, uri, courier_id, user_id, created_at, updated_at
+RETURNING id, type, uri, verified, courier_id, user_id, created_at, updated_at
 `
 
 type UpdateUploadParams struct {
@@ -494,6 +497,7 @@ func (q *Queries) UpdateUpload(ctx context.Context, arg UpdateUploadParams) (Upl
 		&i.ID,
 		&i.Type,
 		&i.Uri,
+		&i.Verified,
 		&i.CourierID,
 		&i.UserID,
 		&i.CreatedAt,

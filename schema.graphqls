@@ -20,7 +20,7 @@ type Session {
 
 enum UploadFile {
   DP
-  DL
+  MCR
   ID
   PC
   LB
@@ -30,6 +30,7 @@ enum UploadFile {
 type Uploads {
   type: String!
   uri: String!
+  verified: Boolean!
   courier_id: UUID
   user_id: UUID
   created_at: Time
