@@ -17,6 +17,7 @@ func Signin() http.HandlerFunc {
 		logger := logger.GetLogger()
 		userService := services.GetUserService()
 		sessionService := services.GetSessionService()
+		courierService := services.GetCourierService()
 		userIp := GetIp(r)
 
 		body, bodyErr := io.ReadAll(r.Body)
@@ -38,6 +39,14 @@ func Signin() http.HandlerFunc {
 		if findUserErr != nil {
 			http.Error(w, findUserErr.Error(), http.StatusInternalServerError)
 			return
+		}
+
+		if loginInput.Courier {
+			_, courierErr := courierService.FindOrCreate(findUser.ID)
+			if courierErr != nil {
+				http.Error(w, courierErr.Error(), http.StatusInternalServerError)
+				return
+			}
 		}
 
 		findSession, findSessionErr := sessionService.SignIn(*findUser, userIp)

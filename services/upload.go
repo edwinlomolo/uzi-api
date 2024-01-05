@@ -3,6 +3,7 @@ package services
 import (
 	"context"
 	"database/sql"
+	"net/http"
 
 	"github.com/3dw1nM0535/uzi-api/model"
 	"github.com/3dw1nM0535/uzi-api/pkg/aws"
@@ -16,6 +17,7 @@ var uploadService Upload
 type Upload interface {
 	CreateCourierUpload(reason, uri string, courierID uuid.UUID) error
 	CreateUserUpload(reason, uri string, userID uuid.UUID) error
+	GetCourierUploads(courierID uuid.UUID) ([]*model.Uploads, error)
 }
 
 func GetUploadService() Upload { return uploadService }
@@ -108,4 +110,29 @@ func (u *uploadClient) createUserUpload(reason, uri string, ID uuid.UUID) error 
 	}
 
 	return u.updateUpload(uri, foundUpload.ID)
+}
+
+func (u *uploadClient) GetCourierUploads(courierID uuid.UUID) ([]*model.Uploads, error) {
+	var uploads []*model.Uploads
+
+	args := uuid.NullUUID{UUID: courierID, Valid: true}
+	uplds, uploadsErr := u.store.GetCourierUploads(context.Background(), args)
+	if uploadsErr != nil {
+		uziErr := model.UziErr{Err: uploadsErr.Error(), Message: "getcourieruploads", Code: http.StatusInternalServerError}
+		u.logger.Errorf(uziErr.Error())
+		return nil, uziErr
+	}
+
+	for _, i := range uplds {
+		upload := &model.Uploads{
+			ID:       i.ID,
+			URI:      i.Uri,
+			Type:     i.Type,
+			Verified: i.Verified,
+		}
+
+		uploads = append(uploads, upload)
+	}
+
+	return uploads, nil
 }

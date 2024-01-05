@@ -17,6 +17,7 @@ type Courier interface {
 	FindOrCreate(userID uuid.UUID) (*model.Courier, error)
 	IsCourier(userID uuid.UUID) (bool, error)
 	GetCourierStatus(userID uuid.UUID) (model.CourierStatus, error)
+	GetCourier(userID uuid.UUID) (*model.Courier, error)
 }
 
 type courierClient struct {
@@ -97,4 +98,8 @@ func (c *courierClient) getCourier(userID uuid.UUID) (*model.Courier, error) {
 	courier.UserID = foundCourier.UserID.UUID
 
 	return &courier, nil
+}
+
+func (c *courierClient) GetCourier(userID uuid.UUID) (*model.Courier, error) {
+	return c.getCourier(userID)
 }

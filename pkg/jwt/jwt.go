@@ -1,7 +1,8 @@
 package jwt
 
 import (
-	"fmt"
+	"errors"
+	"net/http"
 
 	"github.com/3dw1nM0535/uzi-api/config"
 	"github.com/3dw1nM0535/uzi-api/model"
@@ -9,6 +10,8 @@ import (
 	jsonwebtoken "github.com/golang-jwt/jwt/v5"
 	"github.com/sirupsen/logrus"
 )
+
+var jwtService Jwt
 
 type Jwt interface {
 	Sign(secret []byte, claims jwt.Claims) (string, error)
@@ -20,15 +23,19 @@ type jwtclient struct {
 	config config.Jwt
 }
 
+func GetJwtService() Jwt { return jwtService }
+
 func NewJwtClient(logger *logrus.Logger, config config.Jwt) Jwt {
-	return &jwtclient{logger, config}
+	jwtService = &jwtclient{logger, config}
+	return jwtService
 }
 
 func (jwtc *jwtclient) Sign(secret []byte, claims jwt.Claims) (string, error) {
 	token, signJwtErr := jsonwebtoken.NewWithClaims(jsonwebtoken.SigningMethodHS256, claims).SignedString(secret)
 	if signJwtErr != nil {
-		jwtc.logger.Errorf("%s-%v", "SignJwtErr", signJwtErr.Error())
-		return "", &model.UziErr{Err: signJwtErr.Error(), Message: "signjwt", Code: 401}
+		uziErr := model.UziErr{Err: signJwtErr.Error(), Message: "signjwt", Code: http.StatusUnauthorized}
+		jwtc.logger.Errorf(uziErr.Error())
+		return "", uziErr
 	}
 
 	return token, nil
@@ -37,8 +44,9 @@ func (jwtc *jwtclient) Sign(secret []byte, claims jwt.Claims) (string, error) {
 func (jwtc *jwtclient) Validate(jwt string) (*jwt.Token, error) {
 	keyFunc := func(tkn *jsonwebtoken.Token) (interface{}, error) {
 		if _, ok := tkn.Method.(*jsonwebtoken.SigningMethodHMAC); !ok {
-			jwtc.logger.Errorf("%s-%v", "TokenParseErr", "invalid signing algorithm")
-			return nil, fmt.Errorf("%s-%v", "invalid signing algorithm", tkn.Header["alg"])
+			uziErr := model.UziErr{Err: errors.New("TokenParser").Error(), Message: "invalidsigningalg", Code: http.StatusUnauthorized}
+			jwtc.logger.Errorf(uziErr.Error())
+			return nil, uziErr
 		}
 
 		return []byte(jwtc.config.Secret), nil
@@ -46,8 +54,9 @@ func (jwtc *jwtclient) Validate(jwt string) (*jwt.Token, error) {
 
 	token, tokenErr := jsonwebtoken.Parse(jwt, keyFunc)
 	if tokenErr != nil {
-		jwtc.logger.Errorf("%s-%v", "TokenParseErr", tokenErr.Error())
-		return nil, &model.UziErr{Err: tokenErr.Error(), Message: "invalid token", Code: 401}
+		uziErr := model.UziErr{Err: tokenErr.Error(), Message: "invalidtoken", Code: http.StatusUnauthorized}
+		jwtc.logger.Errorf(uziErr.Error())
+		return nil, uziErr
 	}
 
 	return token, nil

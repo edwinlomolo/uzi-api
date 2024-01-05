@@ -43,6 +43,10 @@ uploads
 WHERE courier_id = $1 AND type = $2
 LIMIT 1;
 
+-- name: GetCourierUploads :many
+SELECT * FROM uploads
+WHERE courier_id = $1;
+
 -- name: UpdateUpload :one
 UPDATE uploads
 SET uri = COALESCE($1, uri)

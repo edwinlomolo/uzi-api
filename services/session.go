@@ -43,10 +43,10 @@ func (sc *sessionClient) createSession(user model.User, ip string) (*model.Sessi
 	var session model.Session
 
 	claims := jsonwebtoken.MapClaims{
-		"user_id": base64.StdEncoding.EncodeToString([]byte(user.ID.String())),
-		"ip":      ip,
-		"exp":     sc.config.Expires,
-		"iss":     "Uzi",
+		"userID": base64.StdEncoding.EncodeToString([]byte(user.ID.String())),
+		"ip":     ip,
+		"exp":    sc.config.Expires,
+		"iss":    "Uzi",
 	}
 
 	sessionJwt, signJwtErr := sc.jwtClient.Sign([]byte(sc.config.Secret), claims)

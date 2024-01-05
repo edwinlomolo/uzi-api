@@ -70,6 +70,7 @@ type Trip struct {
 }
 
 type Uploads struct {
+	ID        uuid.UUID  `json:"ID"`
 	Type      string     `json:"type"`
 	URI       string     `json:"uri"`
 	Verified  bool       `json:"verified"`

@@ -10,6 +10,7 @@ import (
 	"github.com/3dw1nM0535/uzi-api/logger"
 	"github.com/3dw1nM0535/uzi-api/pkg/aws"
 	"github.com/3dw1nM0535/uzi-api/pkg/cache"
+	"github.com/3dw1nM0535/uzi-api/pkg/middleware"
 	"github.com/3dw1nM0535/uzi-api/services"
 	"github.com/3dw1nM0535/uzi-api/store"
 	gqlHandler "github.com/99designs/gqlgen/graphql/handler"
@@ -51,7 +52,7 @@ func main() {
 	// Routes
 	r.Get("/ipinfo", handler.Ipinfo())
 	r.Get("/", playground.Handler("GraphQL playground", "/query"))
-	r.Handle("/api", srv)
+	r.Handle("/api", middleware.Auth(srv))
 	r.Post("/signin", handler.Signin())
 	r.Post("/courier/onboard", handler.CourierOnboarding())
 	r.Post("/courier/upload/document", handler.UploadDocument())

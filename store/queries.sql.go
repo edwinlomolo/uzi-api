@@ -366,6 +366,43 @@ func (q *Queries) GetCourierUpload(ctx context.Context, arg GetCourierUploadPara
 	return i, err
 }
 
+const getCourierUploads = `-- name: GetCourierUploads :many
+SELECT id, type, uri, verified, courier_id, user_id, created_at, updated_at FROM uploads
+WHERE courier_id = $1
+`
+
+func (q *Queries) GetCourierUploads(ctx context.Context, courierID uuid.NullUUID) ([]Upload, error) {
+	rows, err := q.db.QueryContext(ctx, getCourierUploads, courierID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []Upload
+	for rows.Next() {
+		var i Upload
+		if err := rows.Scan(
+			&i.ID,
+			&i.Type,
+			&i.Uri,
+			&i.Verified,
+			&i.CourierID,
+			&i.UserID,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const isCourier = `-- name: IsCourier :one
 SELECT verified FROM
 couriers

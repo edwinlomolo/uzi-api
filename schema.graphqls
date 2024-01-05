@@ -28,6 +28,7 @@ enum UploadFile {
 }
 
 type Uploads {
+  ID: UUID!
   type: String!
   uri: String!
   verified: Boolean!
@@ -101,10 +102,16 @@ type Product {
 
 type Query {
   hello: String!
+  getCourierDocuments: [Uploads!]!
+}
+
+type Mutation {
+  createCourierDocument: Uploads!
 }
 
 schema {
   query: Query
+  mutation: Mutation
 }
 
 scalar Time
