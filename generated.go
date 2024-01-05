@@ -5296,7 +5296,7 @@ func (ec *executionContext) unmarshalInputCourierUploadInput(ctx context.Context
 		switch k {
 		case "type":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("type"))
-			data, err := ec.unmarshalNString2string(ctx, v)
+			data, err := ec.unmarshalNUploadFile2githubᚗcomᚋ3dw1nM0535ᚋuziᚑapiᚋmodelᚐUploadFile(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -6394,6 +6394,16 @@ func (ec *executionContext) marshalNUUID2githubᚗcomᚋgoogleᚋuuidᚐUUID(ctx
 		}
 	}
 	return res
+}
+
+func (ec *executionContext) unmarshalNUploadFile2githubᚗcomᚋ3dw1nM0535ᚋuziᚑapiᚋmodelᚐUploadFile(ctx context.Context, v interface{}) (model.UploadFile, error) {
+	var res model.UploadFile
+	err := res.UnmarshalGQL(v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNUploadFile2githubᚗcomᚋ3dw1nM0535ᚋuziᚑapiᚋmodelᚐUploadFile(ctx context.Context, sel ast.SelectionSet, v model.UploadFile) graphql.Marshaler {
+	return v
 }
 
 func (ec *executionContext) marshalNUploads2ᚕᚖgithubᚗcomᚋ3dw1nM0535ᚋuziᚑapiᚋmodelᚐUploadsᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.Uploads) graphql.Marshaler {

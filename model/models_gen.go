@@ -26,8 +26,8 @@ type Courier struct {
 }
 
 type CourierUploadInput struct {
-	Type string `json:"type"`
-	URI  string `json:"uri"`
+	Type UploadFile `json:"type"`
+	URI  string     `json:"uri"`
 }
 
 type Gps struct {

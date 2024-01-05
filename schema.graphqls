@@ -110,7 +110,7 @@ type Mutation {
 }
 
 input CourierUploadInput {
-  type: String!
+  type: UploadFile!
   uri: String!
 }
 

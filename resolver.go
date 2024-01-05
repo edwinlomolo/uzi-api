@@ -40,7 +40,7 @@ func (r *queryResolver) GetCourierDocuments(ctx context.Context) ([]*model.Uploa
 func (r *mutationResolver) CreateCourierDocument(ctx context.Context, doc model.CourierUploadInput) (bool, error) {
 	courierID := GetCourierIDFromRequestContext(ctx)
 
-	err := r.CreateCourierUpload(doc.Type, doc.URI, courierID)
+	err := r.CreateCourierUpload(doc.Type.String(), doc.URI, courierID)
 	if err != nil {
 		return false, err
 	}
