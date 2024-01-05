@@ -69,7 +69,7 @@ type ComplexityRoot struct {
 	}
 
 	Mutation struct {
-		CreateCourierDocument func(childComplexity int) int
+		CreateCourierDocument func(childComplexity int, input model.CourierUploadInput) int
 	}
 
 	Product struct {
@@ -140,7 +140,7 @@ type ComplexityRoot struct {
 }
 
 type MutationResolver interface {
-	CreateCourierDocument(ctx context.Context) (*model.Uploads, error)
+	CreateCourierDocument(ctx context.Context, input model.CourierUploadInput) (bool, error)
 }
 type QueryResolver interface {
 	Hello(ctx context.Context) (string, error)
@@ -262,7 +262,12 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			break
 		}
 
-		return e.complexity.Mutation.CreateCourierDocument(childComplexity), true
+		args, err := ec.field_Mutation_createCourierDocument_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.CreateCourierDocument(childComplexity, args["input"].(model.CourierUploadInput)), true
 
 	case "Product.created_at":
 		if e.complexity.Product.CreatedAt == nil {
@@ -586,7 +591,9 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 	rc := graphql.GetOperationContext(ctx)
 	ec := executionContext{rc, e, 0, 0, make(chan graphql.DeferredResult)}
-	inputUnmarshalMap := graphql.BuildUnmarshalerMap()
+	inputUnmarshalMap := graphql.BuildUnmarshalerMap(
+		ec.unmarshalInputCourierUploadInput,
+	)
 	first := true
 
 	switch rc.Operation.Operation {
@@ -701,6 +708,21 @@ var parsedSchema = gqlparser.MustLoadSchema(sources...)
 // endregion ************************** generated!.gotpl **************************
 
 // region    ***************************** args.gotpl *****************************
+
+func (ec *executionContext) field_Mutation_createCourierDocument_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 model.CourierUploadInput
+	if tmp, ok := rawArgs["input"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
+		arg0, err = ec.unmarshalNCourierUploadInput2githubᚗcomᚋ3dw1nM0535ᚋuziᚑapiᚋmodelᚐCourierUploadInput(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["input"] = arg0
+	return args, nil
+}
 
 func (ec *executionContext) field_Query___type_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
@@ -1329,7 +1351,7 @@ func (ec *executionContext) _Mutation_createCourierDocument(ctx context.Context,
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Mutation().CreateCourierDocument(rctx)
+		return ec.resolvers.Mutation().CreateCourierDocument(rctx, fc.Args["input"].(model.CourierUploadInput))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -1341,9 +1363,9 @@ func (ec *executionContext) _Mutation_createCourierDocument(ctx context.Context,
 		}
 		return graphql.Null
 	}
-	res := resTmp.(*model.Uploads)
+	res := resTmp.(bool)
 	fc.Result = res
-	return ec.marshalNUploads2ᚖgithubᚗcomᚋ3dw1nM0535ᚋuziᚑapiᚋmodelᚐUploads(ctx, field.Selections, res)
+	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Mutation_createCourierDocument(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -1353,26 +1375,19 @@ func (ec *executionContext) fieldContext_Mutation_createCourierDocument(ctx cont
 		IsMethod:   true,
 		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			switch field.Name {
-			case "ID":
-				return ec.fieldContext_Uploads_ID(ctx, field)
-			case "type":
-				return ec.fieldContext_Uploads_type(ctx, field)
-			case "uri":
-				return ec.fieldContext_Uploads_uri(ctx, field)
-			case "verified":
-				return ec.fieldContext_Uploads_verified(ctx, field)
-			case "courier_id":
-				return ec.fieldContext_Uploads_courier_id(ctx, field)
-			case "user_id":
-				return ec.fieldContext_Uploads_user_id(ctx, field)
-			case "created_at":
-				return ec.fieldContext_Uploads_created_at(ctx, field)
-			case "updated_at":
-				return ec.fieldContext_Uploads_updated_at(ctx, field)
-			}
-			return nil, fmt.Errorf("no field named %q was found under type Uploads", field.Name)
+			return nil, errors.New("field of type Boolean does not have child fields")
 		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_createCourierDocument_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
 	}
 	return fc, nil
 }
@@ -2859,14 +2874,11 @@ func (ec *executionContext) _Uploads_type(ctx context.Context, field graphql.Col
 		return graphql.Null
 	}
 	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
 		return graphql.Null
 	}
-	res := resTmp.(string)
+	res := resTmp.(*string)
 	fc.Result = res
-	return ec.marshalNString2string(ctx, field.Selections, res)
+	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Uploads_type(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -2903,14 +2915,11 @@ func (ec *executionContext) _Uploads_uri(ctx context.Context, field graphql.Coll
 		return graphql.Null
 	}
 	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
 		return graphql.Null
 	}
-	res := resTmp.(string)
+	res := resTmp.(*string)
 	fc.Result = res
-	return ec.marshalNString2string(ctx, field.Selections, res)
+	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Uploads_uri(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -5271,6 +5280,40 @@ func (ec *executionContext) fieldContext___Type_specifiedByURL(ctx context.Conte
 
 // region    **************************** input.gotpl *****************************
 
+func (ec *executionContext) unmarshalInputCourierUploadInput(ctx context.Context, obj interface{}) (model.CourierUploadInput, error) {
+	var it model.CourierUploadInput
+	asMap := map[string]interface{}{}
+	for k, v := range obj.(map[string]interface{}) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"type", "uri"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "type":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("type"))
+			data, err := ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Type = data
+		case "uri":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("uri"))
+			data, err := ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.URI = data
+		}
+	}
+
+	return it, nil
+}
+
 // endregion **************************** input.gotpl *****************************
 
 // region    ************************** interface.gotpl ***************************
@@ -5802,14 +5845,8 @@ func (ec *executionContext) _Uploads(ctx context.Context, sel ast.SelectionSet, 
 			}
 		case "type":
 			out.Values[i] = ec._Uploads_type(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
 		case "uri":
 			out.Values[i] = ec._Uploads_uri(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
 		case "verified":
 			out.Values[i] = ec._Uploads_verified(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
@@ -6259,6 +6296,11 @@ func (ec *executionContext) marshalNCourierStatus2githubᚗcomᚋ3dw1nM0535ᚋuz
 	return v
 }
 
+func (ec *executionContext) unmarshalNCourierUploadInput2githubᚗcomᚋ3dw1nM0535ᚋuziᚑapiᚋmodelᚐCourierUploadInput(ctx context.Context, v interface{}) (model.CourierUploadInput, error) {
+	res, err := ec.unmarshalInputCourierUploadInput(ctx, v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
 func (ec *executionContext) unmarshalNFloat2float64(ctx context.Context, v interface{}) (float64, error) {
 	res, err := graphql.UnmarshalFloatContext(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
@@ -6352,10 +6394,6 @@ func (ec *executionContext) marshalNUUID2githubᚗcomᚋgoogleᚋuuidᚐUUID(ctx
 		}
 	}
 	return res
-}
-
-func (ec *executionContext) marshalNUploads2githubᚗcomᚋ3dw1nM0535ᚋuziᚑapiᚋmodelᚐUploads(ctx context.Context, sel ast.SelectionSet, v model.Uploads) graphql.Marshaler {
-	return ec._Uploads(ctx, sel, &v)
 }
 
 func (ec *executionContext) marshalNUploads2ᚕᚖgithubᚗcomᚋ3dw1nM0535ᚋuziᚑapiᚋmodelᚐUploadsᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.Uploads) graphql.Marshaler {

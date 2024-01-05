@@ -63,6 +63,8 @@ func (u *uploadClient) createCourierUpload(reason, uri string, id uuid.UUID) err
 			u.logger.Errorf(uziErr.Error())
 			return createErr
 		}
+
+		return nil
 	} else if getErr != nil {
 		uziErr := model.UziErr{Err: getErr.Error(), Message: "getcourierupload", Code: 500}
 		u.logger.Errorf(uziErr.Error())
@@ -126,8 +128,8 @@ func (u *uploadClient) GetCourierUploads(courierID uuid.UUID) ([]*model.Uploads,
 	for _, i := range uplds {
 		upload := &model.Uploads{
 			ID:       i.ID,
-			URI:      i.Uri,
-			Type:     i.Type,
+			URI:      &i.Uri,
+			Type:     &i.Type,
 			Verified: i.Verified,
 		}
 

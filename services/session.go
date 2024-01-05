@@ -45,7 +45,7 @@ func (sc *sessionClient) createSession(user model.User, ip string) (*model.Sessi
 	claims := jsonwebtoken.MapClaims{
 		"userID": base64.StdEncoding.EncodeToString([]byte(user.ID.String())),
 		"ip":     ip,
-		"exp":    sc.config.Expires,
+		"exp":    sc.config.Expires.Unix(),
 		"iss":    "Uzi",
 	}
 

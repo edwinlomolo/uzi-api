@@ -25,6 +25,11 @@ type Courier struct {
 	UpdatedAt      *time.Time    `json:"updated_at,omitempty"`
 }
 
+type CourierUploadInput struct {
+	Type string `json:"type"`
+	URI  string `json:"uri"`
+}
+
 type Gps struct {
 	Lat float64 `json:"lat"`
 	Lng float64 `json:"lng"`
@@ -71,8 +76,8 @@ type Trip struct {
 
 type Uploads struct {
 	ID        uuid.UUID  `json:"ID"`
-	Type      string     `json:"type"`
-	URI       string     `json:"uri"`
+	Type      *string    `json:"type,omitempty"`
+	URI       *string    `json:"uri,omitempty"`
 	Verified  bool       `json:"verified"`
 	CourierID *uuid.UUID `json:"courier_id,omitempty"`
 	UserID    *uuid.UUID `json:"user_id,omitempty"`

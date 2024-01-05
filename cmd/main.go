@@ -51,7 +51,7 @@ func main() {
 
 	// Routes
 	r.Get("/ipinfo", handler.Ipinfo())
-	r.Get("/", playground.Handler("GraphQL playground", "/query"))
+	r.Get("/", playground.Handler("GraphQL playground", "/api"))
 	r.Handle("/api", middleware.Auth(srv))
 	r.Post("/signin", handler.Signin())
 	r.Post("/courier/onboard", handler.CourierOnboarding())

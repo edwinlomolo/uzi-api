@@ -29,8 +29,8 @@ enum UploadFile {
 
 type Uploads {
   ID: UUID!
-  type: String!
-  uri: String!
+  type: String
+  uri: String
   verified: Boolean!
   courier_id: UUID
   user_id: UUID
@@ -106,8 +106,14 @@ type Query {
 }
 
 type Mutation {
-  createCourierDocument: Uploads!
+  createCourierDocument(input: CourierUploadInput!): Boolean!
 }
+
+input CourierUploadInput {
+  type: String!
+  uri: String!
+}
+
 
 schema {
   query: Query
