@@ -44,7 +44,7 @@ func (jwtc *jwtclient) Sign(secret []byte, claims jwt.Claims) (string, error) {
 func (jwtc *jwtclient) Validate(jwt string) (*jwt.Token, error) {
 	keyFunc := func(tkn *jsonwebtoken.Token) (interface{}, error) {
 		if _, ok := tkn.Method.(*jsonwebtoken.SigningMethodHMAC); !ok {
-			uziErr := model.UziErr{Err: errors.New("TokenParser").Error(), Message: "invalidsigningalg", Code: http.StatusUnauthorized}
+			uziErr := model.UziErr{Err: errors.New("TokenParser").Error(), Message: "invalidsigningalgorithm", Code: http.StatusUnauthorized}
 			jwtc.logger.Errorf(uziErr.Error())
 			return nil, uziErr
 		}
