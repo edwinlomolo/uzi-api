@@ -23,7 +23,7 @@ func Env() {
 	// Load os env
 	err := godotenv.Load()
 	if err != nil {
-		logrus.Errorf("Error loading .env variable: %v", err)
+		logrus.Errorf(".env: %v", err)
 	}
 }
 
