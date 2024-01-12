@@ -298,6 +298,27 @@ func (q *Queries) FindByPhone(ctx context.Context, phone string) (User, error) {
 	return i, err
 }
 
+const findUserByID = `-- name: FindUserByID :one
+SELECT id, first_name, last_name, phone, onboarding, created_at, updated_at FROM users
+WHERE id = $1
+LIMIT 1
+`
+
+func (q *Queries) FindUserByID(ctx context.Context, id uuid.UUID) (User, error) {
+	row := q.db.QueryRowContext(ctx, findUserByID, id)
+	var i User
+	err := row.Scan(
+		&i.ID,
+		&i.FirstName,
+		&i.LastName,
+		&i.Phone,
+		&i.Onboarding,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
 const getCourier = `-- name: GetCourier :one
 SELECT id, verified, status, location, rating, points, vehicle_id, user_id, trip_id, created_at, updated_at FROM
 couriers

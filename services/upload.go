@@ -5,8 +5,8 @@ import (
 	"database/sql"
 	"net/http"
 
+	"github.com/3dw1nM0535/uzi-api/aws"
 	"github.com/3dw1nM0535/uzi-api/model"
-	"github.com/3dw1nM0535/uzi-api/pkg/aws"
 	"github.com/3dw1nM0535/uzi-api/store"
 	"github.com/google/uuid"
 	"github.com/sirupsen/logrus"

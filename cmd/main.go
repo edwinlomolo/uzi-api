@@ -5,12 +5,12 @@ import (
 	"net/http"
 
 	uzi "github.com/3dw1nM0535/uzi-api"
+	"github.com/3dw1nM0535/uzi-api/aws"
+	"github.com/3dw1nM0535/uzi-api/cache"
 	"github.com/3dw1nM0535/uzi-api/config"
 	"github.com/3dw1nM0535/uzi-api/handler"
 	"github.com/3dw1nM0535/uzi-api/logger"
-	"github.com/3dw1nM0535/uzi-api/pkg/aws"
-	"github.com/3dw1nM0535/uzi-api/pkg/cache"
-	"github.com/3dw1nM0535/uzi-api/pkg/middleware"
+	"github.com/3dw1nM0535/uzi-api/middleware"
 	"github.com/3dw1nM0535/uzi-api/services"
 	"github.com/3dw1nM0535/uzi-api/store"
 	gqlHandler "github.com/99designs/gqlgen/graphql/handler"
@@ -26,19 +26,11 @@ func main() {
 	r.Use(cors.AllowAll().Handler)
 	r.Use(handler.Logger)
 
-	// Configs
-	configs := config.LoadConfig()
-
-	// Logger
-	logger := logger.NewLogger()
-
-	// Store
-	store.InitializeStorage(logger, "./store/migrations")
-
-	// Cache
-	cache := cache.NewCache(configs.Database.Redis, logger)
-
 	// Services
+	configs := config.LoadConfig()
+	logger := logger.NewLogger()
+	store.InitializeStorage(logger, "./store/migrations")
+	cache := cache.NewCache(configs.Database.Redis, logger)
 	services.NewIpinfoService(cache, configs.Ipinfo, logger)
 	services.NewUserService(store.GetDatabase(), cache, logger)
 	services.NewSessionService(store.GetDatabase(), logger, configs.Jwt)

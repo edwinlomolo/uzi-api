@@ -11,6 +11,11 @@ SELECT * FROM users
 WHERE phone = $1
 LIMIT 1;
 
+-- name: FindUserByID :one
+SELECT * FROM users
+WHERE id = $1
+LIMIT 1;
+
 -- name: IsUserOnboarding :one
 SELECT onboarding FROM
 users

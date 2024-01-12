@@ -5,8 +5,8 @@ import (
 	"encoding/base64"
 
 	"github.com/3dw1nM0535/uzi-api/config"
+	"github.com/3dw1nM0535/uzi-api/jwt"
 	"github.com/3dw1nM0535/uzi-api/model"
-	"github.com/3dw1nM0535/uzi-api/pkg/jwt"
 	"github.com/3dw1nM0535/uzi-api/store"
 	jsonwebtoken "github.com/golang-jwt/jwt/v5"
 	"github.com/sirupsen/logrus"

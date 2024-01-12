@@ -7,9 +7,9 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/3dw1nM0535/uzi-api/jwt"
 	"github.com/3dw1nM0535/uzi-api/logger"
 	"github.com/3dw1nM0535/uzi-api/model"
-	"github.com/3dw1nM0535/uzi-api/pkg/jwt"
 	jsonwebtoken "github.com/golang-jwt/jwt/v5"
 )
 
@@ -23,6 +23,7 @@ func Auth(h http.Handler) http.HandlerFunc {
 		jwt, jwtErr := validateAuthorizationHeader(r)
 		if jwtErr != nil {
 			http.Error(w, jwtErr.Error(), http.StatusUnauthorized)
+			return
 		}
 
 		if claims, ok := jwt.Claims.(jsonwebtoken.MapClaims); ok && jwt.Valid {
