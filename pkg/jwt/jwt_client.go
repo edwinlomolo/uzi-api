@@ -12,11 +12,6 @@ import (
 
 var jwtService Jwt
 
-type Jwt interface {
-	Sign(secret []byte, claims jsonwebtoken.Claims) (string, error)
-	Validate(token string) (*jsonwebtoken.Token, error)
-}
-
 type jwtclient struct {
 	logger *logrus.Logger
 	config config.Jwt

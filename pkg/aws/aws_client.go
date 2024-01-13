@@ -17,10 +17,6 @@ import (
 
 var awsService Aws
 
-type Aws interface {
-	UploadImage(multipart.File, *multipart.FileHeader) (string, error)
-}
-
 type awsClient struct {
 	s3     *manager.Uploader
 	config config.Aws

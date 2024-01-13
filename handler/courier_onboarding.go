@@ -6,8 +6,8 @@ import (
 	"io"
 	"net/http"
 
-	"github.com/3dw1nM0535/uzi-api/logger"
 	"github.com/3dw1nM0535/uzi-api/model"
+	"github.com/3dw1nM0535/uzi-api/pkg/logger"
 	"github.com/3dw1nM0535/uzi-api/services"
 )
 
