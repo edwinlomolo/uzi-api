@@ -4,19 +4,22 @@ import (
 	"context"
 
 	"github.com/3dw1nM0535/uzi-api/model"
-	"github.com/3dw1nM0535/uzi-api/services"
+	"github.com/3dw1nM0535/uzi-api/services/courier"
+	"github.com/3dw1nM0535/uzi-api/services/upload"
 	"github.com/google/uuid"
 )
 
 // THIS CODE IS A STARTING POINT ONLY. IT WILL NOT BE UPDATED WITH SCHEMA CHANGES.
 
 type Resolver struct {
-	services.Upload
+	upload.Upload
+	courier.Courier
 }
 
 func New() Config {
 	c := Config{Resolvers: &Resolver{
-		services.GetUploadService(),
+		upload.GetUploadService(),
+		courier.GetCourierService(),
 	}}
 
 	return c
@@ -27,7 +30,7 @@ func (r *queryResolver) Hello(ctx context.Context) (string, error) {
 }
 
 func (r *queryResolver) GetCourierDocuments(ctx context.Context) ([]*model.Uploads, error) {
-	courierID := GetCourierIDFromRequestContext(ctx)
+	courierID := GetCourierIDFromRequestContext(ctx, r)
 
 	uploads, err := r.GetCourierUploads(courierID)
 	if err != nil {
@@ -38,7 +41,7 @@ func (r *queryResolver) GetCourierDocuments(ctx context.Context) ([]*model.Uploa
 }
 
 func (r *mutationResolver) CreateCourierDocument(ctx context.Context, doc model.CourierUploadInput) (bool, error) {
-	courierID := GetCourierIDFromRequestContext(ctx)
+	courierID := GetCourierIDFromRequestContext(ctx, r)
 
 	err := r.CreateCourierUpload(doc.Type.String(), doc.URI, courierID)
 	if err != nil {
@@ -48,7 +51,7 @@ func (r *mutationResolver) CreateCourierDocument(ctx context.Context, doc model.
 	return true, nil
 }
 
-func GetCourierIDFromRequestContext(ctx context.Context) uuid.UUID {
+func GetCourierIDFromRequestContext(ctx context.Context, courier courier.Courier) uuid.UUID {
 	userID := ctx.Value("userID").(string)
 
 	uid, err := uuid.Parse(userID)
@@ -56,8 +59,8 @@ func GetCourierIDFromRequestContext(ctx context.Context) uuid.UUID {
 		panic(err)
 	}
 
-	courier, _ := services.GetCourierService().GetCourier(uid)
-	return courier.ID
+	c, _ := courier.GetCourier(uid)
+	return c.ID
 }
 
 // Query returns generated.QueryResolver implementation.

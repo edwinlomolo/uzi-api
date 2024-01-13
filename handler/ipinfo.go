@@ -7,7 +7,7 @@ import (
 
 	"github.com/3dw1nM0535/uzi-api/model"
 	"github.com/3dw1nM0535/uzi-api/pkg/logger"
-	"github.com/3dw1nM0535/uzi-api/services"
+	"github.com/3dw1nM0535/uzi-api/services/ipinfo"
 )
 
 func Ipinfo() http.HandlerFunc {
@@ -15,7 +15,7 @@ func Ipinfo() http.HandlerFunc {
 		logger := logger.GetLogger()
 		ip := GetIp(r)
 
-		ipinfo, err := services.GetIpinfoService().GetIpinfo(ip)
+		ipinfo, err := ipinfo.GetIpinfoService().GetIpinfo(ip)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return

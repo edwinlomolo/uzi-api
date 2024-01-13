@@ -1,4 +1,4 @@
-package services
+package session
 
 import (
 	"context"
@@ -7,6 +7,7 @@ import (
 	"github.com/3dw1nM0535/uzi-api/config"
 	"github.com/3dw1nM0535/uzi-api/model"
 	"github.com/3dw1nM0535/uzi-api/pkg/jwt"
+	"github.com/3dw1nM0535/uzi-api/services/courier"
 	"github.com/3dw1nM0535/uzi-api/store"
 	jsonwebtoken "github.com/golang-jwt/jwt/v5"
 	"github.com/sirupsen/logrus"
@@ -55,12 +56,12 @@ func (sc *sessionClient) createSession(user model.User, ip string) (*model.Sessi
 		return nil, model.UziErr{Err: isUserOnboardingErr.Error(), Message: "isuseronboarding", Code: 500}
 	}
 
-	isCourier, isCourierErr := GetCourierService().IsCourier(user.ID)
+	isCourier, isCourierErr := courier.GetCourierService().IsCourier(user.ID)
 	if isUserOnboardingErr != nil {
 		return nil, isCourierErr
 	}
 
-	courierStatus, courierStatusErr := GetCourierService().GetCourierStatus(user.ID)
+	courierStatus, courierStatusErr := courier.GetCourierService().GetCourierStatus(user.ID)
 	if isUserOnboardingErr != nil {
 		return nil, courierStatusErr
 	}

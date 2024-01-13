@@ -1,4 +1,4 @@
-package services
+package ipinfo
 
 import "github.com/ipinfo/go/v2/ipinfo"
 

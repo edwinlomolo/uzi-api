@@ -8,16 +8,18 @@ import (
 
 	"github.com/3dw1nM0535/uzi-api/model"
 	"github.com/3dw1nM0535/uzi-api/pkg/logger"
-	"github.com/3dw1nM0535/uzi-api/services"
+	"github.com/3dw1nM0535/uzi-api/services/courier"
+	"github.com/3dw1nM0535/uzi-api/services/session"
+	"github.com/3dw1nM0535/uzi-api/services/user"
 )
 
 func Signin() http.HandlerFunc {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		var loginInput model.SigninInput
 		logger := logger.GetLogger()
-		userService := services.GetUserService()
-		sessionService := services.GetSessionService()
-		courierService := services.GetCourierService()
+		userService := user.GetUserService()
+		sessionService := session.GetSessionService()
+		courierService := courier.GetCourierService()
 		userIp := GetIp(r)
 
 		body, bodyErr := io.ReadAll(r.Body)

@@ -8,15 +8,16 @@ import (
 
 	"github.com/3dw1nM0535/uzi-api/model"
 	"github.com/3dw1nM0535/uzi-api/pkg/logger"
-	"github.com/3dw1nM0535/uzi-api/services"
+	"github.com/3dw1nM0535/uzi-api/services/session"
+	"github.com/3dw1nM0535/uzi-api/services/user"
 )
 
 func CourierOnboarding() http.HandlerFunc {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		var bodyReq model.SigninInput
 		logger := logger.GetLogger()
-		userService := services.GetUserService()
-		sessionService := services.GetSessionService()
+		userService := user.GetUserService()
+		sessionService := session.GetSessionService()
 		ip := GetIp(r)
 
 		body, bodyErr := io.ReadAll(r.Body)

@@ -11,7 +11,11 @@ import (
 	"github.com/3dw1nM0535/uzi-api/pkg/cache"
 	"github.com/3dw1nM0535/uzi-api/pkg/logger"
 	"github.com/3dw1nM0535/uzi-api/pkg/middleware"
-	"github.com/3dw1nM0535/uzi-api/services"
+	"github.com/3dw1nM0535/uzi-api/services/courier"
+	"github.com/3dw1nM0535/uzi-api/services/ipinfo"
+	"github.com/3dw1nM0535/uzi-api/services/session"
+	"github.com/3dw1nM0535/uzi-api/services/upload"
+	"github.com/3dw1nM0535/uzi-api/services/user"
 	"github.com/3dw1nM0535/uzi-api/store"
 	gqlHandler "github.com/99designs/gqlgen/graphql/handler"
 	"github.com/99designs/gqlgen/graphql/playground"
@@ -31,12 +35,12 @@ func main() {
 	logger := logger.NewLogger()
 	store.InitializeStorage(logger, "./store/migrations")
 	cache := cache.NewCache(configs.Database.Redis, logger)
-	services.NewIpinfoService(cache, configs.Ipinfo, logger)
-	services.NewUserService(store.GetDatabase(), cache, logger)
-	services.NewSessionService(store.GetDatabase(), logger, configs.Jwt)
-	services.NewCourierService(logger, store.GetDatabase())
+	ipinfo.NewIpinfoService(cache, configs.Ipinfo, logger)
+	user.NewUserService(store.GetDatabase(), cache, logger)
+	session.NewSessionService(store.GetDatabase(), logger, configs.Jwt)
+	courier.NewCourierService(logger, store.GetDatabase())
 	aws.NewAwsS3Service(configs.Aws, logger)
-	services.NewUploadService(aws.GetS3Service(), logger, store.GetDatabase())
+	upload.NewUploadService(aws.GetS3Service(), logger, store.GetDatabase())
 
 	// Graphql
 	srv := gqlHandler.NewDefaultServer(uzi.NewExecutableSchema(uzi.New()))
