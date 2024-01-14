@@ -7,7 +7,7 @@ import (
 
 	"github.com/3dw1nM0535/uzi-api/model"
 	"github.com/3dw1nM0535/uzi-api/pkg/aws"
-	"github.com/3dw1nM0535/uzi-api/store"
+	sqlStore "github.com/3dw1nM0535/uzi-api/store/sqlc"
 	"github.com/google/uuid"
 	"github.com/sirupsen/logrus"
 )
@@ -19,10 +19,10 @@ func GetUploadService() Upload { return uploadService }
 type uploadClient struct {
 	s3     aws.Aws
 	logger *logrus.Logger
-	store  *store.Queries
+	store  *sqlStore.Queries
 }
 
-func NewUploadService(s3 aws.Aws, logger *logrus.Logger, store *store.Queries) Upload {
+func NewUploadService(s3 aws.Aws, logger *logrus.Logger, store *sqlStore.Queries) Upload {
 	uploadService = &uploadClient{s3, logger, store}
 
 	logger.Infoln("Upload service...OK")
@@ -38,14 +38,14 @@ func (u *uploadClient) CreateUserUpload(reason, uri string, id uuid.UUID) error 
 }
 
 func (u *uploadClient) createCourierUpload(reason, uri string, id uuid.UUID) error {
-	courierArgs := store.GetCourierUploadParams{
+	courierArgs := sqlStore.GetCourierUploadParams{
 		Type:      reason,
 		CourierID: uuid.NullUUID{UUID: id, Valid: true},
 	}
 
 	courierUpload, getErr := u.store.GetCourierUpload(context.Background(), courierArgs)
 	if getErr == sql.ErrNoRows {
-		createArgs := store.CreateCourierUploadParams{
+		createArgs := sqlStore.CreateCourierUploadParams{
 			Type:      reason,
 			Uri:       uri,
 			CourierID: uuid.NullUUID{UUID: id, Valid: true},
@@ -69,7 +69,7 @@ func (u *uploadClient) createCourierUpload(reason, uri string, id uuid.UUID) err
 }
 
 func (u *uploadClient) updateUpload(uri string, ID uuid.UUID) error {
-	updateParams := store.UpdateUploadParams{
+	updateParams := sqlStore.UpdateUploadParams{
 		ID:  ID,
 		Uri: uri,
 	}
@@ -85,7 +85,7 @@ func (u *uploadClient) updateUpload(uri string, ID uuid.UUID) error {
 }
 
 func (u *uploadClient) createUserUpload(reason, uri string, ID uuid.UUID) error {
-	createParams := store.CreateUserUploadParams{
+	createParams := sqlStore.CreateUserUploadParams{
 		Type:   reason,
 		Uri:    uri,
 		UserID: uuid.NullUUID{UUID: ID, Valid: true},
@@ -124,7 +124,7 @@ func (u *uploadClient) GetCourierUploads(courierID uuid.UUID) ([]*model.Uploads,
 			ID:       i.ID,
 			URI:      &i.Uri,
 			Type:     &i.Type,
-			Verified: i.Verified,
+			Verified: model.UploadVerificationStatus(i.Verified),
 		}
 
 		uploads = append(uploads, upload)

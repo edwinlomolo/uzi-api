@@ -33,7 +33,7 @@ func main() {
 	// Services
 	configs := config.LoadConfig()
 	logger := logger.NewLogger()
-	store.InitializeStorage(logger, "./store/migrations")
+	store.InitializeStorage(logger, configs.Database.Rdbms.MigrationUrl)
 	cache := cache.NewCache(configs.Database.Redis, logger)
 	ipinfo.NewIpinfoService(cache, configs.Ipinfo, logger)
 	user.NewUserService(store.GetDatabase(), cache, logger)

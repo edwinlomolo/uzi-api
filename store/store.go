@@ -5,13 +5,14 @@ import (
 	"fmt"
 
 	"github.com/3dw1nM0535/uzi-api/config"
+	sqlStore "github.com/3dw1nM0535/uzi-api/store/sqlc"
 	"github.com/golang-migrate/migrate/v4"
 	"github.com/golang-migrate/migrate/v4/database/postgres"
 	_ "github.com/golang-migrate/migrate/v4/source/file"
 	"github.com/sirupsen/logrus"
 )
 
-var dbClient *Queries
+var dbClient *sqlStore.Queries
 
 func InitializeStorage(logger *logrus.Logger, migrationUrl string) error {
 	configs := config.GetConfig()
@@ -24,10 +25,7 @@ func InitializeStorage(logger *logrus.Logger, migrationUrl string) error {
 		logrus.Errorf("%s:%v", "DatabaseError", err)
 		return err
 	}
-	// Apply migration(s)
-	if forceMigrate {
-		db.Exec("DROP TABLE IF EXISTS schema_migrations WITH (FORCE);")
-	}
+
 	db.Exec(fmt.Sprintf("CREATE EXTENSION IF NOT EXISTS %q;", "uuid-ossp"))
 	db.Exec("CREATE EXTENSION IF NOT EXISTS postgis;")
 	db.Exec("CREATE EXTENSION IF NOT EXISTS postgis_rasters; --OPTIONAL")
@@ -40,10 +38,10 @@ func InitializeStorage(logger *logrus.Logger, migrationUrl string) error {
 		logrus.Infoln("Database connection...OK")
 	}
 
-	dbClient = New(db)
+	dbClient = sqlStore.New(db)
 
 	// Setup database schema
-	if err := runDatabaseMigration(db, logger, isDevelopment, migrationUrl); err != nil {
+	if err := runDatabaseMigration(db, logger, isDevelopment, migrationUrl, forceMigrate); err != nil {
 		logger.Errorf("%s:%v", "ApplyingMigrationErr", err.Error())
 	} else if err == nil {
 		logger.Infoln("Database migration...OK")
@@ -52,10 +50,10 @@ func InitializeStorage(logger *logrus.Logger, migrationUrl string) error {
 	return nil
 }
 
-func GetDatabase() *Queries { return dbClient }
+func GetDatabase() *sqlStore.Queries { return dbClient }
 
 // runDbMigration - setup database tables
-func runDatabaseMigration(db *sql.DB, logger *logrus.Logger, isDevelopment bool, migrationUrl string) error {
+func runDatabaseMigration(db *sql.DB, logger *logrus.Logger, isDevelopment bool, migrationUrl string, forceMigrate bool) error {
 	migrationErr := "DatabaseMigrationErr"
 
 	driver, err := postgres.WithInstance(db, &postgres.Config{})
@@ -64,10 +62,16 @@ func runDatabaseMigration(db *sql.DB, logger *logrus.Logger, isDevelopment bool,
 		return err
 	}
 
-	m, err := migrate.NewWithDatabaseInstance(fmt.Sprintf("file://%s", migrationUrl), "postgres", driver)
+	m, err := migrate.NewWithDatabaseInstance(migrationUrl, "postgres", driver)
 	if err != nil {
 		logger.Errorf("%s: %s", migrationErr, err)
 		return err
+	}
+
+	if forceMigrate {
+		if err := m.Down(); err != nil && err != migrate.ErrNoChange {
+			logger.Errorf("%s:%v", "ResetMigration", err)
+		}
 	}
 
 	if err := m.Up(); err != nil && err != migrate.ErrNoChange {

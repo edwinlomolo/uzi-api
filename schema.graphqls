@@ -27,11 +27,17 @@ enum UploadFile {
   VI
 }
 
+enum UploadVerificationStatus {
+  VERIFYING
+  VERIFIED
+  REJECTED
+}
+
 type Uploads {
   ID: UUID!
   type: String
   uri: String
-  verified: Boolean!
+  verified: UploadVerificationStatus!
   courier_id: UUID
   user_id: UUID
   created_at: Time

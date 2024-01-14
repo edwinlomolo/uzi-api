@@ -8,7 +8,7 @@ import (
 	"github.com/3dw1nM0535/uzi-api/model"
 	"github.com/3dw1nM0535/uzi-api/pkg/jwt"
 	"github.com/3dw1nM0535/uzi-api/services/courier"
-	"github.com/3dw1nM0535/uzi-api/store"
+	sqlStore "github.com/3dw1nM0535/uzi-api/store/sqlc"
 	jsonwebtoken "github.com/golang-jwt/jwt/v5"
 	"github.com/sirupsen/logrus"
 )
@@ -17,7 +17,7 @@ var sessionService Session
 
 type sessionClient struct {
 	jwtClient jwt.Jwt
-	store     *store.Queries
+	store     *sqlStore.Queries
 	logger    *logrus.Logger
 	config    config.Jwt
 }
@@ -26,7 +26,7 @@ func GetSessionService() Session {
 	return sessionService
 }
 
-func NewSessionService(store *store.Queries, logger *logrus.Logger, jwtConfig config.Jwt) Session {
+func NewSessionService(store *sqlStore.Queries, logger *logrus.Logger, jwtConfig config.Jwt) Session {
 	sessionService = &sessionClient{jwt.NewJwtClient(logger, jwtConfig), store, logger, jwtConfig}
 	logger.Infoln("Session service...OK")
 	return sessionService

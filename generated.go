@@ -2961,9 +2961,9 @@ func (ec *executionContext) _Uploads_verified(ctx context.Context, field graphql
 		}
 		return graphql.Null
 	}
-	res := resTmp.(bool)
+	res := resTmp.(model.UploadVerificationStatus)
 	fc.Result = res
-	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
+	return ec.marshalNUploadVerificationStatus2githubᚗcomᚋ3dw1nM0535ᚋuziᚑapiᚋmodelᚐUploadVerificationStatus(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Uploads_verified(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -2973,7 +2973,7 @@ func (ec *executionContext) fieldContext_Uploads_verified(ctx context.Context, f
 		IsMethod:   false,
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type Boolean does not have child fields")
+			return nil, errors.New("field of type UploadVerificationStatus does not have child fields")
 		},
 	}
 	return fc, nil
@@ -6403,6 +6403,16 @@ func (ec *executionContext) unmarshalNUploadFile2githubᚗcomᚋ3dw1nM0535ᚋuzi
 }
 
 func (ec *executionContext) marshalNUploadFile2githubᚗcomᚋ3dw1nM0535ᚋuziᚑapiᚋmodelᚐUploadFile(ctx context.Context, sel ast.SelectionSet, v model.UploadFile) graphql.Marshaler {
+	return v
+}
+
+func (ec *executionContext) unmarshalNUploadVerificationStatus2githubᚗcomᚋ3dw1nM0535ᚋuziᚑapiᚋmodelᚐUploadVerificationStatus(ctx context.Context, v interface{}) (model.UploadVerificationStatus, error) {
+	var res model.UploadVerificationStatus
+	err := res.UnmarshalGQL(v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNUploadVerificationStatus2githubᚗcomᚋ3dw1nM0535ᚋuziᚑapiᚋmodelᚐUploadVerificationStatus(ctx context.Context, sel ast.SelectionSet, v model.UploadVerificationStatus) graphql.Marshaler {
 	return v
 }
 

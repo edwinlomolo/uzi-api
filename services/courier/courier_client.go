@@ -6,7 +6,7 @@ import (
 	"errors"
 
 	"github.com/3dw1nM0535/uzi-api/model"
-	"github.com/3dw1nM0535/uzi-api/store"
+	sqlStore "github.com/3dw1nM0535/uzi-api/store/sqlc"
 	"github.com/google/uuid"
 	"github.com/sirupsen/logrus"
 )
@@ -15,14 +15,14 @@ var courierService Courier
 
 type courierClient struct {
 	logger *logrus.Logger
-	store  *store.Queries
+	store  *sqlStore.Queries
 }
 
 func GetCourierService() Courier {
 	return courierService
 }
 
-func NewCourierService(logger *logrus.Logger, store *store.Queries) Courier {
+func NewCourierService(logger *logrus.Logger, store *sqlStore.Queries) Courier {
 	courierService = &courierClient{logger, store}
 	logger.Infoln("Courier sevice...OK")
 	return courierService

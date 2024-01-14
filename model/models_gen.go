@@ -75,14 +75,14 @@ type Trip struct {
 }
 
 type Uploads struct {
-	ID        uuid.UUID  `json:"ID"`
-	Type      *string    `json:"type,omitempty"`
-	URI       *string    `json:"uri,omitempty"`
-	Verified  bool       `json:"verified"`
-	CourierID *uuid.UUID `json:"courier_id,omitempty"`
-	UserID    *uuid.UUID `json:"user_id,omitempty"`
-	CreatedAt *time.Time `json:"created_at,omitempty"`
-	UpdatedAt *time.Time `json:"updated_at,omitempty"`
+	ID        uuid.UUID                `json:"ID"`
+	Type      *string                  `json:"type,omitempty"`
+	URI       *string                  `json:"uri,omitempty"`
+	Verified  UploadVerificationStatus `json:"verified"`
+	CourierID *uuid.UUID               `json:"courier_id,omitempty"`
+	UserID    *uuid.UUID               `json:"user_id,omitempty"`
+	CreatedAt *time.Time               `json:"created_at,omitempty"`
+	UpdatedAt *time.Time               `json:"updated_at,omitempty"`
 }
 
 type User struct {
@@ -228,5 +228,48 @@ func (e *UploadFile) UnmarshalGQL(v interface{}) error {
 }
 
 func (e UploadFile) MarshalGQL(w io.Writer) {
+	fmt.Fprint(w, strconv.Quote(e.String()))
+}
+
+type UploadVerificationStatus string
+
+const (
+	UploadVerificationStatusVerifying UploadVerificationStatus = "VERIFYING"
+	UploadVerificationStatusVerified  UploadVerificationStatus = "VERIFIED"
+	UploadVerificationStatusRejected  UploadVerificationStatus = "REJECTED"
+)
+
+var AllUploadVerificationStatus = []UploadVerificationStatus{
+	UploadVerificationStatusVerifying,
+	UploadVerificationStatusVerified,
+	UploadVerificationStatusRejected,
+}
+
+func (e UploadVerificationStatus) IsValid() bool {
+	switch e {
+	case UploadVerificationStatusVerifying, UploadVerificationStatusVerified, UploadVerificationStatusRejected:
+		return true
+	}
+	return false
+}
+
+func (e UploadVerificationStatus) String() string {
+	return string(e)
+}
+
+func (e *UploadVerificationStatus) UnmarshalGQL(v interface{}) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = UploadVerificationStatus(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid UploadVerificationStatus", str)
+	}
+	return nil
+}
+
+func (e UploadVerificationStatus) MarshalGQL(w io.Writer) {
 	fmt.Fprint(w, strconv.Quote(e.String()))
 }

@@ -9,7 +9,7 @@ import (
 
 	"github.com/3dw1nM0535/uzi-api/model"
 	"github.com/3dw1nM0535/uzi-api/pkg/cache"
-	"github.com/3dw1nM0535/uzi-api/store"
+	sqlStore "github.com/3dw1nM0535/uzi-api/store/sqlc"
 	"github.com/google/uuid"
 	"github.com/redis/go-redis/v9"
 	"github.com/sirupsen/logrus"
@@ -18,7 +18,7 @@ import (
 var userService User
 
 type userClient struct {
-	store  *store.Queries
+	store  *sqlStore.Queries
 	logger *logrus.Logger
 	ctx    context.Context
 	cache  cache.Cache
@@ -28,7 +28,7 @@ func GetUserService() User {
 	return userService
 }
 
-func NewUserService(store *store.Queries, redis *redis.Client, logger *logrus.Logger) User {
+func NewUserService(store *sqlStore.Queries, redis *redis.Client, logger *logrus.Logger) User {
 	c := newusercache(redis, logger)
 	userService = &userClient{store, logger, context.TODO(), c}
 	logger.Infoln("User service...OK")
@@ -51,7 +51,7 @@ func (u *userClient) createUser(user model.SigninInput) (*model.User, error) {
 
 	foundUser, getUserErr := u.store.FindByPhone(context.Background(), user.Phone)
 	if getUserErr == sql.ErrNoRows {
-		newUser, newUserErr := u.store.CreateUser(context.Background(), store.CreateUserParams{
+		newUser, newUserErr := u.store.CreateUser(context.Background(), sqlStore.CreateUserParams{
 			FirstName: user.FirstName,
 			LastName:  user.LastName,
 			Phone:     user.Phone,
@@ -88,9 +88,7 @@ func (u *userClient) getUser(phone string) (*model.User, error) {
 		var user model.User
 		foundUser, getErr := u.store.FindByPhone(context.Background(), phone)
 		if getErr == sql.ErrNoRows {
-			err := model.UziErr{Err: errors.New("not found").Error(), Message: "notfound", Code: 404}
-			u.logger.Errorf("%s:%v", err.Message, err.Error())
-			return nil, err
+			return nil, nil
 		} else if getErr != nil {
 			err := model.UziErr{Err: getErr.Error(), Message: "findbyphone", Code: 500}
 			u.logger.Errorf("%s:%v", err.Message, err.Error())
@@ -167,7 +165,7 @@ func (u *userClient) OnboardUser(user model.SigninInput) (*model.User, error) {
 		return nil, inputErr
 	}
 
-	newUser, onboardErr := u.store.UpdateUserName(context.Background(), store.UpdateUserNameParams{
+	newUser, onboardErr := u.store.UpdateUserName(context.Background(), sqlStore.UpdateUserNameParams{
 		FirstName: user.FirstName,
 		LastName:  user.LastName,
 		Phone:     user.Phone,
@@ -178,7 +176,7 @@ func (u *userClient) OnboardUser(user model.SigninInput) (*model.User, error) {
 		return nil, err
 	}
 
-	if _, err := u.store.SetOnboardingStatus(context.Background(), store.SetOnboardingStatusParams{
+	if _, err := u.store.SetOnboardingStatus(context.Background(), sqlStore.SetOnboardingStatusParams{
 		Phone:      user.Phone,
 		Onboarding: false,
 	}); err != nil {

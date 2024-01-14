@@ -8,4 +8,5 @@ type RDBMS struct {
 	Env struct {
 		Driver string
 	}
+	MigrationUrl string
 }

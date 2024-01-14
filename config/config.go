@@ -70,6 +70,7 @@ func rdbmsConfig() RDBMS {
 	rdbmsConfig.Postal.Uri = strings.TrimSpace(os.Getenv("POSTAL_DATABASE_URI"))
 	rdbmsConfig.Uri = strings.TrimSpace(os.Getenv("DATABASE_URI"))
 	rdbmsConfig.Env.Driver = strings.TrimSpace(os.Getenv("DBDRIVER"))
+	rdbmsConfig.MigrationUrl = strings.TrimSpace(os.Getenv("MIGRATION_URL"))
 
 	return rdbmsConfig
 }
