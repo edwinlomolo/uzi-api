@@ -53,6 +53,9 @@ type Route struct {
 }
 
 type Session struct {
+	ID            uuid.UUID      `json:"id"`
+	IP            string         `json:"ip"`
+	UserAgent     string         `json:"userAgent"`
 	Token         string         `json:"token"`
 	IsCourier     bool           `json:"isCourier"`
 	Onboarding    bool           `json:"onboarding"`

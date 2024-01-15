@@ -51,7 +51,7 @@ func Signin() http.HandlerFunc {
 			}
 		}
 
-		findSession, findSessionErr := sessionService.SignIn(*findUser, userIp)
+		findSession, findSessionErr := sessionService.SignIn(*findUser, userIp, r.UserAgent())
 		if findSessionErr != nil {
 			http.Error(w, findSessionErr.Error(), http.StatusInternalServerError)
 			return

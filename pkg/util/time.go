@@ -4,11 +4,11 @@ import (
 	"time"
 )
 
-func ParseDuration(duration string) (time.Time, error) {
+func ParseDuration(duration string) (time.Duration, error) {
 	t, err := time.ParseDuration(duration)
 	if err != nil {
 		panic(err)
 	}
 
-	return time.Now().Add(t), nil
+	return t, nil
 }

@@ -49,15 +49,17 @@ CREATE TABLE IF NOT EXISTS products (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   name VARCHAR(100) NOT NULL,
   description TEXT NOT NULL,
+  icon TEXT NOT NULL,
   created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
 INSERT INTO products (
-  name, description
+  name, description, icon
 ) VALUES
-  ('UziX', 'Faster|Cheaper|Eco-friendly'),
-  ('UziBoda', 'Convenient|On-demand');
+  ('UziX', 'Faster|Cheaper|Eco-friendly', 'https://uzi-images.s3.eu-west-2.amazonaws.com/icons8-bike-50.png'),
+  ('UziBoda', 'Convenient|On-demand', 'https://uzi-images.s3.eu-west-2.amazonaws.com/icons8-motorbike-50.png'),
+  ('Uzito', 'Loading-truck|Medium-sized', 'https://uzi-images.s3.eu-west-2.amazonaws.com/icons8-truck-50.png');
 
 CREATE TABLE IF NOT EXISTS vehicles (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
@@ -80,7 +82,7 @@ CREATE TABLE IF NOT EXISTS uploads (
 );
 
 CREATE TABLE IF NOT EXISTS sessions (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id UUID PRIMARY KEY,
   ip VARCHAR NOT NULL,
   user_agent VARCHAR NOT NULL,
   phone VARCHAR(20) UNIQUE NOT NULL,

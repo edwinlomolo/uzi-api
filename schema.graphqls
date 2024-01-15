@@ -11,6 +11,9 @@ type User {
 }
 
 type Session {
+  id: UUID!
+  ip: String!
+  userAgent: String!
   token: String!
   isCourier: Boolean!
   onboarding: Boolean!
