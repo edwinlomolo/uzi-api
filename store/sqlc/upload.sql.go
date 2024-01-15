@@ -13,21 +13,27 @@ import (
 
 const createCourierUpload = `-- name: CreateCourierUpload :one
 INSERT INTO uploads (
-  type, uri, courier_id
+  type, uri, courier_id, verification
 ) VALUES (
-  $1, $2, $3
+  $1, $2, $3, $4
 )
 RETURNING id, type, uri, verification, courier_id, user_id, created_at, updated_at
 `
 
 type CreateCourierUploadParams struct {
-	Type      string        `json:"type"`
-	Uri       string        `json:"uri"`
-	CourierID uuid.NullUUID `json:"courier_id"`
+	Type         string        `json:"type"`
+	Uri          string        `json:"uri"`
+	CourierID    uuid.NullUUID `json:"courier_id"`
+	Verification string        `json:"verification"`
 }
 
 func (q *Queries) CreateCourierUpload(ctx context.Context, arg CreateCourierUploadParams) (Upload, error) {
-	row := q.db.QueryRowContext(ctx, createCourierUpload, arg.Type, arg.Uri, arg.CourierID)
+	row := q.db.QueryRowContext(ctx, createCourierUpload,
+		arg.Type,
+		arg.Uri,
+		arg.CourierID,
+		arg.Verification,
+	)
 	var i Upload
 	err := row.Scan(
 		&i.ID,
@@ -140,18 +146,19 @@ func (q *Queries) GetCourierUploads(ctx context.Context, courierID uuid.NullUUID
 
 const updateUpload = `-- name: UpdateUpload :one
 UPDATE uploads
-SET uri = COALESCE($1, uri)
-WHERE id = $2
+SET uri = COALESCE($1, uri), verification = COALESCE($2, verification)
+WHERE id = $3
 RETURNING id, type, uri, verification, courier_id, user_id, created_at, updated_at
 `
 
 type UpdateUploadParams struct {
-	Uri string    `json:"uri"`
-	ID  uuid.UUID `json:"id"`
+	Uri          string    `json:"uri"`
+	Verification string    `json:"verification"`
+	ID           uuid.UUID `json:"id"`
 }
 
 func (q *Queries) UpdateUpload(ctx context.Context, arg UpdateUploadParams) (Upload, error) {
-	row := q.db.QueryRowContext(ctx, updateUpload, arg.Uri, arg.ID)
+	row := q.db.QueryRowContext(ctx, updateUpload, arg.Uri, arg.Verification, arg.ID)
 	var i Upload
 	err := row.Scan(
 		&i.ID,

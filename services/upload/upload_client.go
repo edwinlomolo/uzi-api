@@ -46,9 +46,10 @@ func (u *uploadClient) createCourierUpload(reason, uri string, id uuid.UUID) err
 	courierUpload, getErr := u.store.GetCourierUpload(context.Background(), courierArgs)
 	if getErr == sql.ErrNoRows {
 		createArgs := sqlStore.CreateCourierUploadParams{
-			Type:      reason,
-			Uri:       uri,
-			CourierID: uuid.NullUUID{UUID: id, Valid: true},
+			Type:         reason,
+			Uri:          uri,
+			CourierID:    uuid.NullUUID{UUID: id, Valid: true},
+			Verification: model.UploadVerificationStatusVerifying.String(),
 		}
 
 		_, createErr := u.store.CreateCourierUpload(context.Background(), createArgs)
@@ -65,19 +66,33 @@ func (u *uploadClient) createCourierUpload(reason, uri string, id uuid.UUID) err
 		return getErr
 	}
 
-	return u.updateUpload(uri, courierUpload.ID)
+	return u.updateUploadUri(courierUpload.Uri, courierUpload.ID)
 }
 
-func (u *uploadClient) updateUpload(uri string, ID uuid.UUID) error {
+func (u *uploadClient) updateUploadUri(uri string, ID uuid.UUID) error {
 	updateParams := sqlStore.UpdateUploadParams{
-		ID:  ID,
-		Uri: uri,
+		ID:           ID,
+		Uri:          uri,
+		Verification: model.UploadVerificationStatusVerifying.String(),
 	}
 
-	_, updateErr := u.store.UpdateUpload(context.Background(), updateParams)
-	if updateErr != nil {
+	if _, updateErr := u.store.UpdateUpload(context.Background(), updateParams); updateErr != nil {
 		uziErr := model.UziErr{Err: updateErr.Error(), Message: "updateupload", Code: 500}
 		u.logger.Errorf(uziErr.Error())
+		return updateErr
+	}
+
+	return nil
+}
+
+func (u *uploadClient) updateUploadVerificationStatus(id uuid.UUID, status model.UploadVerificationStatus) error {
+	args := sqlStore.UpdateUploadParams{
+		ID:           id,
+		Verification: status.String(),
+	}
+	if _, updateErr := u.store.UpdateUpload(context.Background(), args); updateErr != nil {
+		err := model.UziErr{Err: updateErr.Error(), Message: "updateuploadverificationstatus", Code: 500}
+		u.logger.Errorf(err.Error())
 		return updateErr
 	}
 
@@ -105,7 +120,7 @@ func (u *uploadClient) createUserUpload(reason, uri string, ID uuid.UUID) error 
 		return foundErr
 	}
 
-	return u.updateUpload(uri, foundUpload.ID)
+	return u.updateUploadUri(foundUpload.Uri, foundUpload.ID)
 }
 
 func (u *uploadClient) GetCourierUploads(courierID uuid.UUID) ([]*model.Uploads, error) {
