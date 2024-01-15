@@ -17,11 +17,6 @@ type jwtclient struct {
 	config config.Jwt
 }
 
-type payload struct {
-	Phone string `json:"phone"`
-	jsonwebtoken.RegisteredClaims
-}
-
 func GetJwtService() Jwt { return jwtService }
 
 func NewJwtClient(logger *logrus.Logger, config config.Jwt) Jwt {
@@ -51,7 +46,7 @@ func (jwtc *jwtclient) Validate(jwt string) (*jsonwebtoken.Token, error) {
 		return []byte(jwtc.config.Secret), nil
 	}
 
-	token, tokenErr := jsonwebtoken.ParseWithClaims(jwt, &payload{}, keyFunc)
+	token, tokenErr := jsonwebtoken.ParseWithClaims(jwt, &Payload{}, keyFunc)
 	if tokenErr != nil {
 		uziErr := model.UziErr{Err: tokenErr.Error(), Message: "invalidtoken", Code: http.StatusUnauthorized}
 		jwtc.logger.Errorf(uziErr.Error())

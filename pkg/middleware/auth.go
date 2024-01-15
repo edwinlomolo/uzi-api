@@ -2,7 +2,6 @@ package middleware
 
 import (
 	"context"
-	"encoding/base64"
 	"errors"
 	"net/http"
 	"strings"
@@ -20,16 +19,14 @@ func Auth(h http.Handler) http.HandlerFunc {
 		)
 		ctx := r.Context()
 
-		jwt, jwtErr := validateAuthorizationHeader(r)
+		jwtToken, jwtErr := validateAuthorizationHeader(r)
 		if jwtErr != nil {
 			http.Error(w, jwtErr.Error(), http.StatusUnauthorized)
 			return
 		}
 
-		if claims, ok := jwt.Claims.(jsonwebtoken.MapClaims); ok && jwt.Valid {
-			userIDBytes, _ := base64.StdEncoding.DecodeString(claims["userID"].(string))
-
-			userID = string(userIDBytes[:])
+		if claims, ok := jwtToken.Claims.(*jwt.Payload); ok && jwtToken.Valid {
+			userID = claims.ID
 		}
 
 		ctx = context.WithValue(ctx, "userID", userID)

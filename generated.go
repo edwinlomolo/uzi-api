@@ -120,14 +120,14 @@ type ComplexityRoot struct {
 	}
 
 	Uploads struct {
-		CourierID func(childComplexity int) int
-		CreatedAt func(childComplexity int) int
-		ID        func(childComplexity int) int
-		Type      func(childComplexity int) int
-		URI       func(childComplexity int) int
-		UpdatedAt func(childComplexity int) int
-		UserID    func(childComplexity int) int
-		Verified  func(childComplexity int) int
+		CourierID    func(childComplexity int) int
+		CreatedAt    func(childComplexity int) int
+		ID           func(childComplexity int) int
+		Type         func(childComplexity int) int
+		URI          func(childComplexity int) int
+		UpdatedAt    func(childComplexity int) int
+		UserID       func(childComplexity int) int
+		Verification func(childComplexity int) int
 	}
 
 	User struct {
@@ -545,12 +545,12 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Uploads.UserID(childComplexity), true
 
-	case "Uploads.verified":
-		if e.complexity.Uploads.Verified == nil {
+	case "Uploads.verification":
+		if e.complexity.Uploads.Verification == nil {
 			break
 		}
 
-		return e.complexity.Uploads.Verified(childComplexity), true
+		return e.complexity.Uploads.Verification(childComplexity), true
 
 	case "User.courier":
 		if e.complexity.User.Courier == nil {
@@ -1763,8 +1763,8 @@ func (ec *executionContext) fieldContext_Query_getCourierDocuments(ctx context.C
 				return ec.fieldContext_Uploads_type(ctx, field)
 			case "uri":
 				return ec.fieldContext_Uploads_uri(ctx, field)
-			case "verified":
-				return ec.fieldContext_Uploads_verified(ctx, field)
+			case "verification":
+				return ec.fieldContext_Uploads_verification(ctx, field)
 			case "courier_id":
 				return ec.fieldContext_Uploads_courier_id(ctx, field)
 			case "user_id":
@@ -3091,8 +3091,8 @@ func (ec *executionContext) fieldContext_Uploads_uri(ctx context.Context, field 
 	return fc, nil
 }
 
-func (ec *executionContext) _Uploads_verified(ctx context.Context, field graphql.CollectedField, obj *model.Uploads) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Uploads_verified(ctx, field)
+func (ec *executionContext) _Uploads_verification(ctx context.Context, field graphql.CollectedField, obj *model.Uploads) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Uploads_verification(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -3105,7 +3105,7 @@ func (ec *executionContext) _Uploads_verified(ctx context.Context, field graphql
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.Verified, nil
+		return obj.Verification, nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -3122,7 +3122,7 @@ func (ec *executionContext) _Uploads_verified(ctx context.Context, field graphql
 	return ec.marshalNUploadVerificationStatus2githubᚗcomᚋ3dw1nM0535ᚋuziᚑapiᚋmodelᚐUploadVerificationStatus(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Uploads_verified(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Uploads_verification(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Uploads",
 		Field:      field,
@@ -6018,8 +6018,8 @@ func (ec *executionContext) _Uploads(ctx context.Context, sel ast.SelectionSet, 
 			out.Values[i] = ec._Uploads_type(ctx, field, obj)
 		case "uri":
 			out.Values[i] = ec._Uploads_uri(ctx, field, obj)
-		case "verified":
-			out.Values[i] = ec._Uploads_verified(ctx, field, obj)
+		case "verification":
+			out.Values[i] = ec._Uploads_verification(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}

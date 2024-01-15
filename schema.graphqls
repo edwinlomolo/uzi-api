@@ -34,13 +34,14 @@ enum UploadVerificationStatus {
   VERIFYING
   VERIFIED
   REJECTED
+  ONBOARDING
 }
 
 type Uploads {
   ID: UUID!
   type: String
   uri: String
-  verified: UploadVerificationStatus!
+  verification: UploadVerificationStatus!
   courier_id: UUID
   user_id: UUID
   created_at: Time

@@ -121,10 +121,10 @@ func (u *uploadClient) GetCourierUploads(courierID uuid.UUID) ([]*model.Uploads,
 
 	for _, i := range uplds {
 		upload := &model.Uploads{
-			ID:       i.ID,
-			URI:      &i.Uri,
-			Type:     &i.Type,
-			Verified: model.UploadVerificationStatus(i.Verified),
+			ID:           i.ID,
+			URI:          &i.Uri,
+			Type:         &i.Type,
+			Verification: model.UploadVerificationStatus(i.Verification),
 		}
 
 		uploads = append(uploads, upload)

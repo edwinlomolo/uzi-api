@@ -65,14 +65,14 @@ type Trip struct {
 }
 
 type Upload struct {
-	ID        uuid.UUID     `json:"id"`
-	Type      string        `json:"type"`
-	Uri       string        `json:"uri"`
-	Verified  string        `json:"verified"`
-	CourierID uuid.NullUUID `json:"courier_id"`
-	UserID    uuid.NullUUID `json:"user_id"`
-	CreatedAt time.Time     `json:"created_at"`
-	UpdatedAt time.Time     `json:"updated_at"`
+	ID           uuid.UUID     `json:"id"`
+	Type         string        `json:"type"`
+	Uri          string        `json:"uri"`
+	Verification string        `json:"verification"`
+	CourierID    uuid.NullUUID `json:"courier_id"`
+	UserID       uuid.NullUUID `json:"user_id"`
+	CreatedAt    time.Time     `json:"created_at"`
+	UpdatedAt    time.Time     `json:"updated_at"`
 }
 
 type User struct {

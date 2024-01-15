@@ -66,7 +66,7 @@ func (sc *sessionClient) createNewSession(userID uuid.UUID, ip, phone, userAgent
 		return nil, err
 	}
 
-	claims, err := NewPayload(userID.String(), phone, sc.config.Expires)
+	claims, err := jwt.NewPayload(userID.String(), phone, sc.config.Expires)
 	if err != nil {
 		return nil, err
 	}
@@ -110,7 +110,7 @@ func (sc *sessionClient) getSession(sessionID uuid.UUID) (*model.Session, error)
 		return nil, err
 	}
 
-	claims, err := NewPayload(foundSess.ID.String(), foundSess.Phone, sc.config.Expires)
+	claims, err := jwt.NewPayload(foundSess.ID.String(), foundSess.Phone, sc.config.Expires)
 	if err != nil {
 		return nil, err
 	}
