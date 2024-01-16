@@ -18,8 +18,8 @@ WHERE courier_id = $1;
 
 -- name: UpdateUpload :one
 UPDATE uploads
-SET uri = COALESCE($1, uri), verification = COALESCE($2, verification)
-WHERE id = $3
+SET uri = COALESCE(sqlc.narg(uri), uri), verification = COALESCE(sqlc.narg(verification), verification)
+WHERE id = $1
 RETURNING *;
 
 -- name: CreateUserUpload :one

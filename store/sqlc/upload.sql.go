@@ -7,6 +7,7 @@ package sqlc
 
 import (
 	"context"
+	"database/sql"
 
 	"github.com/google/uuid"
 )
@@ -146,19 +147,19 @@ func (q *Queries) GetCourierUploads(ctx context.Context, courierID uuid.NullUUID
 
 const updateUpload = `-- name: UpdateUpload :one
 UPDATE uploads
-SET uri = COALESCE($1, uri), verification = COALESCE($2, verification)
-WHERE id = $3
+SET uri = COALESCE($2, uri), verification = COALESCE($3, verification)
+WHERE id = $1
 RETURNING id, type, uri, verification, courier_id, user_id, created_at, updated_at
 `
 
 type UpdateUploadParams struct {
-	Uri          string    `json:"uri"`
-	Verification string    `json:"verification"`
-	ID           uuid.UUID `json:"id"`
+	ID           uuid.UUID      `json:"id"`
+	Uri          sql.NullString `json:"uri"`
+	Verification sql.NullString `json:"verification"`
 }
 
 func (q *Queries) UpdateUpload(ctx context.Context, arg UpdateUploadParams) (Upload, error) {
-	row := q.db.QueryRowContext(ctx, updateUpload, arg.Uri, arg.Verification, arg.ID)
+	row := q.db.QueryRowContext(ctx, updateUpload, arg.ID, arg.Uri, arg.Verification)
 	var i Upload
 	err := row.Scan(
 		&i.ID,

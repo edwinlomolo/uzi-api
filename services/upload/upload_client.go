@@ -72,8 +72,8 @@ func (u *uploadClient) createCourierUpload(reason, uri string, id uuid.UUID) err
 func (u *uploadClient) updateUploadUri(uri string, ID uuid.UUID) error {
 	updateParams := sqlStore.UpdateUploadParams{
 		ID:           ID,
-		Uri:          uri,
-		Verification: model.UploadVerificationStatusVerifying.String(),
+		Uri:          sql.NullString{String: uri, Valid: true},
+		Verification: sql.NullString{String: model.UploadVerificationStatusVerifying.String(), Valid: true},
 	}
 
 	if _, updateErr := u.store.UpdateUpload(context.Background(), updateParams); updateErr != nil {
@@ -88,7 +88,7 @@ func (u *uploadClient) updateUploadUri(uri string, ID uuid.UUID) error {
 func (u *uploadClient) updateUploadVerificationStatus(id uuid.UUID, status model.UploadVerificationStatus) error {
 	args := sqlStore.UpdateUploadParams{
 		ID:           id,
-		Verification: status.String(),
+		Verification: sql.NullString{String: status.String(), Valid: true},
 	}
 	if _, updateErr := u.store.UpdateUpload(context.Background(), args); updateErr != nil {
 		err := model.UziErr{Err: updateErr.Error(), Message: "updateuploadverificationstatus", Code: 500}
@@ -137,8 +137,8 @@ func (u *uploadClient) GetCourierUploads(courierID uuid.UUID) ([]*model.Uploads,
 	for _, i := range uplds {
 		upload := &model.Uploads{
 			ID:           i.ID,
-			URI:          &i.Uri,
-			Type:         &i.Type,
+			URI:          i.Uri,
+			Type:         i.Type,
 			Verification: model.UploadVerificationStatus(i.Verification),
 		}
 

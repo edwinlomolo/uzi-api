@@ -79,8 +79,8 @@ type Trip struct {
 
 type Uploads struct {
 	ID           uuid.UUID                `json:"ID"`
-	Type         *string                  `json:"type,omitempty"`
-	URI          *string                  `json:"uri,omitempty"`
+	Type         string                   `json:"type"`
+	URI          string                   `json:"uri"`
 	Verification UploadVerificationStatus `json:"verification"`
 	CourierID    *uuid.UUID               `json:"courier_id,omitempty"`
 	UserID       *uuid.UUID               `json:"user_id,omitempty"`

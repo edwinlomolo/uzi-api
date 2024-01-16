@@ -39,8 +39,8 @@ enum UploadVerificationStatus {
 
 type Uploads {
   ID: UUID!
-  type: String
-  uri: String
+  type: String!
+  uri: String!
   verification: UploadVerificationStatus!
   courier_id: UUID
   user_id: UUID
