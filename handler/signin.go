@@ -8,6 +8,7 @@ import (
 
 	"github.com/3dw1nM0535/uzi-api/model"
 	"github.com/3dw1nM0535/uzi-api/pkg/logger"
+	"github.com/3dw1nM0535/uzi-api/pkg/util"
 	"github.com/3dw1nM0535/uzi-api/services/courier"
 	"github.com/3dw1nM0535/uzi-api/services/session"
 	"github.com/3dw1nM0535/uzi-api/services/user"
@@ -20,7 +21,7 @@ func Signin() http.HandlerFunc {
 		userService := user.GetUserService()
 		sessionService := session.GetSessionService()
 		courierService := courier.GetCourierService()
-		userIp := GetIp(r)
+		userIp := util.GetIp(r)
 
 		body, bodyErr := io.ReadAll(r.Body)
 		if bodyErr != nil {

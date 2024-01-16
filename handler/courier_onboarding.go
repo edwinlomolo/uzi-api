@@ -8,6 +8,7 @@ import (
 
 	"github.com/3dw1nM0535/uzi-api/model"
 	"github.com/3dw1nM0535/uzi-api/pkg/logger"
+	"github.com/3dw1nM0535/uzi-api/pkg/util"
 	"github.com/3dw1nM0535/uzi-api/services/session"
 	"github.com/3dw1nM0535/uzi-api/services/user"
 )
@@ -18,7 +19,7 @@ func CourierOnboarding() http.HandlerFunc {
 		logger := logger.GetLogger()
 		userService := user.GetUserService()
 		sessionService := session.GetSessionService()
-		ip := GetIp(r)
+		ip := util.GetIp(r)
 
 		body, bodyErr := io.ReadAll(r.Body)
 		if bodyErr != nil {

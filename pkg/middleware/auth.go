@@ -15,7 +15,8 @@ import (
 func Auth(h http.Handler) http.HandlerFunc {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		var (
-			userID string
+			userID,
+			ip string
 		)
 		ctx := r.Context()
 
@@ -27,9 +28,11 @@ func Auth(h http.Handler) http.HandlerFunc {
 
 		if claims, ok := jwtToken.Claims.(*jwt.Payload); ok && jwtToken.Valid {
 			userID = claims.ID
+			ip = claims.IP
 		}
 
 		ctx = context.WithValue(ctx, "userID", userID)
+		ctx = context.WithValue(ctx, "ip", ip)
 		h.ServeHTTP(w, r.WithContext(ctx))
 	})
 }

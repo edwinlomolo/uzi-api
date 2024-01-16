@@ -1,8 +1,6 @@
-package handler
+package util
 
-import (
-	"net/http"
-)
+import "net/http"
 
 func GetIp(r *http.Request) string {
 	clientIp := r.Header.Get("X-FORWARDED-FOR")

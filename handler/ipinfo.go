@@ -7,13 +7,14 @@ import (
 
 	"github.com/3dw1nM0535/uzi-api/model"
 	"github.com/3dw1nM0535/uzi-api/pkg/logger"
+	"github.com/3dw1nM0535/uzi-api/pkg/util"
 	"github.com/3dw1nM0535/uzi-api/services/ipinfo"
 )
 
 func Ipinfo() http.HandlerFunc {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		logger := logger.GetLogger()
-		ip := GetIp(r)
+		ip := util.GetIp(r)
 
 		ipinfo, err := ipinfo.GetIpinfoService().GetIpinfo(ip)
 		if err != nil {

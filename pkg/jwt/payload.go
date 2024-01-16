@@ -8,12 +8,14 @@ import (
 
 type Payload struct {
 	Phone string `json:"phone"`
+	IP    string `json:"ip"`
 	jwt.RegisteredClaims
 }
 
-func NewPayload(id string, phone string, duration time.Duration) (*Payload, error) {
+func NewPayload(id, ip, phone string, duration time.Duration) (*Payload, error) {
 	p := &Payload{
 		phone,
+		ip,
 		jwt.RegisteredClaims{
 			Issuer:    "Uzi",
 			ExpiresAt: jwt.NewNumericDate(time.Now().Add(duration)),
