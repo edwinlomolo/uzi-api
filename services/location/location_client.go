@@ -3,18 +3,20 @@ package location
 import (
 	"github.com/3dw1nM0535/uzi-api/config"
 	"github.com/3dw1nM0535/uzi-api/model"
+	"github.com/sirupsen/logrus"
 )
 
 type locationClient struct {
 	config config.GoogleMaps
+	logger *logrus.Logger
 }
 
 var locationService Location
 
 func GetLocationService() Location { return locationService }
 
-func NewLocationService(cfg config.GoogleMaps) Location {
-	locationService = &locationClient{cfg}
+func NewLocationService(cfg config.GoogleMaps, logger *logrus.Logger) Location {
+	locationService = &locationClient{cfg, logger}
 	return locationService
 }
 

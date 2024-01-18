@@ -42,7 +42,7 @@ func main() {
 	courier.NewCourierService(logger, store.GetDatabase())
 	aws.NewAwsS3Service(configs.Aws, logger)
 	upload.NewUploadService(aws.GetS3Service(), logger, store.GetDatabase())
-	location.NewLocationService(configs.GoogleMaps)
+	location.NewLocationService(configs.GoogleMaps, logger)
 
 	// Graphql
 	srv := gqlHandler.NewDefaultServer(uzi.NewExecutableSchema(uzi.New()))
