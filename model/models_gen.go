@@ -35,6 +35,18 @@ type Gps struct {
 	Lng float64 `json:"lng"`
 }
 
+type GpsInput struct {
+	Lat float64 `json:"lat"`
+	Lng float64 `json:"lng"`
+}
+
+type Place struct {
+	ID               string `json:"id"`
+	Name             string `json:"name"`
+	FormattedAddress string `json:"formattedAddress"`
+	Location         *Gps   `json:"location"`
+}
+
 type Product struct {
 	ID          uuid.UUID  `json:"id"`
 	Name        string     `json:"name"`

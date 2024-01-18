@@ -13,6 +13,7 @@ import (
 	"github.com/3dw1nM0535/uzi-api/pkg/middleware"
 	"github.com/3dw1nM0535/uzi-api/services/courier"
 	"github.com/3dw1nM0535/uzi-api/services/ipinfo"
+	"github.com/3dw1nM0535/uzi-api/services/location"
 	"github.com/3dw1nM0535/uzi-api/services/session"
 	"github.com/3dw1nM0535/uzi-api/services/upload"
 	"github.com/3dw1nM0535/uzi-api/services/user"
@@ -41,6 +42,7 @@ func main() {
 	courier.NewCourierService(logger, store.GetDatabase())
 	aws.NewAwsS3Service(configs.Aws, logger)
 	upload.NewUploadService(aws.GetS3Service(), logger, store.GetDatabase())
+	location.NewLocationService(configs.GoogleMaps)
 
 	// Graphql
 	srv := gqlHandler.NewDefaultServer(uzi.NewExecutableSchema(uzi.New()))

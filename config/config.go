@@ -11,11 +11,12 @@ import (
 )
 
 type Configuration struct {
-	Server   Server
-	Database Database
-	Ipinfo   Ipinfo
-	Jwt      Jwt
-	Aws      Aws
+	Server     Server
+	Database   Database
+	Ipinfo     Ipinfo
+	Jwt        Jwt
+	Aws        Aws
+	GoogleMaps GoogleMaps
 }
 
 // Env - load env
@@ -38,6 +39,7 @@ func LoadConfig() *Configuration {
 	configuration.Ipinfo = ipinfoConfig()
 	configuration.Jwt = jwtConfig()
 	configuration.Aws = awsConfig()
+	configuration.GoogleMaps = googleMapsConfig()
 
 	configAll = &configuration
 
@@ -144,6 +146,17 @@ func awsConfig() Aws {
 	awsConfig.S3.Buckets.Media = strings.TrimSpace(os.Getenv("S3_BUCKET"))
 
 	return awsConfig
+}
+
+// googleMapsConfig - get google map config
+func googleMapsConfig() GoogleMaps {
+	var googleMapsConfig GoogleMaps
+
+	Env()
+
+	googleMapsConfig.GoogleMapsApiKey = strings.TrimSpace(os.Getenv("MAPS_API_KEY"))
+
+	return googleMapsConfig
 }
 
 func IsDev() bool {

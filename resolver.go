@@ -5,6 +5,7 @@ import (
 
 	"github.com/3dw1nM0535/uzi-api/model"
 	"github.com/3dw1nM0535/uzi-api/services/courier"
+	"github.com/3dw1nM0535/uzi-api/services/location"
 	"github.com/3dw1nM0535/uzi-api/services/upload"
 	"github.com/google/uuid"
 )
@@ -14,12 +15,14 @@ import (
 type Resolver struct {
 	upload.Upload
 	courier.Courier
+	location.Location
 }
 
 func New() Config {
 	c := Config{Resolvers: &Resolver{
 		upload.GetUploadService(),
 		courier.GetCourierService(),
+		location.GetLocationService(),
 	}}
 
 	return c
@@ -49,6 +52,14 @@ func (r *mutationResolver) CreateCourierDocument(ctx context.Context, doc model.
 	}
 
 	return true, nil
+}
+
+func (r *queryResolver) ReverseGeocode(ctx context.Context, input model.GpsInput) (*model.Place, error) {
+	return r.GeocodeLatLng(input)
+}
+
+func (r *queryResolver) SearchPlace(ctx context.Context, textQuery string) ([]*model.Place, error) {
+	return r.AutoCompletePlace(textQuery)
 }
 
 func GetCourierIDFromRequestContext(ctx context.Context, courier courier.Courier) uuid.UUID {
