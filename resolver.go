@@ -59,7 +59,7 @@ func (r *queryResolver) ReverseGeocode(ctx context.Context, input model.GpsInput
 }
 
 func (r *queryResolver) SearchPlace(ctx context.Context, textQuery string) ([]*model.Place, error) {
-	return r.AutoCompletePlace(textQuery)
+	return r.AutocompletePlace(textQuery)
 }
 
 func GetCourierIDFromRequestContext(ctx context.Context, courier courier.Courier) uuid.UUID {

@@ -154,7 +154,9 @@ func googleMapsConfig() GoogleMaps {
 
 	Env()
 
-	googleMapsConfig.GoogleMapsApiKey = strings.TrimSpace(os.Getenv("MAPS_API_KEY"))
+	googleMapsConfig.GooglePlacesApiKey = strings.TrimSpace(os.Getenv("MAPS_PLACES_API_KEY"))
+	googleMapsConfig.GoogleGeocodeApiKey = strings.TrimSpace(os.Getenv("MAPS_GEOCODE_API_KEY"))
+	googleMapsConfig.GoogleRoutesApiKey = strings.TrimSpace(os.Getenv("MAPS_ROUTES_API_KEY"))
 
 	return googleMapsConfig
 }
