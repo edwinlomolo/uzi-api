@@ -70,7 +70,7 @@ func (lc *locationcacheclient) placesSetCache(key string, value interface{}) err
 		return cacheErr
 	}
 
-	if err := lc.redis.Set(context.Background(), key, data, time.Minute*5).Err(); err != nil {
+	if err := lc.redis.Set(context.Background(), key, data, time.Hour*24*7).Err(); err != nil {
 		cacheErr := model.UziErr{Err: err.Error(), Message: "setplacescationcache", Code: 500}
 		lc.logger.Errorf("%s: %s", cacheErr.Message, cacheErr.Err)
 		return cacheErr
@@ -88,7 +88,7 @@ func (lc *locationcacheclient) Set(key string, value interface{}) error {
 		return cacheErr
 	}
 
-	if err := lc.redis.Set(context.Background(), key, data, time.Minute*5).Err(); err != nil {
+	if err := lc.redis.Set(context.Background(), key, data, time.Hour*24*7).Err(); err != nil {
 		cacheErr := model.UziErr{Err: err.Error(), Message: "setlocationcache", Code: 500}
 		lc.logger.Errorf("%s: %s", cacheErr.Message, cacheErr.Err)
 		return cacheErr
