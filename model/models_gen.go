@@ -41,10 +41,9 @@ type GpsInput struct {
 }
 
 type Place struct {
-	ID               string `json:"id"`
-	Name             string `json:"name"`
-	FormattedAddress string `json:"formattedAddress"`
-	Location         *Gps   `json:"location"`
+	ID            string `json:"id"`
+	MainText      string `json:"mainText"`
+	SecondaryText string `json:"secondaryText"`
 }
 
 type Product struct {

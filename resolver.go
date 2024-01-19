@@ -54,7 +54,7 @@ func (r *mutationResolver) CreateCourierDocument(ctx context.Context, doc model.
 	return true, nil
 }
 
-func (r *queryResolver) ReverseGeocode(ctx context.Context, input model.GpsInput) (*model.Place, error) {
+func (r *queryResolver) ReverseGeocode(ctx context.Context, input model.GpsInput) (*model.Geocode, error) {
 	return r.GeocodeLatLng(input)
 }
 

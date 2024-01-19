@@ -63,6 +63,11 @@ type ComplexityRoot struct {
 		Verified       func(childComplexity int) int
 	}
 
+	Geocode struct {
+		FormattedAddress func(childComplexity int) int
+		Location         func(childComplexity int) int
+	}
+
 	Gps struct {
 		Lat func(childComplexity int) int
 		Lng func(childComplexity int) int
@@ -73,10 +78,9 @@ type ComplexityRoot struct {
 	}
 
 	Place struct {
-		FormattedAddress func(childComplexity int) int
-		ID               func(childComplexity int) int
-		Location         func(childComplexity int) int
-		Name             func(childComplexity int) int
+		ID            func(childComplexity int) int
+		MainText      func(childComplexity int) int
+		SecondaryText func(childComplexity int) int
 	}
 
 	Product struct {
@@ -158,7 +162,7 @@ type QueryResolver interface {
 	Hello(ctx context.Context) (string, error)
 	GetCourierDocuments(ctx context.Context) ([]*model.Uploads, error)
 	SearchPlace(ctx context.Context, textQuery string) ([]*model.Place, error)
-	ReverseGeocode(ctx context.Context, place model.GpsInput) (*model.Place, error)
+	ReverseGeocode(ctx context.Context, place model.GpsInput) (*model.Geocode, error)
 }
 
 type executableSchema struct {
@@ -257,6 +261,20 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Courier.Verified(childComplexity), true
 
+	case "Geocode.FormattedAddress":
+		if e.complexity.Geocode.FormattedAddress == nil {
+			break
+		}
+
+		return e.complexity.Geocode.FormattedAddress(childComplexity), true
+
+	case "Geocode.Location":
+		if e.complexity.Geocode.Location == nil {
+			break
+		}
+
+		return e.complexity.Geocode.Location(childComplexity), true
+
 	case "Gps.lat":
 		if e.complexity.Gps.Lat == nil {
 			break
@@ -283,13 +301,6 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Mutation.CreateCourierDocument(childComplexity, args["input"].(model.CourierUploadInput)), true
 
-	case "Place.formattedAddress":
-		if e.complexity.Place.FormattedAddress == nil {
-			break
-		}
-
-		return e.complexity.Place.FormattedAddress(childComplexity), true
-
 	case "Place.id":
 		if e.complexity.Place.ID == nil {
 			break
@@ -297,19 +308,19 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Place.ID(childComplexity), true
 
-	case "Place.location":
-		if e.complexity.Place.Location == nil {
+	case "Place.mainText":
+		if e.complexity.Place.MainText == nil {
 			break
 		}
 
-		return e.complexity.Place.Location(childComplexity), true
+		return e.complexity.Place.MainText(childComplexity), true
 
-	case "Place.name":
-		if e.complexity.Place.Name == nil {
+	case "Place.secondaryText":
+		if e.complexity.Place.SecondaryText == nil {
 			break
 		}
 
-		return e.complexity.Place.Name(childComplexity), true
+		return e.complexity.Place.SecondaryText(childComplexity), true
 
 	case "Product.created_at":
 		if e.complexity.Product.CreatedAt == nil {
@@ -1367,6 +1378,100 @@ func (ec *executionContext) fieldContext_Courier_updated_at(ctx context.Context,
 	return fc, nil
 }
 
+func (ec *executionContext) _Geocode_FormattedAddress(ctx context.Context, field graphql.CollectedField, obj *model.Geocode) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Geocode_FormattedAddress(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.FormattedAddress, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Geocode_FormattedAddress(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Geocode",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Geocode_Location(ctx context.Context, field graphql.CollectedField, obj *model.Geocode) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Geocode_Location(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Location, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(model.Gps)
+	fc.Result = res
+	return ec.marshalNGps2githubᚗcomᚋ3dw1nM0535ᚋuziᚑapiᚋmodelᚐGps(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Geocode_Location(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Geocode",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "lat":
+				return ec.fieldContext_Gps_lat(ctx, field)
+			case "lng":
+				return ec.fieldContext_Gps_lng(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Gps", field.Name)
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _Gps_lat(ctx context.Context, field graphql.CollectedField, obj *model.Gps) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Gps_lat(ctx, field)
 	if err != nil {
@@ -1554,8 +1659,8 @@ func (ec *executionContext) fieldContext_Place_id(ctx context.Context, field gra
 	return fc, nil
 }
 
-func (ec *executionContext) _Place_name(ctx context.Context, field graphql.CollectedField, obj *model.Place) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Place_name(ctx, field)
+func (ec *executionContext) _Place_mainText(ctx context.Context, field graphql.CollectedField, obj *model.Place) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Place_mainText(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -1568,7 +1673,7 @@ func (ec *executionContext) _Place_name(ctx context.Context, field graphql.Colle
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.Name, nil
+		return obj.MainText, nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -1585,7 +1690,7 @@ func (ec *executionContext) _Place_name(ctx context.Context, field graphql.Colle
 	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Place_name(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Place_mainText(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Place",
 		Field:      field,
@@ -1598,8 +1703,8 @@ func (ec *executionContext) fieldContext_Place_name(ctx context.Context, field g
 	return fc, nil
 }
 
-func (ec *executionContext) _Place_formattedAddress(ctx context.Context, field graphql.CollectedField, obj *model.Place) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Place_formattedAddress(ctx, field)
+func (ec *executionContext) _Place_secondaryText(ctx context.Context, field graphql.CollectedField, obj *model.Place) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Place_secondaryText(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -1612,7 +1717,7 @@ func (ec *executionContext) _Place_formattedAddress(ctx context.Context, field g
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.FormattedAddress, nil
+		return obj.SecondaryText, nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -1629,7 +1734,7 @@ func (ec *executionContext) _Place_formattedAddress(ctx context.Context, field g
 	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Place_formattedAddress(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Place_secondaryText(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Place",
 		Field:      field,
@@ -1637,56 +1742,6 @@ func (ec *executionContext) fieldContext_Place_formattedAddress(ctx context.Cont
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("field of type String does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _Place_location(ctx context.Context, field graphql.CollectedField, obj *model.Place) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Place_location(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.Location, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(*model.Gps)
-	fc.Result = res
-	return ec.marshalNGps2ᚖgithubᚗcomᚋ3dw1nM0535ᚋuziᚑapiᚋmodelᚐGps(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_Place_location(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Place",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			switch field.Name {
-			case "lat":
-				return ec.fieldContext_Gps_lat(ctx, field)
-			case "lng":
-				return ec.fieldContext_Gps_lng(ctx, field)
-			}
-			return nil, fmt.Errorf("no field named %q was found under type Gps", field.Name)
 		},
 	}
 	return fc, nil
@@ -2097,12 +2152,10 @@ func (ec *executionContext) fieldContext_Query_searchPlace(ctx context.Context, 
 			switch field.Name {
 			case "id":
 				return ec.fieldContext_Place_id(ctx, field)
-			case "name":
-				return ec.fieldContext_Place_name(ctx, field)
-			case "formattedAddress":
-				return ec.fieldContext_Place_formattedAddress(ctx, field)
-			case "location":
-				return ec.fieldContext_Place_location(ctx, field)
+			case "mainText":
+				return ec.fieldContext_Place_mainText(ctx, field)
+			case "secondaryText":
+				return ec.fieldContext_Place_secondaryText(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Place", field.Name)
 		},
@@ -2144,9 +2197,9 @@ func (ec *executionContext) _Query_reverseGeocode(ctx context.Context, field gra
 	if resTmp == nil {
 		return graphql.Null
 	}
-	res := resTmp.(*model.Place)
+	res := resTmp.(*model.Geocode)
 	fc.Result = res
-	return ec.marshalOPlace2ᚖgithubᚗcomᚋ3dw1nM0535ᚋuziᚑapiᚋmodelᚐPlace(ctx, field.Selections, res)
+	return ec.marshalOGeocode2ᚖgithubᚗcomᚋ3dw1nM0535ᚋuziᚑapiᚋmodelᚐGeocode(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Query_reverseGeocode(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -2157,16 +2210,12 @@ func (ec *executionContext) fieldContext_Query_reverseGeocode(ctx context.Contex
 		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
-			case "id":
-				return ec.fieldContext_Place_id(ctx, field)
-			case "name":
-				return ec.fieldContext_Place_name(ctx, field)
-			case "formattedAddress":
-				return ec.fieldContext_Place_formattedAddress(ctx, field)
-			case "location":
-				return ec.fieldContext_Place_location(ctx, field)
+			case "FormattedAddress":
+				return ec.fieldContext_Geocode_FormattedAddress(ctx, field)
+			case "Location":
+				return ec.fieldContext_Geocode_Location(ctx, field)
 			}
-			return nil, fmt.Errorf("no field named %q was found under type Place", field.Name)
+			return nil, fmt.Errorf("no field named %q was found under type Geocode", field.Name)
 		},
 	}
 	defer func() {
@@ -5998,6 +6047,50 @@ func (ec *executionContext) _Courier(ctx context.Context, sel ast.SelectionSet, 
 	return out
 }
 
+var geocodeImplementors = []string{"Geocode"}
+
+func (ec *executionContext) _Geocode(ctx context.Context, sel ast.SelectionSet, obj *model.Geocode) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, geocodeImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("Geocode")
+		case "FormattedAddress":
+			out.Values[i] = ec._Geocode_FormattedAddress(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "Location":
+			out.Values[i] = ec._Geocode_Location(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
 var gpsImplementors = []string{"Gps"}
 
 func (ec *executionContext) _Gps(ctx context.Context, sel ast.SelectionSet, obj *model.Gps) graphql.Marshaler {
@@ -6107,18 +6200,13 @@ func (ec *executionContext) _Place(ctx context.Context, sel ast.SelectionSet, ob
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
-		case "name":
-			out.Values[i] = ec._Place_name(ctx, field, obj)
+		case "mainText":
+			out.Values[i] = ec._Place_mainText(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
-		case "formattedAddress":
-			out.Values[i] = ec._Place_formattedAddress(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
-		case "location":
-			out.Values[i] = ec._Place_location(ctx, field, obj)
+		case "secondaryText":
+			out.Values[i] = ec._Place_secondaryText(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
@@ -7031,6 +7119,10 @@ func (ec *executionContext) marshalNFloat2float64(ctx context.Context, sel ast.S
 	return graphql.WrapContextMarshaler(ctx, res)
 }
 
+func (ec *executionContext) marshalNGps2githubᚗcomᚋ3dw1nM0535ᚋuziᚑapiᚋmodelᚐGps(ctx context.Context, sel ast.SelectionSet, v model.Gps) graphql.Marshaler {
+	return ec._Gps(ctx, sel, &v)
+}
+
 func (ec *executionContext) marshalNGps2ᚖgithubᚗcomᚋ3dw1nM0535ᚋuziᚑapiᚋmodelᚐGps(ctx context.Context, sel ast.SelectionSet, v *model.Gps) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
@@ -7546,11 +7638,11 @@ func (ec *executionContext) marshalOCourierStatus2ᚖgithubᚗcomᚋ3dw1nM0535�
 	return v
 }
 
-func (ec *executionContext) marshalOPlace2ᚖgithubᚗcomᚋ3dw1nM0535ᚋuziᚑapiᚋmodelᚐPlace(ctx context.Context, sel ast.SelectionSet, v *model.Place) graphql.Marshaler {
+func (ec *executionContext) marshalOGeocode2ᚖgithubᚗcomᚋ3dw1nM0535ᚋuziᚑapiᚋmodelᚐGeocode(ctx context.Context, sel ast.SelectionSet, v *model.Geocode) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
-	return ec._Place(ctx, sel, v)
+	return ec._Geocode(ctx, sel, v)
 }
 
 func (ec *executionContext) marshalORoute2ᚖgithubᚗcomᚋ3dw1nM0535ᚋuziᚑapiᚋmodelᚐRoute(ctx context.Context, sel ast.SelectionSet, v *model.Route) graphql.Marshaler {

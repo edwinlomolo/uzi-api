@@ -112,16 +112,20 @@ type Product {
 
 type Place {
   id: String!
-  name: String!
-  formattedAddress: String!
-  location: Gps!
+  mainText: String!
+  secondaryText: String!
+}
+
+type Geocode {
+  FormattedAddress: String!
+  Location: Gps!
 }
 
 type Query {
   hello: String!
   getCourierDocuments: [Uploads!]!
   searchPlace(textQuery: String!): [Place!]!
-  reverseGeocode(place: GpsInput!): Place
+  reverseGeocode(place: GpsInput!): Geocode
 }
 
 type Mutation {
