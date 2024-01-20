@@ -113,6 +113,7 @@ func (l *locationClient) GeocodeLatLng(input model.GpsInput) (*model.Geocode, er
 	}
 
 	geo := &model.Geocode{
+		PlaceID:          res[0].PlaceID,
 		FormattedAddress: res[0].FormattedAddress,
 		Location:         model.Gps{Lat: res[0].Geometry.Location.Lat, Lng: res[0].Geometry.Location.Lng},
 	}
