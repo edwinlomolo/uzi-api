@@ -117,8 +117,9 @@ type Place {
 }
 
 type Geocode {
-  FormattedAddress: String!
-  Location: Gps!
+  placeId: String!
+  formattedAddress: String!
+  location: Gps!
 }
 
 type Query {
