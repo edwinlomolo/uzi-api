@@ -53,6 +53,24 @@ func (n nominatimClient) ReverseGeocode(input model.GpsInput) (*model.Geocode, e
 		geo.FormattedAddress = nominatimRes.Name
 	}
 
+	lat, parseErr := strconv.ParseFloat(nominatimRes.Lat, 64)
+	if parseErr != nil {
+		uziErr := model.UziErr{Err: parseErr.Error(), Message: "parselatitude", Code: 500}
+		n.logger.Errorf(uziErr.Error())
+		return nil, err
+	}
+	lng, parseErr := strconv.ParseFloat(nominatimRes.Lon, 64)
+	if parseErr != nil {
+		uziErr := model.UziErr{Err: parseErr.Error(), Message: "parselongitude", Code: 500}
+		n.logger.Errorf(uziErr.Error())
+		return nil, err
+	}
+
+	geo.Location = model.Gps{
+		Lat: lat,
+		Lng: lng,
+	}
+
 	if err := n.cache.Set(cacheKey, geo); err != nil {
 		return nil, err
 	}
