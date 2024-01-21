@@ -10,16 +10,16 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-type locationcacheclient struct {
+type locationCache struct {
 	redis  *redis.Client
 	logger *logrus.Logger
 }
 
-func newlocationcacheclient(redis *redis.Client, logger *logrus.Logger) locationcacheclient {
-	return locationcacheclient{redis, logger}
+func newlocationCache(redis *redis.Client, logger *logrus.Logger) locationCache {
+	return locationCache{redis, logger}
 }
 
-func (lc *locationcacheclient) Get(key string) (interface{}, error) {
+func (lc *locationCache) Get(key string) (interface{}, error) {
 	var res model.Geocode
 
 	keyValue, err := lc.redis.Get(context.Background(), key).Result()
@@ -40,7 +40,7 @@ func (lc *locationcacheclient) Get(key string) (interface{}, error) {
 	return &res, nil
 }
 
-func (lc *locationcacheclient) placesGetCache(key string) (interface{}, error) {
+func (lc *locationCache) placesGetCache(key string) (interface{}, error) {
 	var res []*model.Place
 
 	keyValue, err := lc.redis.Get(context.Background(), key).Result()
@@ -61,7 +61,7 @@ func (lc *locationcacheclient) placesGetCache(key string) (interface{}, error) {
 	return res, nil
 }
 
-func (lc *locationcacheclient) placesSetCache(key string, value interface{}) error {
+func (lc *locationCache) placesSetCache(key string, value interface{}) error {
 	locationinfo := value.([]*model.Place)
 	data, err := json.Marshal(locationinfo)
 	if err != nil {
@@ -70,7 +70,7 @@ func (lc *locationcacheclient) placesSetCache(key string, value interface{}) err
 		return cacheErr
 	}
 
-	if err := lc.redis.Set(context.Background(), key, data, time.Hour*24*7).Err(); err != nil {
+	if err := lc.redis.Set(context.Background(), key, data, time.Minute*5).Err(); err != nil {
 		cacheErr := model.UziErr{Err: err.Error(), Message: "setplacescationcache", Code: 500}
 		lc.logger.Errorf("%s: %s", cacheErr.Message, cacheErr.Err)
 		return cacheErr
@@ -79,7 +79,7 @@ func (lc *locationcacheclient) placesSetCache(key string, value interface{}) err
 	return nil
 }
 
-func (lc *locationcacheclient) Set(key string, value interface{}) error {
+func (lc *locationCache) Set(key string, value interface{}) error {
 	locationinfo := value.(*model.Geocode)
 	data, err := json.Marshal(locationinfo)
 	if err != nil {
@@ -88,7 +88,7 @@ func (lc *locationcacheclient) Set(key string, value interface{}) error {
 		return cacheErr
 	}
 
-	if err := lc.redis.Set(context.Background(), key, data, time.Hour*24*7).Err(); err != nil {
+	if err := lc.redis.Set(context.Background(), key, data, time.Minute*5).Err(); err != nil {
 		cacheErr := model.UziErr{Err: err.Error(), Message: "setlocationcache", Code: 500}
 		lc.logger.Errorf("%s: %s", cacheErr.Message, cacheErr.Err)
 		return cacheErr
