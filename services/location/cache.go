@@ -41,7 +41,7 @@ func (lc *locationCache) Get(key string) (interface{}, error) {
 }
 
 func (lc *locationCache) placesGetCache(key string) (interface{}, error) {
-	var res []*model.Geocode
+	var res []*model.Place
 
 	keyValue, err := lc.redis.Get(context.Background(), key).Result()
 	if err == redis.Nil {
@@ -62,7 +62,7 @@ func (lc *locationCache) placesGetCache(key string) (interface{}, error) {
 }
 
 func (lc *locationCache) placesSetCache(key string, value interface{}) error {
-	locationinfo := value.([]*model.Geocode)
+	locationinfo := value.([]*model.Place)
 	data, err := json.Marshal(locationinfo)
 	if err != nil {
 		cacheErr := model.UziErr{Err: err.Error(), Message: "setplacescationcachemarshal", Code: 500}

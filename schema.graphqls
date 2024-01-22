@@ -125,7 +125,7 @@ type Geocode {
 type Query {
   hello: String!
   getCourierDocuments: [Uploads!]!
-  searchPlace(textQuery: String!): [Geocode!]!
+  searchPlace(textQuery: String!): [Place!]!
   reverseGeocode(place: GpsInput!): Geocode
 }
 

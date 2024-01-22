@@ -45,14 +45,14 @@ func NewLocationService(cfg config.GoogleMaps, logger *logrus.Logger, redis *red
 	return locationService
 }
 
-func (l *locationClient) AutocompletePlace(searchQuery string) ([]*model.Geocode, error) {
+func (l *locationClient) AutocompletePlace(searchQuery string) ([]*model.Place, error) {
 	placesCache, placesCacheErr := l.cache.placesGetCache(searchQuery)
 	if placesCacheErr != nil {
 		return nil, placesCacheErr
 	}
 
 	if placesCache != nil {
-		return (placesCache).([]*model.Geocode), nil
+		return (placesCache).([]*model.Place), nil
 	}
 
 	componentsFilter := map[maps.Component][]string{
@@ -71,23 +71,13 @@ func (l *locationClient) AutocompletePlace(searchQuery string) ([]*model.Geocode
 		return nil, placesErr
 	}
 
-	p := make([]*model.Geocode, 0)
+	p := make([]*model.Place, 0)
 	for _, item := range places.Predictions {
-		place := model.Geocode{}
-
-		placeCords, cordsErr := l.getPlaceDetails(item.PlaceID)
-		if cordsErr != nil {
-			return nil, cordsErr
+		place := model.Place{
+			ID:            item.PlaceID,
+			MainText:      item.StructuredFormatting.MainText,
+			SecondaryText: item.StructuredFormatting.SecondaryText,
 		}
-
-		placeGeo, geoErr := l.GeocodeLatLng(model.GpsInput{Lat: placeCords.Location.Lat, Lng: placeCords.Location.Lng})
-		if geoErr != nil {
-			return nil, geoErr
-		}
-
-		place.PlaceID = placeGeo.PlaceID
-		place.FormattedAddress = placeGeo.FormattedAddress
-		place.Location = placeGeo.Location
 
 		p = append(p, &place)
 	}

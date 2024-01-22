@@ -162,7 +162,7 @@ type MutationResolver interface {
 type QueryResolver interface {
 	Hello(ctx context.Context) (string, error)
 	GetCourierDocuments(ctx context.Context) ([]*model.Uploads, error)
-	SearchPlace(ctx context.Context, textQuery string) ([]*model.Geocode, error)
+	SearchPlace(ctx context.Context, textQuery string) ([]*model.Place, error)
 	ReverseGeocode(ctx context.Context, place model.GpsInput) (*model.Geocode, error)
 }
 
@@ -2189,9 +2189,9 @@ func (ec *executionContext) _Query_searchPlace(ctx context.Context, field graphq
 		}
 		return graphql.Null
 	}
-	res := resTmp.([]*model.Geocode)
+	res := resTmp.([]*model.Place)
 	fc.Result = res
-	return ec.marshalNGeocode2ᚕᚖgithubᚗcomᚋ3dw1nM0535ᚋuziᚑapiᚋmodelᚐGeocodeᚄ(ctx, field.Selections, res)
+	return ec.marshalNPlace2ᚕᚖgithubᚗcomᚋ3dw1nM0535ᚋuziᚑapiᚋmodelᚐPlaceᚄ(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Query_searchPlace(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -2202,14 +2202,14 @@ func (ec *executionContext) fieldContext_Query_searchPlace(ctx context.Context, 
 		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
-			case "placeId":
-				return ec.fieldContext_Geocode_placeId(ctx, field)
-			case "formattedAddress":
-				return ec.fieldContext_Geocode_formattedAddress(ctx, field)
-			case "location":
-				return ec.fieldContext_Geocode_location(ctx, field)
+			case "id":
+				return ec.fieldContext_Place_id(ctx, field)
+			case "mainText":
+				return ec.fieldContext_Place_mainText(ctx, field)
+			case "secondaryText":
+				return ec.fieldContext_Place_secondaryText(ctx, field)
 			}
-			return nil, fmt.Errorf("no field named %q was found under type Geocode", field.Name)
+			return nil, fmt.Errorf("no field named %q was found under type Place", field.Name)
 		},
 	}
 	defer func() {
@@ -7178,60 +7178,6 @@ func (ec *executionContext) marshalNFloat2float64(ctx context.Context, sel ast.S
 	return graphql.WrapContextMarshaler(ctx, res)
 }
 
-func (ec *executionContext) marshalNGeocode2ᚕᚖgithubᚗcomᚋ3dw1nM0535ᚋuziᚑapiᚋmodelᚐGeocodeᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.Geocode) graphql.Marshaler {
-	ret := make(graphql.Array, len(v))
-	var wg sync.WaitGroup
-	isLen1 := len(v) == 1
-	if !isLen1 {
-		wg.Add(len(v))
-	}
-	for i := range v {
-		i := i
-		fc := &graphql.FieldContext{
-			Index:  &i,
-			Result: &v[i],
-		}
-		ctx := graphql.WithFieldContext(ctx, fc)
-		f := func(i int) {
-			defer func() {
-				if r := recover(); r != nil {
-					ec.Error(ctx, ec.Recover(ctx, r))
-					ret = nil
-				}
-			}()
-			if !isLen1 {
-				defer wg.Done()
-			}
-			ret[i] = ec.marshalNGeocode2ᚖgithubᚗcomᚋ3dw1nM0535ᚋuziᚑapiᚋmodelᚐGeocode(ctx, sel, v[i])
-		}
-		if isLen1 {
-			f(i)
-		} else {
-			go f(i)
-		}
-
-	}
-	wg.Wait()
-
-	for _, e := range ret {
-		if e == graphql.Null {
-			return graphql.Null
-		}
-	}
-
-	return ret
-}
-
-func (ec *executionContext) marshalNGeocode2ᚖgithubᚗcomᚋ3dw1nM0535ᚋuziᚑapiᚋmodelᚐGeocode(ctx context.Context, sel ast.SelectionSet, v *model.Geocode) graphql.Marshaler {
-	if v == nil {
-		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
-		}
-		return graphql.Null
-	}
-	return ec._Geocode(ctx, sel, v)
-}
-
 func (ec *executionContext) marshalNGps2githubᚗcomᚋ3dw1nM0535ᚋuziᚑapiᚋmodelᚐGps(ctx context.Context, sel ast.SelectionSet, v model.Gps) graphql.Marshaler {
 	return ec._Gps(ctx, sel, &v)
 }
@@ -7264,6 +7210,60 @@ func (ec *executionContext) marshalNInt2int(ctx context.Context, sel ast.Selecti
 		}
 	}
 	return res
+}
+
+func (ec *executionContext) marshalNPlace2ᚕᚖgithubᚗcomᚋ3dw1nM0535ᚋuziᚑapiᚋmodelᚐPlaceᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.Place) graphql.Marshaler {
+	ret := make(graphql.Array, len(v))
+	var wg sync.WaitGroup
+	isLen1 := len(v) == 1
+	if !isLen1 {
+		wg.Add(len(v))
+	}
+	for i := range v {
+		i := i
+		fc := &graphql.FieldContext{
+			Index:  &i,
+			Result: &v[i],
+		}
+		ctx := graphql.WithFieldContext(ctx, fc)
+		f := func(i int) {
+			defer func() {
+				if r := recover(); r != nil {
+					ec.Error(ctx, ec.Recover(ctx, r))
+					ret = nil
+				}
+			}()
+			if !isLen1 {
+				defer wg.Done()
+			}
+			ret[i] = ec.marshalNPlace2ᚖgithubᚗcomᚋ3dw1nM0535ᚋuziᚑapiᚋmodelᚐPlace(ctx, sel, v[i])
+		}
+		if isLen1 {
+			f(i)
+		} else {
+			go f(i)
+		}
+
+	}
+	wg.Wait()
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
+}
+
+func (ec *executionContext) marshalNPlace2ᚖgithubᚗcomᚋ3dw1nM0535ᚋuziᚑapiᚋmodelᚐPlace(ctx context.Context, sel ast.SelectionSet, v *model.Place) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._Place(ctx, sel, v)
 }
 
 func (ec *executionContext) unmarshalNString2string(ctx context.Context, v interface{}) (string, error) {

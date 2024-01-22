@@ -58,7 +58,7 @@ func (r *queryResolver) ReverseGeocode(ctx context.Context, input model.GpsInput
 	return r.GeocodeLatLng(input)
 }
 
-func (r *queryResolver) SearchPlace(ctx context.Context, textQuery string) ([]*model.Geocode, error) {
+func (r *queryResolver) SearchPlace(ctx context.Context, textQuery string) ([]*model.Place, error) {
 	return r.AutocompletePlace(textQuery)
 }
 
