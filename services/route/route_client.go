@@ -1,6 +1,7 @@
 package route
 
 import (
+	"github.com/3dw1nM0535/uzi-api/model"
 	sqlStore "github.com/3dw1nM0535/uzi-api/store/sqlc"
 	"github.com/sirupsen/logrus"
 )
@@ -18,4 +19,6 @@ func NewRouteService(logger *logrus.Logger, store *sqlStore.Queries) {
 
 func GetRouteService() Route { return routeService }
 
-func (r *routeClient) CreateRoute() {}
+func (r *routeClient) GetTripRoute(input model.TripRouteInput) (*model.TripRoute, error) {
+	return nil, nil
+}

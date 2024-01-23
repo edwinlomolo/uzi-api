@@ -66,7 +66,7 @@ func (r *queryResolver) SearchPlace(ctx context.Context, textQuery string) ([]*m
 }
 
 func (r *queryResolver) GetRoute(ctx context.Context, input model.TripRouteInput) (*model.TripRoute, error) {
-	panic("not implemented")
+	return r.GetTripRoute(input)
 }
 
 func GetCourierIDFromRequestContext(ctx context.Context, courier courier.Courier) uuid.UUID {
