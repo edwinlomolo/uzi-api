@@ -1,4 +1,3 @@
-# User
 type User {
   id: UUID!
   first_name: String!
@@ -150,8 +149,14 @@ input GpsInput {
 }
 
 input TripRouteInput {
-  pickup: GpsInput!
-  dropoff: GpsInput!
+  pickup: TripInput!
+  dropoff: TripInput!
+}
+
+input TripInput {
+  placeId: String!,
+  formattedAddress: String!
+  location: GpsInput!
 }
 
 schema {

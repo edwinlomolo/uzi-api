@@ -105,7 +105,7 @@ func (l *locationClient) GeocodeLatLng(input model.GpsInput) (*model.Geocode, er
 	return l.nominatim.ReverseGeocode(input)
 }
 
-func (l *locationClient) getPlaceDetails(placeID string) (*model.Geocode, error) {
+func (l *locationClient) GetPlaceDetails(placeID string) (*model.Geocode, error) {
 	placeCache, placeCacheErr := l.cache.Get(placeID)
 	if placeCacheErr != nil {
 		return nil, placeCacheErr

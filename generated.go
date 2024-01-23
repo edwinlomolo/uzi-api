@@ -733,6 +733,7 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 	inputUnmarshalMap := graphql.BuildUnmarshalerMap(
 		ec.unmarshalInputCourierUploadInput,
 		ec.unmarshalInputGpsInput,
+		ec.unmarshalInputTripInput,
 		ec.unmarshalInputTripRouteInput,
 	)
 	first := true
@@ -6214,6 +6215,47 @@ func (ec *executionContext) unmarshalInputGpsInput(ctx context.Context, obj inte
 	return it, nil
 }
 
+func (ec *executionContext) unmarshalInputTripInput(ctx context.Context, obj interface{}) (model.TripInput, error) {
+	var it model.TripInput
+	asMap := map[string]interface{}{}
+	for k, v := range obj.(map[string]interface{}) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"placeId", "formattedAddress", "location"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "placeId":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("placeId"))
+			data, err := ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.PlaceID = data
+		case "formattedAddress":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("formattedAddress"))
+			data, err := ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.FormattedAddress = data
+		case "location":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("location"))
+			data, err := ec.unmarshalNGpsInput2ᚖgithubᚗcomᚋ3dw1nM0535ᚋuziᚑapiᚋmodelᚐGpsInput(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Location = data
+		}
+	}
+
+	return it, nil
+}
+
 func (ec *executionContext) unmarshalInputTripRouteInput(ctx context.Context, obj interface{}) (model.TripRouteInput, error) {
 	var it model.TripRouteInput
 	asMap := map[string]interface{}{}
@@ -6230,14 +6272,14 @@ func (ec *executionContext) unmarshalInputTripRouteInput(ctx context.Context, ob
 		switch k {
 		case "pickup":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("pickup"))
-			data, err := ec.unmarshalNGpsInput2ᚖgithubᚗcomᚋ3dw1nM0535ᚋuziᚑapiᚋmodelᚐGpsInput(ctx, v)
+			data, err := ec.unmarshalNTripInput2ᚖgithubᚗcomᚋ3dw1nM0535ᚋuziᚑapiᚋmodelᚐTripInput(ctx, v)
 			if err != nil {
 				return it, err
 			}
 			it.Pickup = data
 		case "dropoff":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("dropoff"))
-			data, err := ec.unmarshalNGpsInput2ᚖgithubᚗcomᚋ3dw1nM0535ᚋuziᚑapiᚋmodelᚐGpsInput(ctx, v)
+			data, err := ec.unmarshalNTripInput2ᚖgithubᚗcomᚋ3dw1nM0535ᚋuziᚑapiᚋmodelᚐTripInput(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -7597,6 +7639,11 @@ func (ec *executionContext) marshalNTime2timeᚐTime(ctx context.Context, sel as
 		}
 	}
 	return res
+}
+
+func (ec *executionContext) unmarshalNTripInput2ᚖgithubᚗcomᚋ3dw1nM0535ᚋuziᚑapiᚋmodelᚐTripInput(ctx context.Context, v interface{}) (*model.TripInput, error) {
+	res, err := ec.unmarshalInputTripInput(ctx, v)
+	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
 func (ec *executionContext) marshalNTripRoute2githubᚗcomᚋ3dw1nM0535ᚋuziᚑapiᚋmodelᚐTripRoute(ctx context.Context, sel ast.SelectionSet, v model.TripRoute) graphql.Marshaler {
