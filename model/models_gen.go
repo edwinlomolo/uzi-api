@@ -88,6 +88,16 @@ type Trip struct {
 	UpdatedAt     *time.Time `json:"updated_at,omitempty"`
 }
 
+type TripRoute struct {
+	ProductID uuid.UUID `json:"productId"`
+	Duration  time.Time `json:"duration"`
+}
+
+type TripRouteInput struct {
+	Pickup  *GpsInput `json:"pickup"`
+	Dropoff *GpsInput `json:"dropoff"`
+}
+
 type Uploads struct {
 	ID           uuid.UUID                `json:"ID"`
 	Type         string                   `json:"type"`

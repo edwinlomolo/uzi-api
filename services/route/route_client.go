@@ -16,4 +16,6 @@ func NewRouteService(logger *logrus.Logger, store *sqlStore.Queries) {
 	routeService = &routeClient{logger, store}
 }
 
+func GetRouteService() Route { return routeService }
+
 func (r *routeClient) CreateRoute() {}

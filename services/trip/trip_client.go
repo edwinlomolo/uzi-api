@@ -16,5 +16,7 @@ func NewTripService(logger *logrus.Logger, store *sqlStore.Queries) {
 	tripService = &tripClient{logger, store}
 }
 
+func GetTripService() Trip { return tripService }
+
 func (t *tripClient) CreateTrip()        {}
 func (t *tripClient) AssingRouteToTrip() {}

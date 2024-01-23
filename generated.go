@@ -95,6 +95,7 @@ type ComplexityRoot struct {
 
 	Query struct {
 		GetCourierDocuments func(childComplexity int) int
+		GetRoute            func(childComplexity int, input model.TripRouteInput) int
 		Hello               func(childComplexity int) int
 		ReverseGeocode      func(childComplexity int, place model.GpsInput) int
 		SearchPlace         func(childComplexity int, textQuery string) int
@@ -133,6 +134,11 @@ type ComplexityRoot struct {
 		UserID        func(childComplexity int) int
 	}
 
+	TripRoute struct {
+		Duration  func(childComplexity int) int
+		ProductID func(childComplexity int) int
+	}
+
 	Uploads struct {
 		CourierID    func(childComplexity int) int
 		CreatedAt    func(childComplexity int) int
@@ -164,6 +170,7 @@ type QueryResolver interface {
 	GetCourierDocuments(ctx context.Context) ([]*model.Uploads, error)
 	SearchPlace(ctx context.Context, textQuery string) ([]*model.Place, error)
 	ReverseGeocode(ctx context.Context, place model.GpsInput) (*model.Geocode, error)
+	GetRoute(ctx context.Context, input model.TripRouteInput) (*model.TripRoute, error)
 }
 
 type executableSchema struct {
@@ -379,6 +386,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Query.GetCourierDocuments(childComplexity), true
 
+	case "Query.getRoute":
+		if e.complexity.Query.GetRoute == nil {
+			break
+		}
+
+		args, err := ec.field_Query_getRoute_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Query.GetRoute(childComplexity, args["input"].(model.TripRouteInput)), true
+
 	case "Query.hello":
 		if e.complexity.Query.Hello == nil {
 			break
@@ -578,6 +597,20 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Trip.UserID(childComplexity), true
 
+	case "TripRoute.duration":
+		if e.complexity.TripRoute.Duration == nil {
+			break
+		}
+
+		return e.complexity.TripRoute.Duration(childComplexity), true
+
+	case "TripRoute.productId":
+		if e.complexity.TripRoute.ProductID == nil {
+			break
+		}
+
+		return e.complexity.TripRoute.ProductID(childComplexity), true
+
 	case "Uploads.courier_id":
 		if e.complexity.Uploads.CourierID == nil {
 			break
@@ -700,6 +733,7 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 	inputUnmarshalMap := graphql.BuildUnmarshalerMap(
 		ec.unmarshalInputCourierUploadInput,
 		ec.unmarshalInputGpsInput,
+		ec.unmarshalInputTripRouteInput,
 	)
 	first := true
 
@@ -843,6 +877,21 @@ func (ec *executionContext) field_Query___type_args(ctx context.Context, rawArgs
 		}
 	}
 	args["name"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Query_getRoute_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 model.TripRouteInput
+	if tmp, ok := rawArgs["input"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
+		arg0, err = ec.unmarshalNTripRouteInput2githubᚗcomᚋ3dw1nM0535ᚋuziᚑapiᚋmodelᚐTripRouteInput(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["input"] = arg0
 	return args, nil
 }
 
@@ -2286,6 +2335,67 @@ func (ec *executionContext) fieldContext_Query_reverseGeocode(ctx context.Contex
 	return fc, nil
 }
 
+func (ec *executionContext) _Query_getRoute(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Query_getRoute(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Query().GetRoute(rctx, fc.Args["input"].(model.TripRouteInput))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*model.TripRoute)
+	fc.Result = res
+	return ec.marshalNTripRoute2ᚖgithubᚗcomᚋ3dw1nM0535ᚋuziᚑapiᚋmodelᚐTripRoute(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Query_getRoute(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "productId":
+				return ec.fieldContext_TripRoute_productId(ctx, field)
+			case "duration":
+				return ec.fieldContext_TripRoute_duration(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type TripRoute", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Query_getRoute_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _Query___type(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Query___type(ctx, field)
 	if err != nil {
@@ -3461,6 +3571,94 @@ func (ec *executionContext) _Trip_updated_at(ctx context.Context, field graphql.
 func (ec *executionContext) fieldContext_Trip_updated_at(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Trip",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Time does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _TripRoute_productId(ctx context.Context, field graphql.CollectedField, obj *model.TripRoute) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_TripRoute_productId(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.ProductID, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(uuid.UUID)
+	fc.Result = res
+	return ec.marshalNUUID2githubᚗcomᚋgoogleᚋuuidᚐUUID(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_TripRoute_productId(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "TripRoute",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type UUID does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _TripRoute_duration(ctx context.Context, field graphql.CollectedField, obj *model.TripRoute) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_TripRoute_duration(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Duration, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(time.Time)
+	fc.Result = res
+	return ec.marshalNTime2timeᚐTime(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_TripRoute_duration(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "TripRoute",
 		Field:      field,
 		IsMethod:   false,
 		IsResolver: false,
@@ -6016,6 +6214,40 @@ func (ec *executionContext) unmarshalInputGpsInput(ctx context.Context, obj inte
 	return it, nil
 }
 
+func (ec *executionContext) unmarshalInputTripRouteInput(ctx context.Context, obj interface{}) (model.TripRouteInput, error) {
+	var it model.TripRouteInput
+	asMap := map[string]interface{}{}
+	for k, v := range obj.(map[string]interface{}) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"pickup", "dropoff"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "pickup":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("pickup"))
+			data, err := ec.unmarshalNGpsInput2ᚖgithubᚗcomᚋ3dw1nM0535ᚋuziᚑapiᚋmodelᚐGpsInput(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Pickup = data
+		case "dropoff":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("dropoff"))
+			data, err := ec.unmarshalNGpsInput2ᚖgithubᚗcomᚋ3dw1nM0535ᚋuziᚑapiᚋmodelᚐGpsInput(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Dropoff = data
+		}
+	}
+
+	return it, nil
+}
+
 // endregion **************************** input.gotpl *****************************
 
 // region    ************************** interface.gotpl ***************************
@@ -6454,6 +6686,28 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 			}
 
 			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
+		case "getRoute":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_getRoute(ctx, field)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx,
+					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
 		case "__type":
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Query___type(ctx, field)
@@ -6660,6 +6914,50 @@ func (ec *executionContext) _Trip(ctx context.Context, sel ast.SelectionSet, obj
 			out.Values[i] = ec._Trip_created_at(ctx, field, obj)
 		case "updated_at":
 			out.Values[i] = ec._Trip_updated_at(ctx, field, obj)
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var tripRouteImplementors = []string{"TripRoute"}
+
+func (ec *executionContext) _TripRoute(ctx context.Context, sel ast.SelectionSet, obj *model.TripRoute) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, tripRouteImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("TripRoute")
+		case "productId":
+			out.Values[i] = ec._TripRoute_productId(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "duration":
+			out.Values[i] = ec._TripRoute_duration(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -7197,6 +7495,11 @@ func (ec *executionContext) unmarshalNGpsInput2githubᚗcomᚋ3dw1nM0535ᚋuzi�
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
+func (ec *executionContext) unmarshalNGpsInput2ᚖgithubᚗcomᚋ3dw1nM0535ᚋuziᚑapiᚋmodelᚐGpsInput(ctx context.Context, v interface{}) (*model.GpsInput, error) {
+	res, err := ec.unmarshalInputGpsInput(ctx, v)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
 func (ec *executionContext) unmarshalNInt2int(ctx context.Context, v interface{}) (int, error) {
 	res, err := graphql.UnmarshalInt(v)
 	return res, graphql.ErrorOnPath(ctx, err)
@@ -7294,6 +7597,25 @@ func (ec *executionContext) marshalNTime2timeᚐTime(ctx context.Context, sel as
 		}
 	}
 	return res
+}
+
+func (ec *executionContext) marshalNTripRoute2githubᚗcomᚋ3dw1nM0535ᚋuziᚑapiᚋmodelᚐTripRoute(ctx context.Context, sel ast.SelectionSet, v model.TripRoute) graphql.Marshaler {
+	return ec._TripRoute(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNTripRoute2ᚖgithubᚗcomᚋ3dw1nM0535ᚋuziᚑapiᚋmodelᚐTripRoute(ctx context.Context, sel ast.SelectionSet, v *model.TripRoute) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._TripRoute(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalNTripRouteInput2githubᚗcomᚋ3dw1nM0535ᚋuziᚑapiᚋmodelᚐTripRouteInput(ctx context.Context, v interface{}) (model.TripRouteInput, error) {
+	res, err := ec.unmarshalInputTripRouteInput(ctx, v)
+	return res, graphql.ErrorOnPath(ctx, err)
 }
 
 func (ec *executionContext) unmarshalNTripStatus2githubᚗcomᚋ3dw1nM0535ᚋuziᚑapiᚋmodelᚐTripStatus(ctx context.Context, v interface{}) (model.TripStatus, error) {

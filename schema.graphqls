@@ -122,11 +122,17 @@ type Geocode {
   location: Gps!
 }
 
+type TripRoute {
+  productId: UUID!
+  duration: Time!
+}
+
 type Query {
   hello: String!
   getCourierDocuments: [Uploads!]!
   searchPlace(textQuery: String!): [Place!]!
   reverseGeocode(place: GpsInput!): Geocode
+  getRoute(input: TripRouteInput!): TripRoute!
 }
 
 type Mutation {
@@ -143,6 +149,10 @@ input GpsInput {
   lng: Float!
 }
 
+input TripRouteInput {
+  pickup: GpsInput!
+  dropoff: GpsInput!
+}
 
 schema {
   query: Query

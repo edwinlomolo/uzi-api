@@ -6,6 +6,7 @@ import (
 	"github.com/3dw1nM0535/uzi-api/model"
 	"github.com/3dw1nM0535/uzi-api/services/courier"
 	"github.com/3dw1nM0535/uzi-api/services/location"
+	"github.com/3dw1nM0535/uzi-api/services/route"
 	"github.com/3dw1nM0535/uzi-api/services/upload"
 	"github.com/google/uuid"
 )
@@ -16,6 +17,7 @@ type Resolver struct {
 	upload.Upload
 	courier.Courier
 	location.Location
+	route.Route
 }
 
 func New() Config {
@@ -23,6 +25,7 @@ func New() Config {
 		upload.GetUploadService(),
 		courier.GetCourierService(),
 		location.GetLocationService(),
+		route.GetRouteService(),
 	}}
 
 	return c
@@ -60,6 +63,10 @@ func (r *queryResolver) ReverseGeocode(ctx context.Context, input model.GpsInput
 
 func (r *queryResolver) SearchPlace(ctx context.Context, textQuery string) ([]*model.Place, error) {
 	return r.AutocompletePlace(textQuery)
+}
+
+func (r *queryResolver) GetRoute(ctx context.Context, input model.TripRouteInput) (*model.TripRoute, error) {
+	panic("not implemented")
 }
 
 func GetCourierIDFromRequestContext(ctx context.Context, courier courier.Courier) uuid.UUID {
