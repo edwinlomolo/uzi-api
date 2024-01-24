@@ -6,10 +6,10 @@ package resolvers
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/3dw1nM0535/uzi-api/gql"
 	"github.com/3dw1nM0535/uzi-api/model"
+	"github.com/google/uuid"
 )
 
 // CreateCourierDocument is the resolver for the createCourierDocument field.
@@ -24,9 +24,20 @@ func (r *mutationResolver) CreateCourierDocument(ctx context.Context, input mode
 	return true, nil
 }
 
+// TrackCourierGps is the resolver for the trackCourierGps field.
+func (r *mutationResolver) TrackCourierGps(ctx context.Context, input model.GpsInput) (bool, error) {
+	userID := ctx.Value("userID").(string)
+	uid, err := uuid.Parse(userID)
+	if err != nil {
+		panic(err)
+	}
+
+	return r.TrackCourierLocation(uid, input)
+}
+
 // Hello is the resolver for the hello field.
 func (r *queryResolver) Hello(ctx context.Context) (string, error) {
-	panic(fmt.Errorf("not implemented: Hello - hello"))
+	return "Hello, world!", nil
 }
 
 // GetCourierDocuments is the resolver for the getCourierDocuments field.

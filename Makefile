@@ -2,7 +2,7 @@
 tidy:
 	go mod tidy
 # Generate graphql resolvers and models
-gql:
+graphql:
 	go run github.com/99designs/gqlgen generate --verbose
 # Sqlc
 sqlc:

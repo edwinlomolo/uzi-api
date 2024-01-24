@@ -35,3 +35,9 @@ SELECT * FROM
 couriers
 WHERE user_id = $1
 LIMIT 1;
+
+-- name: TrackCourierLocation :one
+UPDATE couriers
+SET location = sqlc.arg(location)
+WHERE user_id = $1
+RETURNING *;

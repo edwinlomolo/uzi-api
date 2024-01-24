@@ -151,3 +151,33 @@ func (q *Queries) SetCourierStatus(ctx context.Context, arg SetCourierStatusPara
 	)
 	return i, err
 }
+
+const trackCourierLocation = `-- name: TrackCourierLocation :one
+UPDATE couriers
+SET location = $2
+WHERE user_id = $1
+RETURNING id, verified, status, location, rating, points, user_id, trip_id, created_at, updated_at
+`
+
+type TrackCourierLocationParams struct {
+	UserID   uuid.NullUUID `json:"user_id"`
+	Location interface{}   `json:"location"`
+}
+
+func (q *Queries) TrackCourierLocation(ctx context.Context, arg TrackCourierLocationParams) (Courier, error) {
+	row := q.db.QueryRowContext(ctx, trackCourierLocation, arg.UserID, arg.Location)
+	var i Courier
+	err := row.Scan(
+		&i.ID,
+		&i.Verified,
+		&i.Status,
+		&i.Location,
+		&i.Rating,
+		&i.Points,
+		&i.UserID,
+		&i.TripID,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}

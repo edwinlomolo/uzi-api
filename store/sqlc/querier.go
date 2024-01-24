@@ -33,6 +33,7 @@ type Querier interface {
 	IsUserOnboarding(ctx context.Context, id uuid.UUID) (bool, error)
 	SetCourierStatus(ctx context.Context, arg SetCourierStatusParams) (Courier, error)
 	SetOnboardingStatus(ctx context.Context, arg SetOnboardingStatusParams) (User, error)
+	TrackCourierLocation(ctx context.Context, arg TrackCourierLocationParams) (Courier, error)
 	UpdateUpload(ctx context.Context, arg UpdateUploadParams) (Upload, error)
 	UpdateUserName(ctx context.Context, arg UpdateUserNameParams) (User, error)
 }

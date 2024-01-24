@@ -76,6 +76,7 @@ type ComplexityRoot struct {
 
 	Mutation struct {
 		CreateCourierDocument func(childComplexity int, input model.CourierUploadInput) int
+		TrackCourierGps       func(childComplexity int, input model.GpsInput) int
 	}
 
 	Place struct {
@@ -164,6 +165,7 @@ type ComplexityRoot struct {
 
 type MutationResolver interface {
 	CreateCourierDocument(ctx context.Context, input model.CourierUploadInput) (bool, error)
+	TrackCourierGps(ctx context.Context, input model.GpsInput) (bool, error)
 }
 type QueryResolver interface {
 	Hello(ctx context.Context) (string, error)
@@ -315,6 +317,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Mutation.CreateCourierDocument(childComplexity, args["input"].(model.CourierUploadInput)), true
+
+	case "Mutation.trackCourierGps":
+		if e.complexity.Mutation.TrackCourierGps == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_trackCourierGps_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.TrackCourierGps(childComplexity, args["input"].(model.GpsInput)), true
 
 	case "Place.id":
 		if e.complexity.Place.ID == nil {
@@ -866,6 +880,21 @@ func (ec *executionContext) field_Mutation_createCourierDocument_args(ctx contex
 	if tmp, ok := rawArgs["input"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
 		arg0, err = ec.unmarshalNCourierUploadInput2githubᚗcomᚋ3dw1nM0535ᚋuziᚑapiᚋmodelᚐCourierUploadInput(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["input"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_trackCourierGps_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 model.GpsInput
+	if tmp, ok := rawArgs["input"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
+		arg0, err = ec.unmarshalNGpsInput2githubᚗcomᚋ3dw1nM0535ᚋuziᚑapiᚋmodelᚐGpsInput(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -1719,6 +1748,61 @@ func (ec *executionContext) fieldContext_Mutation_createCourierDocument(ctx cont
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
 	if fc.Args, err = ec.field_Mutation_createCourierDocument_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_trackCourierGps(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Mutation_trackCourierGps(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Mutation().TrackCourierGps(rctx, fc.Args["input"].(model.GpsInput))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(bool)
+	fc.Result = res
+	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Mutation_trackCourierGps(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Boolean does not have child fields")
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_trackCourierGps_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return fc, err
 	}
@@ -6498,6 +6582,13 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 		case "createCourierDocument":
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Mutation_createCourierDocument(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "trackCourierGps":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_trackCourierGps(ctx, field)
 			})
 			if out.Values[i] == graphql.Null {
 				out.Invalids++

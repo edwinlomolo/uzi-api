@@ -60,4 +60,5 @@ type Query {
 
 type Mutation {
   createCourierDocument(input: CourierUploadInput!): Boolean!
+  trackCourierGps(input: GpsInput!): Boolean!
 }

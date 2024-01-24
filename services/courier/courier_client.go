@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	"fmt"
 
 	"github.com/3dw1nM0535/uzi-api/model"
 	sqlStore "github.com/3dw1nM0535/uzi-api/store/sqlc"
@@ -95,4 +96,20 @@ func (c *courierClient) getCourier(userID uuid.UUID) (*model.Courier, error) {
 
 func (c *courierClient) GetCourier(userID uuid.UUID) (*model.Courier, error) {
 	return c.getCourier(userID)
+}
+
+func (c *courierClient) TrackCourierLocation(userID uuid.UUID, input model.GpsInput) (bool, error) {
+	if _, err := c.getCourier(userID); err != nil {
+		return false, err
+	}
+
+	args := sqlStore.TrackCourierLocationParams{
+		UserID:   uuid.NullUUID{UUID: userID, Valid: true},
+		Location: fmt.Sprintf("SRID=4326;POINT(%.8f %.8f)", input.Lng, input.Lat),
+	}
+	if _, updateErr := c.store.TrackCourierLocation(context.Background(), args); updateErr != nil {
+		return false, updateErr
+	}
+
+	return true, nil
 }
