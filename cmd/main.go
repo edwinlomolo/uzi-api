@@ -46,7 +46,7 @@ func main() {
 	upload.NewUploadService(aws.GetS3Service(), logger, store.GetDatabase())
 	location.NewLocationService(configs.GoogleMaps, logger, cache)
 	trip.NewTripService(logger, store.GetDatabase())
-	route.NewRouteService(logger, store.GetDatabase())
+	route.NewRouteService(logger, store.GetDatabase(), configs.GoogleMaps)
 
 	// Graphql
 	srv := gqlHandler.NewDefaultServer(uzi.NewExecutableSchema(uzi.New()))
