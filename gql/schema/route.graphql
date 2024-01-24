@@ -1,0 +1,12 @@
+type Route {
+  id: UUID!
+  distance: String!
+  eta: Time!
+  created_at: Time
+  updated_at: Time
+}
+
+type TripRoute {
+  productId: UUID!
+  duration: Time!
+}

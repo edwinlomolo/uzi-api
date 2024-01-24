@@ -1,0 +1,10 @@
+type Session {
+  id: UUID!
+  ip: String!
+  userAgent: String!
+  token: String!
+  isCourier: Boolean!
+  onboarding: Boolean!
+  phone: String!
+  courierStatus: CourierStatus
+}

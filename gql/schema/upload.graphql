@@ -1,0 +1,10 @@
+type Uploads {
+  ID: UUID!
+  type: String!
+  uri: String!
+  verification: UploadVerificationStatus!
+  courier_id: UUID
+  user_id: UUID
+  created_at: Time
+  updated_at: Time
+}

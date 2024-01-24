@@ -1,0 +1,16 @@
+type Gps {
+  lat: Float!
+  lng: Float!
+}
+
+type Place {
+  id: String!
+  mainText: String!
+  secondaryText: String!
+}
+
+type Geocode {
+  placeId: String!
+  formattedAddress: String!
+  location: Gps!
+}

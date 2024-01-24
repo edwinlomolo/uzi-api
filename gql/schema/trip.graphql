@@ -1,0 +1,13 @@
+type Trip {
+  id: UUID!
+  courier_id: UUID!
+  user_id: UUID!
+  start_location: Gps!
+  end_location: Gps!
+  status: TripStatus!
+  cost: String
+  route_id: UUID
+  route: Route
+  created_at: Time
+  updated_at: Time
+}

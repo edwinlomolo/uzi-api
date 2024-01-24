@@ -4,8 +4,9 @@ import (
 	"fmt"
 	"net/http"
 
-	uzi "github.com/3dw1nM0535/uzi-api"
 	"github.com/3dw1nM0535/uzi-api/config"
+	"github.com/3dw1nM0535/uzi-api/gql"
+	"github.com/3dw1nM0535/uzi-api/gql/resolvers"
 	"github.com/3dw1nM0535/uzi-api/handler"
 	"github.com/3dw1nM0535/uzi-api/pkg/aws"
 	"github.com/3dw1nM0535/uzi-api/pkg/cache"
@@ -49,7 +50,7 @@ func main() {
 	route.NewRouteService(logger, store.GetDatabase(), configs.GoogleMaps)
 
 	// Graphql
-	srv := gqlHandler.NewDefaultServer(uzi.NewExecutableSchema(uzi.New()))
+	srv := gqlHandler.NewDefaultServer(gql.NewExecutableSchema(resolvers.New()))
 
 	// Routes
 	r.Get("/ipinfo", handler.Ipinfo())

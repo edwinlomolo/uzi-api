@@ -1,0 +1,13 @@
+type Courier {
+  id: UUID!
+  user_id: UUID!
+  verified: Boolean!
+  status: CourierStatus!
+  rating: Float!
+  trip_id: UUID
+  completedTrips: Int!
+  points: Int!
+  upload_id: UUID
+  created_at: Time
+  updated_at: Time
+}

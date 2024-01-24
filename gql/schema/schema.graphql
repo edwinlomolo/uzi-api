@@ -1,0 +1,63 @@
+scalar Time
+scalar UUID
+
+enum UploadFile {
+  DP
+  MCR
+  ID
+  PC
+  LB
+  VI
+}
+
+enum UploadVerificationStatus {
+  VERIFYING
+  VERIFIED
+  REJECTED
+  ONBOARDING
+}
+
+enum CourierStatus {
+  OFFLINE
+  ONLINE
+  ONBOARDING
+}
+
+enum TripStatus {
+  ARRIVING
+  EN_ROUTE
+  COMPLETE
+}
+
+input CourierUploadInput {
+  type: UploadFile!
+  uri: String!
+}
+
+input GpsInput {
+  lat: Float!
+  lng: Float!
+}
+
+input TripRouteInput {
+  pickup: TripInput!
+  dropoff: TripInput!
+}
+
+input TripInput {
+  placeId: String!,
+  formattedAddress: String!
+  location: GpsInput!
+}
+
+type Query {
+  hello: String!
+  getCourierDocuments: [Uploads!]!
+  searchPlace(textQuery: String!): [Place!]!
+  reverseGeocode(place: GpsInput!): Geocode
+  getRoute(input: TripRouteInput!): TripRoute!
+}
+
+type Mutation {
+  createCourierDocument(input: CourierUploadInput!): Boolean!
+}

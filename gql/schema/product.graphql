@@ -1,0 +1,8 @@
+type Product {
+  id: UUID!
+  name: String!
+  description: String!
+  price: Int!
+  created_at: Time
+  updated_at: Time
+}

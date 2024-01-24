@@ -1,0 +1,10 @@
+type User {
+  id: UUID!
+  first_name: String!
+  last_name: String!
+  phone: String!
+  courier_id: UUID
+  courier: Courier
+  created_at: Time
+  updated_at: Time
+}
