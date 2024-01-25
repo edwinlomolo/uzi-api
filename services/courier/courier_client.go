@@ -113,3 +113,17 @@ func (c *courierClient) TrackCourierLocation(userID uuid.UUID, input model.GpsIn
 
 	return true, nil
 }
+
+func (c *courierClient) UpdateCourierStatus(userID uuid.UUID, status model.CourierStatus) (bool, error) {
+	args := sqlStore.SetCourierStatusParams{
+		Status: status.String(),
+		UserID: uuid.NullUUID{UUID: userID, Valid: true},
+	}
+	if _, setErr := c.store.SetCourierStatus(context.Background(), args); setErr != nil {
+		uziErr := model.UziErr{Err: setErr.Error(), Message: "setcourierstatus", Code: 500}
+		c.logger.Errorf(uziErr.Error())
+		return false, uziErr
+	}
+
+	return true, nil
+}
