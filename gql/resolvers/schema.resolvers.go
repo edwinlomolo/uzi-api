@@ -75,7 +75,7 @@ func (r *queryResolver) ReverseGeocode(ctx context.Context, place model.GpsInput
 }
 
 // GetRoute is the resolver for the getRoute field.
-func (r *queryResolver) GetRoute(ctx context.Context, input model.TripRouteInput) (*model.TripRoute, error) {
+func (r *queryResolver) MakeTripRoute(ctx context.Context, input model.TripRouteInput) (*model.TripRoute, error) {
 	return r.GetTripRoute(input)
 }
 
