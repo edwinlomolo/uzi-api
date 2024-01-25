@@ -137,8 +137,7 @@ type ComplexityRoot struct {
 	}
 
 	TripRoute struct {
-		Duration  func(childComplexity int) int
-		ProductID func(childComplexity int) int
+		Polyline func(childComplexity int) int
 	}
 
 	Uploads struct {
@@ -625,19 +624,12 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Trip.UserID(childComplexity), true
 
-	case "TripRoute.duration":
-		if e.complexity.TripRoute.Duration == nil {
+	case "TripRoute.polyline":
+		if e.complexity.TripRoute.Polyline == nil {
 			break
 		}
 
-		return e.complexity.TripRoute.Duration(childComplexity), true
-
-	case "TripRoute.productId":
-		if e.complexity.TripRoute.ProductID == nil {
-			break
-		}
-
-		return e.complexity.TripRoute.ProductID(childComplexity), true
+		return e.complexity.TripRoute.Polyline(childComplexity), true
 
 	case "Uploads.courier_id":
 		if e.complexity.Uploads.CourierID == nil {
@@ -2551,10 +2543,8 @@ func (ec *executionContext) fieldContext_Query_makeTripRoute(ctx context.Context
 		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
-			case "productId":
-				return ec.fieldContext_TripRoute_productId(ctx, field)
-			case "duration":
-				return ec.fieldContext_TripRoute_duration(ctx, field)
+			case "polyline":
+				return ec.fieldContext_TripRoute_polyline(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type TripRoute", field.Name)
 		},
@@ -3758,8 +3748,8 @@ func (ec *executionContext) fieldContext_Trip_updated_at(ctx context.Context, fi
 	return fc, nil
 }
 
-func (ec *executionContext) _TripRoute_productId(ctx context.Context, field graphql.CollectedField, obj *model.TripRoute) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_TripRoute_productId(ctx, field)
+func (ec *executionContext) _TripRoute_polyline(ctx context.Context, field graphql.CollectedField, obj *model.TripRoute) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_TripRoute_polyline(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -3772,7 +3762,7 @@ func (ec *executionContext) _TripRoute_productId(ctx context.Context, field grap
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.ProductID, nil
+		return obj.Polyline, nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -3784,63 +3774,19 @@ func (ec *executionContext) _TripRoute_productId(ctx context.Context, field grap
 		}
 		return graphql.Null
 	}
-	res := resTmp.(uuid.UUID)
+	res := resTmp.(string)
 	fc.Result = res
-	return ec.marshalNUUID2githubᚗcomᚋgoogleᚋuuidᚐUUID(ctx, field.Selections, res)
+	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_TripRoute_productId(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_TripRoute_polyline(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "TripRoute",
 		Field:      field,
 		IsMethod:   false,
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type UUID does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _TripRoute_duration(ctx context.Context, field graphql.CollectedField, obj *model.TripRoute) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_TripRoute_duration(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.Duration, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(time.Time)
-	fc.Result = res
-	return ec.marshalNTime2timeᚐTime(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_TripRoute_duration(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "TripRoute",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type Time does not have child fields")
+			return nil, errors.New("field of type String does not have child fields")
 		},
 	}
 	return fc, nil
@@ -7180,13 +7126,8 @@ func (ec *executionContext) _TripRoute(ctx context.Context, sel ast.SelectionSet
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("TripRoute")
-		case "productId":
-			out.Values[i] = ec._TripRoute_productId(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
-		case "duration":
-			out.Values[i] = ec._TripRoute_duration(ctx, field, obj)
+		case "polyline":
+			out.Values[i] = ec._TripRoute_polyline(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}

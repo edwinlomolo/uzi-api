@@ -95,8 +95,7 @@ type TripInput struct {
 }
 
 type TripRoute struct {
-	ProductID uuid.UUID `json:"productId"`
-	Duration  time.Time `json:"duration"`
+	Polyline string `json:"polyline"`
 }
 
 type TripRouteInput struct {

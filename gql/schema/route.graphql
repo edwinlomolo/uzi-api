@@ -7,6 +7,5 @@ type Route {
 }
 
 type TripRoute {
-  productId: UUID!
-  duration: Time!
+  polyline: String!
 }
