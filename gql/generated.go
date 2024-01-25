@@ -76,7 +76,7 @@ type ComplexityRoot struct {
 
 	Mutation struct {
 		CreateCourierDocument func(childComplexity int, input model.CourierUploadInput) int
-		SetCourierStatus      func(childComplexity int, status model.CourierStatus) int
+		SetCourierStatus      func(childComplexity int, status string) int
 		TrackCourierGps       func(childComplexity int, input model.GpsInput) int
 	}
 
@@ -167,7 +167,7 @@ type ComplexityRoot struct {
 type MutationResolver interface {
 	CreateCourierDocument(ctx context.Context, input model.CourierUploadInput) (bool, error)
 	TrackCourierGps(ctx context.Context, input model.GpsInput) (bool, error)
-	SetCourierStatus(ctx context.Context, status model.CourierStatus) (bool, error)
+	SetCourierStatus(ctx context.Context, status string) (bool, error)
 }
 type QueryResolver interface {
 	Hello(ctx context.Context) (string, error)
@@ -330,7 +330,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Mutation.SetCourierStatus(childComplexity, args["status"].(model.CourierStatus)), true
+		return e.complexity.Mutation.SetCourierStatus(childComplexity, args["status"].(string)), true
 
 	case "Mutation.trackCourierGps":
 		if e.complexity.Mutation.TrackCourierGps == nil {
@@ -905,10 +905,10 @@ func (ec *executionContext) field_Mutation_createCourierDocument_args(ctx contex
 func (ec *executionContext) field_Mutation_setCourierStatus_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	var arg0 model.CourierStatus
+	var arg0 string
 	if tmp, ok := rawArgs["status"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("status"))
-		arg0, err = ec.unmarshalNCourierStatus2githubᚗcomᚋ3dw1nM0535ᚋuziᚑapiᚋmodelᚐCourierStatus(ctx, tmp)
+		arg0, err = ec.unmarshalNString2string(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -1852,7 +1852,7 @@ func (ec *executionContext) _Mutation_setCourierStatus(ctx context.Context, fiel
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Mutation().SetCourierStatus(rctx, fc.Args["status"].(model.CourierStatus))
+		return ec.resolvers.Mutation().SetCourierStatus(rctx, fc.Args["status"].(string))
 	})
 	if err != nil {
 		ec.Error(ctx, err)

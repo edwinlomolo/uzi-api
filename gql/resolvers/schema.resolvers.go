@@ -36,14 +36,15 @@ func (r *mutationResolver) TrackCourierGps(ctx context.Context, input model.GpsI
 }
 
 // SetCourierStatus is the resolver for the setCourierStatus field.
-func (r *mutationResolver) SetCourierStatus(ctx context.Context, status model.CourierStatus) (bool, error) {
+func (r *mutationResolver) SetCourierStatus(ctx context.Context, status string) (bool, error) {
 	userID := ctx.Value("userID").(string)
 	uid, err := uuid.Parse(userID)
 	if err != nil {
 		panic(err)
 	}
 
-	return r.UpdateCourierStatus(uid, status)
+	s := model.CourierStatus(status)
+	return r.UpdateCourierStatus(uid, s)
 }
 
 // Hello is the resolver for the hello field.
