@@ -7,8 +7,10 @@ import (
 
 	"github.com/3dw1nM0535/uzi-api/config"
 	"github.com/3dw1nM0535/uzi-api/model"
+	"github.com/3dw1nM0535/uzi-api/pkg/util"
 	"github.com/3dw1nM0535/uzi-api/services/location"
 	sqlStore "github.com/3dw1nM0535/uzi-api/store/sqlc"
+	"github.com/redis/go-redis/v9"
 	"github.com/sirupsen/logrus"
 )
 
@@ -19,13 +21,15 @@ const (
 var routeService Route
 
 type routeClient struct {
+	redis  *redis.Client
 	logger *logrus.Logger
 	store  *sqlStore.Queries
 	config config.GoogleMaps
+	cache  routeCache
 }
 
-func NewRouteService(logger *logrus.Logger, store *sqlStore.Queries, config config.GoogleMaps) {
-	routeService = &routeClient{logger, store, config}
+func NewRouteService(redis *redis.Client, logger *logrus.Logger, store *sqlStore.Queries, config config.GoogleMaps) {
+	routeService = &routeClient{redis, logger, store, config, newrouteCache(redis, logger)}
 }
 
 func GetRouteService() Route { return routeService }
@@ -68,6 +72,9 @@ func (r *routeClient) parsePickupDropoff(input model.TripInput) (*model.Geocode,
 
 func (r *routeClient) computeRoute(pickup, dropoff model.Geocode) (*model.TripRoute, error) {
 	routeResponse := &model.RouteResponse{}
+
+	tripRoute := &model.TripRoute{}
+
 	routeParams := createRouteRequest(
 		model.LatLng{
 			Lat: pickup.Location.Lat,
@@ -78,6 +85,17 @@ func (r *routeClient) computeRoute(pickup, dropoff model.Geocode) (*model.TripRo
 			Lng: dropoff.Location.Lng,
 		},
 	)
+
+	cacheKey := util.Base64Key(routeParams)
+
+	tripInfo, tripInfoErr := r.cache.getRouteCache(cacheKey)
+	if tripInfoErr != nil {
+		return nil, tripInfoErr
+	}
+
+	if tripInfo != nil {
+		return (tripInfo).(*model.TripRoute), nil
+	}
 
 	reqPayload, payloadErr := json.Marshal(routeParams)
 	if payloadErr != nil {
@@ -116,7 +134,13 @@ func (r *routeClient) computeRoute(pickup, dropoff model.Geocode) (*model.TripRo
 		return nil, uziErr
 	}
 
-	return nil, nil
+	tripRoute.Polyline = routeResponse.Routes[0].Polyline.EncodedPolyline
+
+	if cacheErr := r.cache.cacheRoute(cacheKey, tripRoute); cacheErr != nil {
+		return nil, cacheErr
+	}
+
+	return tripRoute, nil
 }
 
 func createRouteRequest(pickup, dropoff model.LatLng) model.RouteRequest {
