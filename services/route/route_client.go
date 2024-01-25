@@ -30,7 +30,7 @@ func NewRouteService(logger *logrus.Logger, store *sqlStore.Queries, config conf
 
 func GetRouteService() Route { return routeService }
 
-func (r *routeClient) GetTripRoute(input model.TripRouteInput) (*model.TripRoute, error) {
+func (r *routeClient) ComputeTripRoute(input model.TripRouteInput) (*model.TripRoute, error) {
 	pickup, pickupErr := r.parsePickupDropoff(*input.Pickup)
 	if pickupErr != nil {
 		return nil, pickupErr
