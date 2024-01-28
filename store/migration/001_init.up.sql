@@ -17,14 +17,32 @@ CREATE TABLE IF NOT EXISTS users (
   updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
+CREATE TABLE IF NOT EXISTS products (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  name VARCHAR(100) NOT NULL,
+  description TEXT NOT NULL,
+  weight_class INTEGER NOT NULL,
+  icon TEXT NOT NULL,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+INSERT INTO products (
+  name, description, icon
+) VALUES
+  ('UziX', 'Faster|Cheaper|Eco-friendly', 638, 'https://uzi-images.s3.eu-west-2.amazonaws.com/icons8-bike-50.png'),
+  ('UziBoda', 'Convenient|On-demand', 1472, 'https://uzi-images.s3.eu-west-2.amazonaws.com/icons8-motorbike-50.png'),
+  ('Uzito', 'Loading-truck|Medium-sized', 2000, 'https://uzi-images.s3.eu-west-2.amazonaws.com/icons8-truck-50.png');
+
 CREATE TABLE IF NOT EXISTS couriers (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   verified BOOLEAN DEFAULT false,
   status VARCHAR(10) NOT NULL DEFAULT 'ONBOARDING',
   location GEOGRAPHY,
-  rating FLOAT NOT NULL DEFAULT 1.0,
-  points INTEGER NOT NULL DEFAULT 1,
+  ratings INTEGER NOT NULL DEFAULT 0,
+  points INTEGER NOT NULL DEFAULT 0,
   user_id UUID REFERENCES users ON DELETE CASCADE,
+  product_id UUID REFERENCES products ON DELETE CASCADE,
   trip_id UUID,
   created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
@@ -44,22 +62,6 @@ CREATE TABLE IF NOT EXISTS trips (
   created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
-
-CREATE TABLE IF NOT EXISTS products (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-  name VARCHAR(100) NOT NULL,
-  description TEXT NOT NULL,
-  icon TEXT NOT NULL,
-  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
-);
-
-INSERT INTO products (
-  name, description, icon
-) VALUES
-  ('UziX', 'Faster|Cheaper|Eco-friendly', 'https://uzi-images.s3.eu-west-2.amazonaws.com/icons8-bike-50.png'),
-  ('UziBoda', 'Convenient|On-demand', 'https://uzi-images.s3.eu-west-2.amazonaws.com/icons8-motorbike-50.png'),
-  ('Uzito', 'Loading-truck|Medium-sized', 'https://uzi-images.s3.eu-west-2.amazonaws.com/icons8-truck-50.png');
 
 CREATE TABLE IF NOT EXISTS vehicles (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),

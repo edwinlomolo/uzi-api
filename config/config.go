@@ -17,6 +17,7 @@ type Configuration struct {
 	Jwt        Jwt
 	Aws        Aws
 	GoogleMaps GoogleMaps
+	Pricer     Pricer
 }
 
 // Env - load env
@@ -40,6 +41,7 @@ func LoadConfig() *Configuration {
 	configuration.Jwt = jwtConfig()
 	configuration.Aws = awsConfig()
 	configuration.GoogleMaps = googleMapsConfig()
+	configuration.Pricer = pricerConfig()
 
 	configAll = &configuration
 
@@ -159,6 +161,22 @@ func googleMapsConfig() GoogleMaps {
 	googleMapsConfig.GoogleRoutesApiKey = strings.TrimSpace(os.Getenv("MAPS_ROUTES_API_KEY"))
 
 	return googleMapsConfig
+}
+
+// pricerConfig - get pricing config
+func pricerConfig() Pricer {
+	var pricingConfig Pricer
+
+	Env()
+
+	hourlyWage, err := strconv.Atoi(strings.TrimSpace(os.Getenv("MINIMUM_HOURLY_WAGE")))
+	if err != nil {
+		panic(err)
+	}
+
+	pricingConfig.HourlyWage = hourlyWage
+
+	return pricingConfig
 }
 
 func IsDev() bool {
