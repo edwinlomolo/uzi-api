@@ -4,7 +4,7 @@ import (
 	"github.com/3dw1nM0535/uzi-api/gql"
 	"github.com/3dw1nM0535/uzi-api/services/courier"
 	"github.com/3dw1nM0535/uzi-api/services/location"
-	"github.com/3dw1nM0535/uzi-api/services/route"
+	"github.com/3dw1nM0535/uzi-api/services/trip"
 	"github.com/3dw1nM0535/uzi-api/services/upload"
 )
 
@@ -18,7 +18,7 @@ type Resolver struct {
 	upload.Upload
 	courier.Courier
 	location.Location
-	route.Route
+	trip.Trip
 }
 
 func New() gql.Config {
@@ -26,7 +26,7 @@ func New() gql.Config {
 		upload.GetUploadService(),
 		courier.GetCourierService(),
 		location.GetLocationService(),
-		route.GetRouteService(),
+		trip.GetTripService(),
 	}}
 
 	return c

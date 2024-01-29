@@ -6,13 +6,15 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-func NewCache(config config.Redis, logger *logrus.Logger) *redis.Client {
+var rdb *redis.Client
+
+func NewCache(config config.Redis, logger *logrus.Logger) {
 	opts, err := redis.ParseURL(config.Url)
 	if err != nil {
 		logger.Errorf("%s-%v", "ParseRedisUrlErr", err.Error())
 	}
 
-	rdb := redis.NewClient(opts)
-
-	return rdb
+	rdb = redis.NewClient(opts)
 }
+
+func GetCache() *redis.Client { return rdb }

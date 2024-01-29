@@ -12,10 +12,10 @@ import (
 	"github.com/3dw1nM0535/uzi-api/pkg/cache"
 	"github.com/3dw1nM0535/uzi-api/pkg/logger"
 	"github.com/3dw1nM0535/uzi-api/pkg/middleware"
+	"github.com/3dw1nM0535/uzi-api/pkg/route"
 	"github.com/3dw1nM0535/uzi-api/services/courier"
 	"github.com/3dw1nM0535/uzi-api/services/ipinfo"
 	"github.com/3dw1nM0535/uzi-api/services/location"
-	"github.com/3dw1nM0535/uzi-api/services/route"
 	"github.com/3dw1nM0535/uzi-api/services/session"
 	"github.com/3dw1nM0535/uzi-api/services/trip"
 	"github.com/3dw1nM0535/uzi-api/services/upload"
@@ -35,19 +35,23 @@ func main() {
 	r.Use(handler.Logger)
 
 	// Services
-	configs := config.LoadConfig()
-	logger := logger.NewLogger()
-	store.InitializeStorage(logger, configs.Database.Rdbms.MigrationUrl)
-	cache := cache.NewCache(configs.Database.Redis, logger)
-	ipinfo.NewIpinfoService(cache, configs.Ipinfo, logger)
-	user.NewUserService(store.GetDatabase(), cache, logger)
-	session.NewSessionService(store.GetDatabase(), logger, configs.Jwt)
-	courier.NewCourierService(logger, store.GetDatabase())
-	aws.NewAwsS3Service(configs.Aws, logger)
-	upload.NewUploadService(aws.GetS3Service(), logger, store.GetDatabase())
-	location.NewLocationService(configs.GoogleMaps, logger, cache)
-	trip.NewTripService(logger, store.GetDatabase())
-	route.NewRouteService(cache, logger, store.GetDatabase(), configs.GoogleMaps)
+	config.LoadConfig()
+	cfg := config.GetConfig()
+	logger.NewLogger()
+	log := logger.GetLogger()
+	store.InitializeStorage(log, cfg.Database.Rdbms.MigrationUrl)
+	cache.NewCache(cfg.Database.Redis, log)
+	c := cache.GetCache()
+	ipinfo.NewIpinfoService(c, cfg.Ipinfo, log)
+	db := store.GetDatabase()
+	user.NewUserService(db, c, log)
+	session.NewSessionService(db, log, cfg.Jwt)
+	courier.NewCourierService(log, db)
+	aws.NewAwsS3Service(cfg.Aws, log)
+	upload.NewUploadService(aws.GetS3Service(), log, db)
+	location.NewLocationService(cfg.GoogleMaps, log, c)
+	route.NewRouteService()
+	trip.NewTripService(log, db)
 
 	// Graphql
 	srv := gqlHandler.NewDefaultServer(gql.NewExecutableSchema(resolvers.New()))
@@ -62,7 +66,7 @@ func main() {
 
 	// Server
 	s := &http.Server{
-		Addr:    fmt.Sprintf("0.0.0.0:%s", configs.Server.Port),
+		Addr:    fmt.Sprintf("0.0.0.0:%s", cfg.Server.Port),
 		Handler: r,
 	}
 

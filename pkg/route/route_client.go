@@ -7,8 +7,11 @@ import (
 
 	"github.com/3dw1nM0535/uzi-api/config"
 	"github.com/3dw1nM0535/uzi-api/model"
+	"github.com/3dw1nM0535/uzi-api/pkg/cache"
+	"github.com/3dw1nM0535/uzi-api/pkg/logger"
 	"github.com/3dw1nM0535/uzi-api/pkg/util"
 	"github.com/3dw1nM0535/uzi-api/services/location"
+	"github.com/3dw1nM0535/uzi-api/store"
 	sqlStore "github.com/3dw1nM0535/uzi-api/store/sqlc"
 	"github.com/redis/go-redis/v9"
 	"github.com/sirupsen/logrus"
@@ -28,8 +31,10 @@ type routeClient struct {
 	cache  routeCache
 }
 
-func NewRouteService(redis *redis.Client, logger *logrus.Logger, store *sqlStore.Queries, config config.GoogleMaps) {
-	routeService = &routeClient{redis, logger, store, config, newrouteCache(redis, logger)}
+func NewRouteService() {
+	c := cache.GetCache()
+	log := logger.GetLogger()
+	routeService = &routeClient{c, log, store.GetDatabase(), config.GetConfig().GoogleMaps, newrouteCache(c, log)}
 }
 
 func GetRouteService() Route { return routeService }

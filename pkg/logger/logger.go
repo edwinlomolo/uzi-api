@@ -6,11 +6,8 @@ import (
 
 var logger *logrus.Logger
 
-func NewLogger() *logrus.Logger {
-	log := logrus.New()
-	logger = log
-
-	return logger
+func NewLogger() {
+	logger = logrus.New()
 }
 
 func GetLogger() *logrus.Logger {

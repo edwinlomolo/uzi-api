@@ -32,7 +32,7 @@ func Env() {
 var configAll *Configuration
 
 // LoadConfig - load all configuration
-func LoadConfig() *Configuration {
+func LoadConfig() {
 	var configuration Configuration
 
 	configuration.Server = serverConfig()
@@ -44,8 +44,6 @@ func LoadConfig() *Configuration {
 	configuration.Pricer = pricerConfig()
 
 	configAll = &configuration
-
-	return configAll
 }
 
 // GetConfig - get configurations
