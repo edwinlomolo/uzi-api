@@ -28,7 +28,7 @@ CREATE TABLE IF NOT EXISTS products (
 );
 
 INSERT INTO products (
-  name, description, icon
+  name, description, weight_class, icon
 ) VALUES
   ('UziX', 'Faster|Cheaper|Eco-friendly', 638, 'https://uzi-images.s3.eu-west-2.amazonaws.com/icons8-bike-50.png'),
   ('UziBoda', 'Convenient|On-demand', 1472, 'https://uzi-images.s3.eu-west-2.amazonaws.com/icons8-motorbike-50.png'),

@@ -28,6 +28,7 @@ type Querier interface {
 	GetCourierStatus(ctx context.Context, userID uuid.NullUUID) (string, error)
 	GetCourierUpload(ctx context.Context, arg GetCourierUploadParams) (Upload, error)
 	GetCourierUploads(ctx context.Context, courierID uuid.NullUUID) ([]Upload, error)
+	GetNearbyAvailableCourierProducts(ctx context.Context, point interface{}) ([]GetNearbyAvailableCourierProductsRow, error)
 	GetSession(ctx context.Context, id uuid.UUID) (Session, error)
 	IsCourier(ctx context.Context, userID uuid.NullUUID) (sql.NullBool, error)
 	IsUserOnboarding(ctx context.Context, id uuid.UUID) (bool, error)

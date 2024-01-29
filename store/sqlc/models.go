@@ -16,9 +16,10 @@ type Courier struct {
 	Verified  sql.NullBool  `json:"verified"`
 	Status    string        `json:"status"`
 	Location  interface{}   `json:"location"`
-	Rating    float64       `json:"rating"`
+	Ratings   int32         `json:"ratings"`
 	Points    int32         `json:"points"`
 	UserID    uuid.NullUUID `json:"user_id"`
+	ProductID uuid.NullUUID `json:"product_id"`
 	TripID    uuid.NullUUID `json:"trip_id"`
 	CreatedAt time.Time     `json:"created_at"`
 	UpdatedAt time.Time     `json:"updated_at"`
@@ -28,6 +29,7 @@ type Product struct {
 	ID          uuid.UUID `json:"id"`
 	Name        string    `json:"name"`
 	Description string    `json:"description"`
+	WeightClass int32     `json:"weight_class"`
 	Icon        string    `json:"icon"`
 	CreatedAt   time.Time `json:"created_at"`
 	UpdatedAt   time.Time `json:"updated_at"`

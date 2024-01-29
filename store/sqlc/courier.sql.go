@@ -8,6 +8,7 @@ package sqlc
 import (
 	"context"
 	"database/sql"
+	"time"
 
 	"github.com/google/uuid"
 )
@@ -16,7 +17,7 @@ const assignTripToCourier = `-- name: AssignTripToCourier :one
 UPDATE couriers
 SET trip_id = $1
 WHERE id = $2
-RETURNING id, verified, status, location, rating, points, user_id, trip_id, created_at, updated_at
+RETURNING id, verified, status, location, ratings, points, user_id, product_id, trip_id, created_at, updated_at
 `
 
 type AssignTripToCourierParams struct {
@@ -32,9 +33,10 @@ func (q *Queries) AssignTripToCourier(ctx context.Context, arg AssignTripToCouri
 		&i.Verified,
 		&i.Status,
 		&i.Location,
-		&i.Rating,
+		&i.Ratings,
 		&i.Points,
 		&i.UserID,
+		&i.ProductID,
 		&i.TripID,
 		&i.CreatedAt,
 		&i.UpdatedAt,
@@ -48,7 +50,7 @@ INSERT INTO couriers (
 ) VALUES (
   $1
 )
-RETURNING id, verified, status, location, rating, points, user_id, trip_id, created_at, updated_at
+RETURNING id, verified, status, location, ratings, points, user_id, product_id, trip_id, created_at, updated_at
 `
 
 func (q *Queries) CreateCourier(ctx context.Context, userID uuid.NullUUID) (Courier, error) {
@@ -59,9 +61,10 @@ func (q *Queries) CreateCourier(ctx context.Context, userID uuid.NullUUID) (Cour
 		&i.Verified,
 		&i.Status,
 		&i.Location,
-		&i.Rating,
+		&i.Ratings,
 		&i.Points,
 		&i.UserID,
+		&i.ProductID,
 		&i.TripID,
 		&i.CreatedAt,
 		&i.UpdatedAt,
@@ -70,7 +73,7 @@ func (q *Queries) CreateCourier(ctx context.Context, userID uuid.NullUUID) (Cour
 }
 
 const getCourier = `-- name: GetCourier :one
-SELECT id, verified, status, location, rating, points, user_id, trip_id, created_at, updated_at FROM
+SELECT id, verified, status, location, ratings, points, user_id, product_id, trip_id, created_at, updated_at FROM
 couriers
 WHERE user_id = $1
 LIMIT 1
@@ -84,9 +87,10 @@ func (q *Queries) GetCourier(ctx context.Context, userID uuid.NullUUID) (Courier
 		&i.Verified,
 		&i.Status,
 		&i.Location,
-		&i.Rating,
+		&i.Ratings,
 		&i.Points,
 		&i.UserID,
+		&i.ProductID,
 		&i.TripID,
 		&i.CreatedAt,
 		&i.UpdatedAt,
@@ -108,6 +112,53 @@ func (q *Queries) GetCourierStatus(ctx context.Context, userID uuid.NullUUID) (s
 	return status, err
 }
 
+const getNearbyAvailableCourierProducts = `-- name: GetNearbyAvailableCourierProducts :many
+SELECT DISTINCT ON (p.id) c.id, p.id, p.name, p.description, p.weight_class, p.icon, p.created_at, p.updated_at FROM couriers c INNER JOIN products p ON ST_DWithin(c.location, $1::geography, 1000)
+`
+
+type GetNearbyAvailableCourierProductsRow struct {
+	ID          uuid.UUID `json:"id"`
+	ID_2        uuid.UUID `json:"id_2"`
+	Name        string    `json:"name"`
+	Description string    `json:"description"`
+	WeightClass int32     `json:"weight_class"`
+	Icon        string    `json:"icon"`
+	CreatedAt   time.Time `json:"created_at"`
+	UpdatedAt   time.Time `json:"updated_at"`
+}
+
+func (q *Queries) GetNearbyAvailableCourierProducts(ctx context.Context, point interface{}) ([]GetNearbyAvailableCourierProductsRow, error) {
+	rows, err := q.db.QueryContext(ctx, getNearbyAvailableCourierProducts, point)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []GetNearbyAvailableCourierProductsRow{}
+	for rows.Next() {
+		var i GetNearbyAvailableCourierProductsRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.ID_2,
+			&i.Name,
+			&i.Description,
+			&i.WeightClass,
+			&i.Icon,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const isCourier = `-- name: IsCourier :one
 SELECT verified FROM
 couriers
@@ -126,7 +177,7 @@ const setCourierStatus = `-- name: SetCourierStatus :one
 UPDATE couriers
 SET status = $1
 WHERE user_id = $2
-RETURNING id, verified, status, location, rating, points, user_id, trip_id, created_at, updated_at
+RETURNING id, verified, status, location, ratings, points, user_id, product_id, trip_id, created_at, updated_at
 `
 
 type SetCourierStatusParams struct {
@@ -142,9 +193,10 @@ func (q *Queries) SetCourierStatus(ctx context.Context, arg SetCourierStatusPara
 		&i.Verified,
 		&i.Status,
 		&i.Location,
-		&i.Rating,
+		&i.Ratings,
 		&i.Points,
 		&i.UserID,
+		&i.ProductID,
 		&i.TripID,
 		&i.CreatedAt,
 		&i.UpdatedAt,
@@ -156,7 +208,7 @@ const trackCourierLocation = `-- name: TrackCourierLocation :one
 UPDATE couriers
 SET location = $2
 WHERE user_id = $1
-RETURNING id, verified, status, location, rating, points, user_id, trip_id, created_at, updated_at
+RETURNING id, verified, status, location, ratings, points, user_id, product_id, trip_id, created_at, updated_at
 `
 
 type TrackCourierLocationParams struct {
@@ -172,9 +224,10 @@ func (q *Queries) TrackCourierLocation(ctx context.Context, arg TrackCourierLoca
 		&i.Verified,
 		&i.Status,
 		&i.Location,
-		&i.Rating,
+		&i.Ratings,
 		&i.Points,
 		&i.UserID,
+		&i.ProductID,
 		&i.TripID,
 		&i.CreatedAt,
 		&i.UpdatedAt,
