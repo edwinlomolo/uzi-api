@@ -23,16 +23,17 @@ CREATE TABLE IF NOT EXISTS products (
   description TEXT NOT NULL,
   weight_class INTEGER NOT NULL,
   icon TEXT NOT NULL,
+  relevance INTEGER NOT NULL,
   created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
 INSERT INTO products (
-  name, description, weight_class, icon
+  name, description, weight_class, icon, relevance
 ) VALUES
-  ('UziX', 'Faster|Cheaper|Eco-friendly', 638, 'https://uzi-images.s3.eu-west-2.amazonaws.com/icons8-bike-50.png'),
-  ('UziBoda', 'Convenient|On-demand', 1472, 'https://uzi-images.s3.eu-west-2.amazonaws.com/icons8-motorbike-50.png'),
-  ('Uzito', 'Loading-truck|Medium-sized', 2000, 'https://uzi-images.s3.eu-west-2.amazonaws.com/icons8-truck-50.png');
+  ('UziX', 'Faster|Cheaper|Eco-friendly', 638, 'https://uzi-images.s3.eu-west-2.amazonaws.com/icons8-bike-50.png', 1),
+  ('UziBoda', 'Convenient|On-demand', 1472, 'https://uzi-images.s3.eu-west-2.amazonaws.com/icons8-motorbike-50.png', 2),
+  ('Uzito', 'Loading-truck|Medium-sized', 2000, 'https://uzi-images.s3.eu-west-2.amazonaws.com/icons8-truck-50.png', 3);
 
 CREATE TABLE IF NOT EXISTS couriers (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),

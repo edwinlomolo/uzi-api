@@ -43,4 +43,4 @@ WHERE user_id = $1
 RETURNING *;
 
 -- name: GetNearbyAvailableCourierProducts :many
-SELECT DISTINCT ON (p.id) c.id, p.* FROM couriers c INNER JOIN products p ON ST_DWithin(c.location, sqlc.arg(point)::geography, 1000);
+SELECT DISTINCT ON (p.id) c.id, p.* FROM couriers c INNER JOIN products p ON ST_DWithin(c.location, sqlc.arg(point)::geography, 1000) ORDER BY p.relevance DESC;

@@ -31,6 +31,7 @@ type Product struct {
 	Description string    `json:"description"`
 	WeightClass int32     `json:"weight_class"`
 	Icon        string    `json:"icon"`
+	Relevance   int32     `json:"relevance"`
 	CreatedAt   time.Time `json:"created_at"`
 	UpdatedAt   time.Time `json:"updated_at"`
 }

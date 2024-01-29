@@ -113,7 +113,7 @@ func (q *Queries) GetCourierStatus(ctx context.Context, userID uuid.NullUUID) (s
 }
 
 const getNearbyAvailableCourierProducts = `-- name: GetNearbyAvailableCourierProducts :many
-SELECT DISTINCT ON (p.id) c.id, p.id, p.name, p.description, p.weight_class, p.icon, p.created_at, p.updated_at FROM couriers c INNER JOIN products p ON ST_DWithin(c.location, $1::geography, 1000)
+SELECT DISTINCT ON (p.id) c.id, p.id, p.name, p.description, p.weight_class, p.icon, p.relevance, p.created_at, p.updated_at FROM couriers c INNER JOIN products p ON ST_DWithin(c.location, $1::geography, 1000) ORDER BY p.relevance DESC
 `
 
 type GetNearbyAvailableCourierProductsRow struct {
@@ -123,6 +123,7 @@ type GetNearbyAvailableCourierProductsRow struct {
 	Description string    `json:"description"`
 	WeightClass int32     `json:"weight_class"`
 	Icon        string    `json:"icon"`
+	Relevance   int32     `json:"relevance"`
 	CreatedAt   time.Time `json:"created_at"`
 	UpdatedAt   time.Time `json:"updated_at"`
 }
@@ -143,6 +144,7 @@ func (q *Queries) GetNearbyAvailableCourierProducts(ctx context.Context, point i
 			&i.Description,
 			&i.WeightClass,
 			&i.Icon,
+			&i.Relevance,
 			&i.CreatedAt,
 			&i.UpdatedAt,
 		); err != nil {
