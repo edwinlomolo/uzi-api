@@ -7,6 +7,7 @@ import (
 
 	"github.com/3dw1nM0535/uzi-api/config"
 	"github.com/3dw1nM0535/uzi-api/model"
+	"github.com/3dw1nM0535/uzi-api/pkg/logger"
 	"github.com/aws/aws-sdk-go-v2/aws"
 	awsConfig "github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/credentials"
@@ -23,20 +24,20 @@ type awsClient struct {
 	logger *logrus.Logger
 }
 
-func GetS3Service() Aws { return awsService }
+func GetAwsService() Aws { return awsService }
 
-func NewAwsS3Service(config config.Aws, logger *logrus.Logger) Aws {
-	cfg, err := awsConfig.LoadDefaultConfig(context.TODO(), awsConfig.WithRegion("eu-west-2"), awsConfig.WithCredentialsProvider(credentials.NewStaticCredentialsProvider(config.AccessKey, config.SecretAccessKey, "")))
+func NewAwsS3Service() {
+	log := logger.GetLogger()
+	cfg := config.GetConfig().Aws
+	awsConfig, err := awsConfig.LoadDefaultConfig(context.TODO(), awsConfig.WithRegion("eu-west-2"), awsConfig.WithCredentialsProvider(credentials.NewStaticCredentialsProvider(cfg.AccessKey, cfg.SecretAccessKey, "")))
 	if err != nil {
 		panic(err)
 	} else if err == nil {
-		logger.Infoln("Aws S3 credential...OK")
+		log.Infoln("Aws S3 credential...OK")
 	}
 
-	s3Client := manager.NewUploader(s3.NewFromConfig(cfg))
-	awsService = &awsClient{s3Client, config, logger}
-
-	return awsService
+	s3Client := manager.NewUploader(s3.NewFromConfig(awsConfig))
+	awsService = &awsClient{s3Client, cfg, log}
 }
 
 func (a awsClient) UploadImage(file multipart.File, fileHeader *multipart.FileHeader) (string, error) {

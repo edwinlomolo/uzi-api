@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/3dw1nM0535/uzi-api/config"
+	"github.com/3dw1nM0535/uzi-api/pkg/logger"
 	sqlStore "github.com/3dw1nM0535/uzi-api/store/sqlc"
 	"github.com/golang-migrate/migrate/v4"
 	"github.com/golang-migrate/migrate/v4/database/postgres"
@@ -14,15 +15,16 @@ import (
 
 var dbClient *sqlStore.Queries
 
-func InitializeStorage(logger *logrus.Logger, migrationUrl string) error {
+func InitializeStorage() error {
+	log := logger.GetLogger()
 	configs := config.GetConfig()
-	databaseconfigs := configs.Database.Rdbms
+	rdbmsConfig := configs.Database.Rdbms
 	isDevelopment := config.IsDev()
 	forceMigrate := configs.Database.ForceMigration
 
-	db, err := sql.Open(databaseconfigs.Env.Driver, databaseconfigs.Uri)
+	db, err := sql.Open(rdbmsConfig.Env.Driver, rdbmsConfig.Uri)
 	if err != nil {
-		logrus.Errorf("%s:%v", "DatabaseError", err)
+		log.Errorf("%s:%v", "DatabaseError", err)
 		return err
 	}
 
@@ -32,19 +34,19 @@ func InitializeStorage(logger *logrus.Logger, migrationUrl string) error {
 	db.Exec("CREATE EXTENSION IF NOT EXISTS postgis_topology; --OPTIONAL")
 
 	if err := db.Ping(); err != nil {
-		logrus.Errorf("%s:%v", "DatabasePingError", err.Error())
+		log.Errorf("%s:%v", "DatabasePingError", err.Error())
 		return err
 	} else if err == nil {
-		logrus.Infoln("Database connection...OK")
+		log.Infoln("Database connection...OK")
 	}
 
 	dbClient = sqlStore.New(db)
 
 	// Setup database schema
-	if err := runDatabaseMigration(db, logger, isDevelopment, migrationUrl, forceMigrate); err != nil {
-		logger.Errorf("%s:%v", "ApplyingMigrationErr", err.Error())
+	if err := runDatabaseMigration(db, log, isDevelopment, rdbmsConfig.MigrationUrl, forceMigrate); err != nil {
+		log.Errorf("%s:%v", "ApplyingMigrationErr", err.Error())
 	} else if err == nil {
-		logger.Infoln("Database migration...OK")
+		log.Infoln("Database migration...OK")
 	}
 
 	return nil

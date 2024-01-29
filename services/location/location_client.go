@@ -5,8 +5,9 @@ import (
 
 	"github.com/3dw1nM0535/uzi-api/config"
 	"github.com/3dw1nM0535/uzi-api/model"
+	"github.com/3dw1nM0535/uzi-api/pkg/cache"
+	"github.com/3dw1nM0535/uzi-api/pkg/logger"
 	"github.com/3dw1nM0535/uzi-api/pkg/util"
-	"github.com/redis/go-redis/v9"
 	"github.com/sirupsen/logrus"
 	"googlemaps.github.io/maps"
 )
@@ -23,26 +24,28 @@ var locationService Location
 
 func GetLocationService() Location { return locationService }
 
-func NewLocationService(cfg config.GoogleMaps, logger *logrus.Logger, redis *redis.Client) Location {
-	places, placesErr := maps.NewClient(maps.WithAPIKey(cfg.GooglePlacesApiKey))
+func NewLocationService() {
+	log := logger.GetLogger()
+	apiKey := config.GetConfig().GoogleMaps.GooglePlacesApiKey
+	c := cache.GetCache()
+
+	places, placesErr := maps.NewClient(maps.WithAPIKey(apiKey))
 	if placesErr != nil {
-		logger.Errorf("%s:%v", "new places", placesErr.Error())
+		log.Errorf("%s:%v", "new places", placesErr.Error())
 	} else {
-		logger.Infoln("Places service...OK")
+		log.Infoln("Places service...OK")
 	}
 
-	geocode, geocodeErr := maps.NewClient(maps.WithAPIKey(cfg.GoogleGeocodeApiKey))
+	geocode, geocodeErr := maps.NewClient(maps.WithAPIKey(apiKey))
 	if geocodeErr != nil {
-		logger.Errorf("%s: %v", "new geocode err", geocodeErr.Error())
+		log.Errorf("%s: %v", "new geocode err", geocodeErr.Error())
 	} else {
-		logger.Infoln("Geocode service...OK")
+		log.Infoln("Geocode service...OK")
 	}
 
-	cache := newlocationCache(redis, logger)
+	lc := newlocationCache(c, log)
 
-	locationService = &locationClient{newNominatimService(logger, cache), places, geocode, cfg, logger, cache}
-
-	return locationService
+	locationService = &locationClient{newNominatimService(lc), places, geocode, config.GetConfig().GoogleMaps, log, lc}
 }
 
 func (l *locationClient) AutocompletePlace(searchQuery string) ([]*model.Place, error) {

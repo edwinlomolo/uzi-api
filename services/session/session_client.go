@@ -7,7 +7,9 @@ import (
 	"github.com/3dw1nM0535/uzi-api/config"
 	"github.com/3dw1nM0535/uzi-api/model"
 	"github.com/3dw1nM0535/uzi-api/pkg/jwt"
+	"github.com/3dw1nM0535/uzi-api/pkg/logger"
 	"github.com/3dw1nM0535/uzi-api/services/courier"
+	"github.com/3dw1nM0535/uzi-api/store"
 	sqlStore "github.com/3dw1nM0535/uzi-api/store/sqlc"
 	"github.com/google/uuid"
 	"github.com/sirupsen/logrus"
@@ -26,10 +28,13 @@ func GetSessionService() Session {
 	return sessionService
 }
 
-func NewSessionService(store *sqlStore.Queries, logger *logrus.Logger, jwtConfig config.Jwt) Session {
-	sessionService = &sessionClient{jwt.NewJwtClient(logger, jwtConfig), store, logger, jwtConfig}
-	logger.Infoln("Session service...OK")
-	return sessionService
+func NewSessionService() {
+	log := logger.GetLogger()
+	jwtConfig := config.GetConfig().Jwt
+
+	sessionService = &sessionClient{jwt.NewJwtClient(log, jwtConfig), store.GetDatabase(), log, jwtConfig}
+
+	log.Infoln("Session service...OK")
 }
 
 func (sc *sessionClient) SignIn(user model.User, ip, userAgent string) (*model.Session, error) {

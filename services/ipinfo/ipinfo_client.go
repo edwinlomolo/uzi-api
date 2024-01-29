@@ -8,6 +8,8 @@ import (
 
 	"github.com/3dw1nM0535/uzi-api/config"
 	"github.com/3dw1nM0535/uzi-api/model"
+	redisCache "github.com/3dw1nM0535/uzi-api/pkg/cache"
+	"github.com/3dw1nM0535/uzi-api/pkg/logger"
 	"github.com/ipinfo/go/v2/ipinfo"
 	"github.com/ipinfo/go/v2/ipinfo/cache"
 	"github.com/redis/go-redis/v9"
@@ -22,13 +24,15 @@ type ipinfoClient struct {
 	client *ipinfo.Client
 }
 
-func NewIpinfoService(redis *redis.Client, config config.Ipinfo, logger *logrus.Logger) {
-	cache := newipinfocache(redis, logger, config)
+func NewIpinfoService() {
+	log := logger.GetLogger()
+	cfg := config.GetConfig().Ipinfo
+	cache := newipinfocache(redisCache.GetCache(), log, cfg)
 	c := ipinfo.NewCache(cache)
-	client := ipinfo.NewClient(nil, c, config.ApiKey)
+	client := ipinfo.NewClient(nil, c, cfg.ApiKey)
 
-	logger.Infoln("Ipinfo service...OK")
-	ipinfoService = &ipinfoClient{config, logger, client}
+	ipinfoService = &ipinfoClient{cfg, log, client}
+	log.Infoln("Ipinfo service...OK")
 }
 
 func GetIpinfoService() IpInfo {

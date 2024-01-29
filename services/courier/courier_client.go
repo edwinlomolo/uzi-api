@@ -7,6 +7,8 @@ import (
 	"fmt"
 
 	"github.com/3dw1nM0535/uzi-api/model"
+	"github.com/3dw1nM0535/uzi-api/pkg/logger"
+	"github.com/3dw1nM0535/uzi-api/store"
 	sqlStore "github.com/3dw1nM0535/uzi-api/store/sqlc"
 	"github.com/google/uuid"
 	"github.com/sirupsen/logrus"
@@ -23,10 +25,10 @@ func GetCourierService() Courier {
 	return courierService
 }
 
-func NewCourierService(logger *logrus.Logger, store *sqlStore.Queries) Courier {
-	courierService = &courierClient{logger, store}
-	logger.Infoln("Courier sevice...OK")
-	return courierService
+func NewCourierService() {
+	log := logger.GetLogger()
+	courierService = &courierClient{log, store.GetDatabase()}
+	log.Infoln("Courier sevice...OK")
 }
 
 func (c *courierClient) FindOrCreate(userID uuid.UUID) (*model.Courier, error) {

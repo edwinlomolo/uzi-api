@@ -7,6 +7,7 @@ import (
 	"strconv"
 
 	"github.com/3dw1nM0535/uzi-api/model"
+	"github.com/3dw1nM0535/uzi-api/pkg/logger"
 	"github.com/3dw1nM0535/uzi-api/pkg/util"
 	"github.com/sirupsen/logrus"
 )
@@ -20,8 +21,8 @@ type nominatimClient struct {
 	cache  locationCache
 }
 
-func newNominatimService(logger *logrus.Logger, cache locationCache) nominatim {
-	return &nominatimClient{logger, cache}
+func newNominatimService(cache locationCache) nominatim {
+	return &nominatimClient{logger.GetLogger(), cache}
 }
 
 func (n nominatimClient) ReverseGeocode(input model.GpsInput) (*model.Geocode, error) {

@@ -14,7 +14,7 @@ func UploadDocument() http.HandlerFunc {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		maxSize := int64(6000000)
 		logger := logger.GetLogger()
-		s3Service := aws.GetS3Service()
+		s3Service := aws.GetAwsService()
 
 		err := r.ParseMultipartForm(maxSize)
 		if err != nil {

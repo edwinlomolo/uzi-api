@@ -7,6 +7,8 @@ import (
 
 	"github.com/3dw1nM0535/uzi-api/model"
 	"github.com/3dw1nM0535/uzi-api/pkg/aws"
+	"github.com/3dw1nM0535/uzi-api/pkg/logger"
+	"github.com/3dw1nM0535/uzi-api/store"
 	sqlStore "github.com/3dw1nM0535/uzi-api/store/sqlc"
 	"github.com/google/uuid"
 	"github.com/sirupsen/logrus"
@@ -22,11 +24,10 @@ type uploadClient struct {
 	store  *sqlStore.Queries
 }
 
-func NewUploadService(s3 aws.Aws, logger *logrus.Logger, store *sqlStore.Queries) Upload {
-	uploadService = &uploadClient{s3, logger, store}
-
-	logger.Infoln("Upload service...OK")
-	return uploadService
+func NewUploadService() {
+	log := logger.GetLogger()
+	uploadService = &uploadClient{aws.GetAwsService(), log, store.GetDatabase()}
+	log.Infoln("Upload service...OK")
 }
 
 func (u *uploadClient) CreateCourierUpload(reason, uri string, id uuid.UUID) error {

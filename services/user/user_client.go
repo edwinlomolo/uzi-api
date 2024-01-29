@@ -7,9 +7,10 @@ import (
 
 	"github.com/3dw1nM0535/uzi-api/model"
 	"github.com/3dw1nM0535/uzi-api/pkg/cache"
+	"github.com/3dw1nM0535/uzi-api/pkg/logger"
+	"github.com/3dw1nM0535/uzi-api/store"
 	sqlStore "github.com/3dw1nM0535/uzi-api/store/sqlc"
 	"github.com/google/uuid"
-	"github.com/redis/go-redis/v9"
 	"github.com/sirupsen/logrus"
 )
 
@@ -26,11 +27,13 @@ func GetUserService() User {
 	return userService
 }
 
-func NewUserService(store *sqlStore.Queries, redis *redis.Client, logger *logrus.Logger) User {
-	c := newusercache(redis, logger)
-	userService = &userClient{store, logger, context.TODO(), c}
-	logger.Infoln("User service...OK")
-	return userService
+func NewUserService() {
+	log := logger.GetLogger()
+	redis := cache.GetCache()
+	c := newusercache(redis, log)
+
+	userService = &userClient{store.GetDatabase(), log, context.TODO(), c}
+	log.Infoln("User service...OK")
 }
 
 func (u *userClient) FindOrCreate(user model.SigninInput) (*model.User, error) {

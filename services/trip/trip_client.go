@@ -2,7 +2,9 @@ package trip
 
 import (
 	"github.com/3dw1nM0535/uzi-api/model"
+	"github.com/3dw1nM0535/uzi-api/pkg/logger"
 	"github.com/3dw1nM0535/uzi-api/pkg/route"
+	"github.com/3dw1nM0535/uzi-api/store"
 	sqlStore "github.com/3dw1nM0535/uzi-api/store/sqlc"
 	"github.com/sirupsen/logrus"
 )
@@ -15,8 +17,10 @@ type tripClient struct {
 
 var tripService Trip
 
-func NewTripService(logger *logrus.Logger, store *sqlStore.Queries) {
-	tripService = &tripClient{logger, store, route.GetRouteService()}
+func NewTripService() {
+	log := logger.GetLogger()
+	tripService = &tripClient{log, store.GetDatabase(), route.GetRouteService()}
+	log.Infoln("Trip service...OK")
 }
 
 func GetTripService() Trip { return tripService }
