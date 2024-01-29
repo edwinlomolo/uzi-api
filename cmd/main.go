@@ -28,13 +28,15 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
+// TODO probably setup server client and user factory paradigm
+// to setup its dependencies and services with receiver methods
 func main() {
-	// Chi router
+	// Chi router TODO refactor all these to one setup func
 	r := chi.NewRouter()
 	r.Use(cors.AllowAll().Handler)
 	r.Use(handler.Logger)
 
-	// Services
+	// Services TODO refactor all these to one setup func
 	config.LoadConfig()
 	cfg := config.GetConfig()
 	logger.NewLogger()
@@ -53,10 +55,10 @@ func main() {
 	route.NewRouteService()
 	trip.NewTripService()
 
-	// Graphql
+	// Graphql TODO refactor this to one setup func
 	srv := gqlHandler.NewDefaultServer(gql.NewExecutableSchema(resolvers.New()))
 
-	// Routes
+	// Routes TODO (look at first route setup comment)
 	r.Get("/ipinfo", handler.Ipinfo())
 	r.Get("/", playground.Handler("GraphQL playground", "/api"))
 	r.Handle("/api", middleware.Auth(srv))
@@ -70,6 +72,6 @@ func main() {
 		Handler: r,
 	}
 
-	// Run server
+	// Run server TODO refactor this to one setup func to start server
 	logrus.Fatal(s.ListenAndServe())
 }
