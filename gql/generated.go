@@ -97,11 +97,12 @@ type ComplexityRoot struct {
 	}
 
 	Query struct {
-		GetCourierDocuments func(childComplexity int) int
-		Hello               func(childComplexity int) int
-		MakeTripRoute       func(childComplexity int, input model.TripRouteInput) int
-		ReverseGeocode      func(childComplexity int, place model.GpsInput) int
-		SearchPlace         func(childComplexity int, textQuery string) int
+		GetCourierDocuments       func(childComplexity int) int
+		GetCourierNearPickupPoint func(childComplexity int, point model.GpsInput) int
+		Hello                     func(childComplexity int) int
+		MakeTripRoute             func(childComplexity int, input model.TripRouteInput) int
+		ReverseGeocode            func(childComplexity int, place model.GpsInput) int
+		SearchPlace               func(childComplexity int, textQuery string) int
 	}
 
 	Route struct {
@@ -139,6 +140,7 @@ type ComplexityRoot struct {
 
 	TripRoute struct {
 		AvailableProducts func(childComplexity int) int
+		Distance          func(childComplexity int) int
 		Polyline          func(childComplexity int) int
 	}
 
@@ -176,6 +178,7 @@ type QueryResolver interface {
 	SearchPlace(ctx context.Context, textQuery string) ([]*model.Place, error)
 	ReverseGeocode(ctx context.Context, place model.GpsInput) (*model.Geocode, error)
 	MakeTripRoute(ctx context.Context, input model.TripRouteInput) (*model.TripRoute, error)
+	GetCourierNearPickupPoint(ctx context.Context, point model.GpsInput) ([]*model.Courier, error)
 }
 
 type executableSchema struct {
@@ -422,6 +425,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Query.GetCourierDocuments(childComplexity), true
 
+	case "Query.getCourierNearPickupPoint":
+		if e.complexity.Query.GetCourierNearPickupPoint == nil {
+			break
+		}
+
+		args, err := ec.field_Query_getCourierNearPickupPoint_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Query.GetCourierNearPickupPoint(childComplexity, args["point"].(model.GpsInput)), true
+
 	case "Query.hello":
 		if e.complexity.Query.Hello == nil {
 			break
@@ -639,6 +654,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.TripRoute.AvailableProducts(childComplexity), true
+
+	case "TripRoute.distance":
+		if e.complexity.TripRoute.Distance == nil {
+			break
+		}
+
+		return e.complexity.TripRoute.Distance(childComplexity), true
 
 	case "TripRoute.polyline":
 		if e.complexity.TripRoute.Polyline == nil {
@@ -952,6 +974,21 @@ func (ec *executionContext) field_Query___type_args(ctx context.Context, rawArgs
 		}
 	}
 	args["name"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Query_getCourierNearPickupPoint_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 model.GpsInput
+	if tmp, ok := rawArgs["point"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("point"))
+		arg0, err = ec.unmarshalNGpsInput2githubᚗcomᚋ3dw1nM0535ᚋuziᚑapiᚋmodelᚐGpsInput(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["point"] = arg0
 	return args, nil
 }
 
@@ -2605,6 +2642,8 @@ func (ec *executionContext) fieldContext_Query_makeTripRoute(ctx context.Context
 			switch field.Name {
 			case "polyline":
 				return ec.fieldContext_TripRoute_polyline(ctx, field)
+			case "distance":
+				return ec.fieldContext_TripRoute_distance(ctx, field)
 			case "availableProducts":
 				return ec.fieldContext_TripRoute_availableProducts(ctx, field)
 			}
@@ -2619,6 +2658,85 @@ func (ec *executionContext) fieldContext_Query_makeTripRoute(ctx context.Context
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
 	if fc.Args, err = ec.field_Query_makeTripRoute_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Query_getCourierNearPickupPoint(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Query_getCourierNearPickupPoint(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Query().GetCourierNearPickupPoint(rctx, fc.Args["point"].(model.GpsInput))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.([]*model.Courier)
+	fc.Result = res
+	return ec.marshalNCourier2ᚕᚖgithubᚗcomᚋ3dw1nM0535ᚋuziᚑapiᚋmodelᚐCourierᚄ(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Query_getCourierNearPickupPoint(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_Courier_id(ctx, field)
+			case "user_id":
+				return ec.fieldContext_Courier_user_id(ctx, field)
+			case "verified":
+				return ec.fieldContext_Courier_verified(ctx, field)
+			case "status":
+				return ec.fieldContext_Courier_status(ctx, field)
+			case "rating":
+				return ec.fieldContext_Courier_rating(ctx, field)
+			case "trip_id":
+				return ec.fieldContext_Courier_trip_id(ctx, field)
+			case "completedTrips":
+				return ec.fieldContext_Courier_completedTrips(ctx, field)
+			case "points":
+				return ec.fieldContext_Courier_points(ctx, field)
+			case "upload_id":
+				return ec.fieldContext_Courier_upload_id(ctx, field)
+			case "created_at":
+				return ec.fieldContext_Courier_created_at(ctx, field)
+			case "updated_at":
+				return ec.fieldContext_Courier_updated_at(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Courier", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Query_getCourierNearPickupPoint_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return fc, err
 	}
@@ -3849,6 +3967,50 @@ func (ec *executionContext) fieldContext_TripRoute_polyline(ctx context.Context,
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _TripRoute_distance(ctx context.Context, field graphql.CollectedField, obj *model.TripRoute) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_TripRoute_distance(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Distance, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(int)
+	fc.Result = res
+	return ec.marshalNInt2int(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_TripRoute_distance(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "TripRoute",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
 		},
 	}
 	return fc, nil
@@ -7013,6 +7175,28 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 			}
 
 			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
+		case "getCourierNearPickupPoint":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_getCourierNearPickupPoint(ctx, field)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx,
+					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
 		case "__type":
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Query___type(ctx, field)
@@ -7255,6 +7439,11 @@ func (ec *executionContext) _TripRoute(ctx context.Context, sel ast.SelectionSet
 			out.Values[i] = graphql.MarshalString("TripRoute")
 		case "polyline":
 			out.Values[i] = ec._TripRoute_polyline(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "distance":
+			out.Values[i] = ec._TripRoute_distance(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
@@ -7749,6 +7938,60 @@ func (ec *executionContext) marshalNBoolean2bool(ctx context.Context, sel ast.Se
 		}
 	}
 	return res
+}
+
+func (ec *executionContext) marshalNCourier2ᚕᚖgithubᚗcomᚋ3dw1nM0535ᚋuziᚑapiᚋmodelᚐCourierᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.Courier) graphql.Marshaler {
+	ret := make(graphql.Array, len(v))
+	var wg sync.WaitGroup
+	isLen1 := len(v) == 1
+	if !isLen1 {
+		wg.Add(len(v))
+	}
+	for i := range v {
+		i := i
+		fc := &graphql.FieldContext{
+			Index:  &i,
+			Result: &v[i],
+		}
+		ctx := graphql.WithFieldContext(ctx, fc)
+		f := func(i int) {
+			defer func() {
+				if r := recover(); r != nil {
+					ec.Error(ctx, ec.Recover(ctx, r))
+					ret = nil
+				}
+			}()
+			if !isLen1 {
+				defer wg.Done()
+			}
+			ret[i] = ec.marshalNCourier2ᚖgithubᚗcomᚋ3dw1nM0535ᚋuziᚑapiᚋmodelᚐCourier(ctx, sel, v[i])
+		}
+		if isLen1 {
+			f(i)
+		} else {
+			go f(i)
+		}
+
+	}
+	wg.Wait()
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
+}
+
+func (ec *executionContext) marshalNCourier2ᚖgithubᚗcomᚋ3dw1nM0535ᚋuziᚑapiᚋmodelᚐCourier(ctx context.Context, sel ast.SelectionSet, v *model.Courier) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._Courier(ctx, sel, v)
 }
 
 func (ec *executionContext) unmarshalNCourierStatus2githubᚗcomᚋ3dw1nM0535ᚋuziᚑapiᚋmodelᚐCourierStatus(ctx context.Context, v interface{}) (model.CourierStatus, error) {

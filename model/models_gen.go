@@ -97,6 +97,7 @@ type TripInput struct {
 
 type TripRoute struct {
 	Polyline          string     `json:"polyline"`
+	Distance          int        `json:"distance"`
 	AvailableProducts []*Product `json:"availableProducts"`
 }
 

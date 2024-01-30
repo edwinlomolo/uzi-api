@@ -1,3 +1,6 @@
 package pricer
 
-type Pricer interface{}
+type Pricer interface {
+	CalculateTripCost(weightClass, distance int, earnWithFuel bool) int
+	CalculateTripRevenue(tripCost int) int
+}

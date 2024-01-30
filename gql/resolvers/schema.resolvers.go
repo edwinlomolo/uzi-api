@@ -79,6 +79,11 @@ func (r *queryResolver) MakeTripRoute(ctx context.Context, input model.TripRoute
 	return r.ComputeTrip(input)
 }
 
+// GetCourierNearPickupPoint is the resolver for the getCourierNearPickupPoint field.
+func (r *queryResolver) GetCourierNearPickupPoint(ctx context.Context, point model.GpsInput) ([]*model.Courier, error) {
+	return r.GetCourierNearPickup(point)
+}
+
 // Mutation returns gql.MutationResolver implementation.
 func (r *Resolver) Mutation() gql.MutationResolver { return &mutationResolver{r} }
 

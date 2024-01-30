@@ -56,6 +56,7 @@ type Query {
   searchPlace(textQuery: String!): [Place!]!
   reverseGeocode(place: GpsInput!): Geocode
   makeTripRoute(input: TripRouteInput!): TripRoute!
+  getCourierNearPickupPoint(point: GpsInput!): [Courier!]!
 }
 
 type Mutation {

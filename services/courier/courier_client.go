@@ -8,6 +8,7 @@ import (
 
 	"github.com/3dw1nM0535/uzi-api/model"
 	"github.com/3dw1nM0535/uzi-api/pkg/logger"
+	"github.com/3dw1nM0535/uzi-api/pkg/pricer"
 	"github.com/3dw1nM0535/uzi-api/store"
 	sqlStore "github.com/3dw1nM0535/uzi-api/store/sqlc"
 	"github.com/google/uuid"
@@ -128,4 +129,59 @@ func (c *courierClient) UpdateCourierStatus(userID uuid.UUID, status model.Couri
 	}
 
 	return true, nil
+}
+
+func (c *courierClient) GetNearbyAvailableProducts(params sqlStore.GetNearbyAvailableCourierProductsParams, tripDistance int) ([]*model.Product, error) {
+	var nearbyProducts []*model.Product
+
+	nearbys, nearbyErr := c.store.GetNearbyAvailableCourierProducts(context.Background(), params)
+	if nearbyErr == sql.ErrNoRows {
+		return make([]*model.Product, 0), nil
+	} else if nearbyErr != nil {
+		uziErr := model.UziErr{Err: nearbyErr.Error(), Message: "getnearbyavailablecourierproducts", Code: 500}
+		c.logger.Errorf(uziErr.Error())
+		return nil, uziErr
+	}
+
+	for _, item := range nearbys {
+		earnWithFuel := item.Name != "UziX"
+		product := &model.Product{
+			ID:          item.ID,
+			Price:       pricer.GetPricerService().CalculateTripCost(tripDistance, int(item.WeightClass), earnWithFuel),
+			Name:        item.Name,
+			Description: item.Description,
+			IconURL:     item.Icon,
+		}
+
+		nearbyProducts = append(nearbyProducts, product)
+	}
+
+	return nearbyProducts, nil
+}
+
+func (c *courierClient) GetCourierNearPickup(point model.GpsInput) ([]*model.Courier, error) {
+	var couriers []*model.Courier
+
+	args := sqlStore.GetCourierNearPickupPointParams{
+		Point:  fmt.Sprintf("SRID=4326;POINT(%.8f %.8f)", point.Lng, point.Lat),
+		Radius: 2000,
+	}
+	foundCouriers, err := c.store.GetCourierNearPickupPoint(context.Background(), args)
+	if err == sql.ErrNoRows {
+		return make([]*model.Courier, 0), nil
+	} else if err != nil {
+		uziErr := model.UziErr{Err: err.Error(), Message: "getcouriernearpickuppoint", Code: 500}
+		c.logger.Errorf(uziErr.Error())
+		return nil, uziErr
+	}
+
+	for _, item := range foundCouriers {
+		courier := &model.Courier{
+			ID: item.ID,
+		}
+
+		couriers = append(couriers, courier)
+	}
+
+	return couriers, nil
 }

@@ -8,5 +8,6 @@ type Route {
 
 type TripRoute {
   polyline: String!
+  distance: Int!
   availableProducts: [Product!]!
 }

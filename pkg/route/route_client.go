@@ -3,6 +3,7 @@ package route
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"net/http"
 
 	"github.com/3dw1nM0535/uzi-api/config"
@@ -10,6 +11,7 @@ import (
 	"github.com/3dw1nM0535/uzi-api/pkg/cache"
 	"github.com/3dw1nM0535/uzi-api/pkg/logger"
 	"github.com/3dw1nM0535/uzi-api/pkg/util"
+	"github.com/3dw1nM0535/uzi-api/services/courier"
 	"github.com/3dw1nM0535/uzi-api/services/location"
 	"github.com/3dw1nM0535/uzi-api/store"
 	sqlStore "github.com/3dw1nM0535/uzi-api/store/sqlc"
@@ -98,10 +100,38 @@ func (r *routeClient) computeRoute(pickup, dropoff model.Geocode) (*model.TripRo
 		return nil, tripInfoErr
 	}
 
-	if tripInfo != nil {
-		return (tripInfo).(*model.TripRoute), nil
+	if tripInfo == nil {
+		routeRes, routeResErr := r.requestRoute(routeParams, routeResponse)
+		if routeResErr != nil {
+			return nil, routeResErr
+		}
+
+		tripRoute.Polyline = routeRes.Routes[0].Polyline.EncodedPolyline
+		tripRoute.Distance = routeRes.Routes[0].Distance
+
+		if cacheErr := r.cache.cacheRoute(cacheKey, tripRoute); cacheErr != nil {
+			return nil, cacheErr
+		}
+	} else {
+		route := (tripInfo).(*model.TripRoute)
+		tripRoute.Polyline = route.Polyline
+		tripRoute.Distance = route.Distance
 	}
 
+	nearbyParams := sqlStore.GetNearbyAvailableCourierProductsParams{
+		Point:  fmt.Sprintf("SRID=4326;POINT(%.8f %.8f)", pickup.Location.Lng, pickup.Location.Lat),
+		Radius: 2000,
+	}
+	nearbyProducts, nearbyErr := courier.GetCourierService().GetNearbyAvailableProducts(nearbyParams, tripRoute.Distance)
+	if nearbyErr != nil {
+		return nil, nearbyErr
+	}
+	tripRoute.AvailableProducts = nearbyProducts
+
+	return tripRoute, nil
+}
+
+func (r *routeClient) requestRoute(routeParams model.RouteRequest, routeResponse *model.RouteResponse) (*model.RouteResponse, error) {
 	reqPayload, payloadErr := json.Marshal(routeParams)
 	if payloadErr != nil {
 		uziErr := model.UziErr{Err: payloadErr.Error(), Message: "computeroutepayloadmarshal", Code: 500}
@@ -139,13 +169,7 @@ func (r *routeClient) computeRoute(pickup, dropoff model.Geocode) (*model.TripRo
 		return nil, uziErr
 	}
 
-	tripRoute.Polyline = routeResponse.Routes[0].Polyline.EncodedPolyline
-
-	if cacheErr := r.cache.cacheRoute(cacheKey, tripRoute); cacheErr != nil {
-		return nil, cacheErr
-	}
-
-	return tripRoute, nil
+	return routeResponse, nil
 }
 
 func createRouteRequest(pickup, dropoff model.LatLng) model.RouteRequest {

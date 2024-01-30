@@ -98,6 +98,52 @@ func (q *Queries) GetCourier(ctx context.Context, userID uuid.NullUUID) (Courier
 	return i, err
 }
 
+const getCourierNearPickupPoint = `-- name: GetCourierNearPickupPoint :many
+SELECT id, verified, status, location, ratings, points, user_id, product_id, trip_id, created_at, updated_at FROM
+couriers
+WHERE ST_DWithin(location, $1::geography, $2) AND status = 'ONLINE' AND verified = 'true'
+`
+
+type GetCourierNearPickupPointParams struct {
+	Point  interface{} `json:"point"`
+	Radius interface{} `json:"radius"`
+}
+
+func (q *Queries) GetCourierNearPickupPoint(ctx context.Context, arg GetCourierNearPickupPointParams) ([]Courier, error) {
+	rows, err := q.db.QueryContext(ctx, getCourierNearPickupPoint, arg.Point, arg.Radius)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []Courier{}
+	for rows.Next() {
+		var i Courier
+		if err := rows.Scan(
+			&i.ID,
+			&i.Verified,
+			&i.Status,
+			&i.Location,
+			&i.Ratings,
+			&i.Points,
+			&i.UserID,
+			&i.ProductID,
+			&i.TripID,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const getCourierStatus = `-- name: GetCourierStatus :one
 SELECT status FROM
 couriers
