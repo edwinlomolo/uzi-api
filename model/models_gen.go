@@ -50,6 +50,7 @@ type Product struct {
 	ID          uuid.UUID  `json:"id"`
 	Name        string     `json:"name"`
 	Description string     `json:"description"`
+	IconURL     string     `json:"icon_url"`
 	Price       int        `json:"price"`
 	CreatedAt   *time.Time `json:"created_at,omitempty"`
 	UpdatedAt   *time.Time `json:"updated_at,omitempty"`
@@ -95,7 +96,8 @@ type TripInput struct {
 }
 
 type TripRoute struct {
-	Polyline string `json:"polyline"`
+	Polyline          string     `json:"polyline"`
+	AvailableProducts []*Product `json:"availableProducts"`
 }
 
 type TripRouteInput struct {
