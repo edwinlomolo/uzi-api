@@ -13,20 +13,20 @@ import (
 var pricerService Pricer
 
 type pricerClient struct {
-	store  *sqlStore.Queries
-	logger *logrus.Logger
-	config config.Pricer
+	store      *sqlStore.Queries
+	logger     *logrus.Logger
+	hourlyWage int
 }
 
 func GetPricerService() Pricer { return pricerService }
 
 func NewPricer() {
-	pricerService = &pricerClient{store.GetDatabase(), logger.GetLogger(), config.GetConfig().Pricer}
+	pricerService = &pricerClient{store.GetDatabase(), logger.GetLogger(), config.GetConfig().Pricer.HourlyWage}
 }
 
 func (p *pricerClient) CalculateTripCost(weightClass, distance int, earnWithFuel bool) int {
 	work := p.workToBeDone(weightClass, distance)
-	tripCost := p.nominalTripCost(work, p.config.HourlyWage) + p.earnWithRatingPoints(work, p.config.HourlyWage)
+	tripCost := p.nominalTripCost(work, p.hourlyWage) + p.earnWithRatingPoints(work, p.hourlyWage)
 	if earnWithFuel {
 		return tripCost + p.earnTripFuel(tripCost)
 	} else {
@@ -35,7 +35,7 @@ func (p *pricerClient) CalculateTripCost(weightClass, distance int, earnWithFuel
 }
 
 func (p *pricerClient) workToBeDone(weightClass, distance int) int {
-	return weightClass * int((float64(distance) / math.Pow10(6)))
+	return weightClass * distance / int(math.Pow10(6))
 }
 
 func (p *pricerClient) earnTripFuel(tripCost int) int {
@@ -52,5 +52,5 @@ func (p *pricerClient) earnWithRatingPoints(hourlyWage, points int) int { return
 func (p *pricerClient) CalculateTripRevenue(tripCost int) int { return (16 / 100) * tripCost }
 
 func (p *pricerClient) byminuteWage() int {
-	return p.config.HourlyWage / 60
+	return p.hourlyWage / 60
 }

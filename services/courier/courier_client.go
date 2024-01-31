@@ -148,7 +148,7 @@ func (c *courierClient) GetNearbyAvailableProducts(params sqlStore.GetNearbyAvai
 		earnWithFuel := item.Name != "UziX"
 		product := &model.Product{
 			ID:          item.ID,
-			Price:       pricer.GetPricerService().CalculateTripCost(tripDistance, int(item.WeightClass), earnWithFuel),
+			Price:       c.courierProductTripCost(int(item.WeightClass), tripDistance, earnWithFuel),
 			Name:        item.Name,
 			Description: item.Description,
 			IconURL:     item.Icon,
@@ -158,6 +158,12 @@ func (c *courierClient) GetNearbyAvailableProducts(params sqlStore.GetNearbyAvai
 	}
 
 	return nearbyProducts, nil
+}
+
+func (c *courierClient) courierProductTripCost(weightClass, distance int, earnWithFuel bool) int {
+	pricer := pricer.GetPricerService()
+	p := pricer.CalculateTripCost(weightClass, distance, earnWithFuel)
+	return p
 }
 
 func (c *courierClient) GetCourierNearPickup(point model.GpsInput) ([]*model.Courier, error) {
