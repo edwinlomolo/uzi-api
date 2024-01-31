@@ -177,29 +177,30 @@ func (c *courierClient) GetCourierNearPickup(point model.GpsInput) ([]*model.Cou
 	}
 
 	for _, item := range foundCouriers {
-		var location *model.Point
-
-		if item.Location != nil {
-			json.Unmarshal([]byte((item.Location).(string)), &location)
-		} else {
-			location = nil
-		}
-
 		courier := &model.Courier{
-			ID: item.ID,
-		}
-
-		if location != nil {
-			lng := &location.Coordinates[0]
-			lat := &location.Coordinates[1]
-			courier.Location = &model.Gps{
-				Lat: *lat,
-				Lng: *lng,
-			}
+			ID:       item.ID,
+			Location: parseCourierLocation(item.Location),
 		}
 
 		couriers = append(couriers, courier)
 	}
 
 	return couriers, nil
+}
+
+func parseCourierLocation(point interface{}) *model.Gps {
+	var location *model.Point
+
+	if point != nil {
+		json.Unmarshal([]byte((point).(string)), &location)
+
+		lat := &location.Coordinates[1]
+		lng := &location.Coordinates[0]
+		return &model.Gps{
+			Lat: *lat,
+			Lng: *lng,
+		}
+	} else {
+		return nil
+	}
 }
