@@ -156,6 +156,7 @@ SELECT c.id, c.product_id, p.id, p.name, p.description, p.weight_class, p.icon, 
 JOIN products p
 ON ST_DWithin(c.location, $1::geography, $2)
 WHERE c.product_id = p.id
+ORDER BY p.relevance ASC
 `
 
 type GetNearbyAvailableCourierProductsParams struct {

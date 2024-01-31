@@ -147,7 +147,7 @@ func (c *courierClient) GetNearbyAvailableProducts(params sqlStore.GetNearbyAvai
 	for _, item := range nearbys {
 		earnWithFuel := item.Name != "UziX"
 		product := &model.Product{
-			ID:          item.ID,
+			ID:          item.ID_2,
 			Price:       pricer.GetPricerService().CalculateTripCost(int(item.WeightClass), tripDistance, earnWithFuel),
 			Name:        item.Name,
 			Description: item.Description,
