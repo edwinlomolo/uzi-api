@@ -43,9 +43,12 @@ WHERE user_id = $1
 RETURNING *;
 
 -- name: GetNearbyAvailableCourierProducts :many
-SELECT DISTINCT ON (p.relevance) c.id, p.* FROM couriers c INNER JOIN products p ON ST_DWithin(c.location, sqlc.arg(point)::geography, sqlc.arg(radius)) ORDER BY p.relevance DESC;
+SELECT c.id, c.product_id, p.* FROM couriers c
+JOIN products p
+ON ST_DWithin(c.location, sqlc.arg(point)::geography, sqlc.arg(radius))
+WHERE c.product_id = p.id;
 
 -- name: GetCourierNearPickupPoint :many
-SELECT * FROM
+SELECT id, ST_AsGeoJSON(location) AS location FROM
 couriers
 WHERE ST_DWithin(location, sqlc.arg(point)::geography, sqlc.arg(radius)) AND status = 'ONLINE' AND verified = 'true';

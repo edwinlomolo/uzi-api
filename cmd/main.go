@@ -12,6 +12,7 @@ import (
 	"github.com/3dw1nM0535/uzi-api/pkg/cache"
 	"github.com/3dw1nM0535/uzi-api/pkg/logger"
 	"github.com/3dw1nM0535/uzi-api/pkg/middleware"
+	"github.com/3dw1nM0535/uzi-api/pkg/pricer"
 	"github.com/3dw1nM0535/uzi-api/pkg/route"
 	"github.com/3dw1nM0535/uzi-api/services/courier"
 	"github.com/3dw1nM0535/uzi-api/services/ipinfo"
@@ -54,6 +55,7 @@ func main() {
 	location.NewLocationService()
 	route.NewRouteService()
 	trip.NewTripService()
+	pricer.NewPricer()
 
 	// Graphql TODO refactor this to one setup func
 	srv := gqlHandler.NewDefaultServer(gql.NewExecutableSchema(resolvers.New()))

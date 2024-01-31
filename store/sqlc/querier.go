@@ -25,7 +25,7 @@ type Querier interface {
 	FindByPhone(ctx context.Context, phone string) (User, error)
 	FindUserByID(ctx context.Context, id uuid.UUID) (User, error)
 	GetCourier(ctx context.Context, userID uuid.NullUUID) (Courier, error)
-	GetCourierNearPickupPoint(ctx context.Context, arg GetCourierNearPickupPointParams) ([]Courier, error)
+	GetCourierNearPickupPoint(ctx context.Context, arg GetCourierNearPickupPointParams) ([]GetCourierNearPickupPointRow, error)
 	GetCourierStatus(ctx context.Context, userID uuid.NullUUID) (string, error)
 	GetCourierUpload(ctx context.Context, arg GetCourierUploadParams) (Upload, error)
 	GetCourierUploads(ctx context.Context, courierID uuid.NullUUID) ([]Upload, error)

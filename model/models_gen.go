@@ -17,6 +17,7 @@ type Courier struct {
 	Verified       bool          `json:"verified"`
 	Status         CourierStatus `json:"status"`
 	Rating         float64       `json:"rating"`
+	Location       *Gps          `json:"location"`
 	TripID         *uuid.UUID    `json:"trip_id,omitempty"`
 	CompletedTrips int           `json:"completedTrips"`
 	Points         int           `json:"points"`

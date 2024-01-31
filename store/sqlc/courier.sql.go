@@ -99,7 +99,7 @@ func (q *Queries) GetCourier(ctx context.Context, userID uuid.NullUUID) (Courier
 }
 
 const getCourierNearPickupPoint = `-- name: GetCourierNearPickupPoint :many
-SELECT id, verified, status, location, ratings, points, user_id, product_id, trip_id, created_at, updated_at FROM
+SELECT id, ST_AsGeoJSON(location) AS location FROM
 couriers
 WHERE ST_DWithin(location, $1::geography, $2) AND status = 'ONLINE' AND verified = 'true'
 `
@@ -109,28 +109,21 @@ type GetCourierNearPickupPointParams struct {
 	Radius interface{} `json:"radius"`
 }
 
-func (q *Queries) GetCourierNearPickupPoint(ctx context.Context, arg GetCourierNearPickupPointParams) ([]Courier, error) {
+type GetCourierNearPickupPointRow struct {
+	ID       uuid.UUID   `json:"id"`
+	Location interface{} `json:"location"`
+}
+
+func (q *Queries) GetCourierNearPickupPoint(ctx context.Context, arg GetCourierNearPickupPointParams) ([]GetCourierNearPickupPointRow, error) {
 	rows, err := q.db.QueryContext(ctx, getCourierNearPickupPoint, arg.Point, arg.Radius)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	items := []Courier{}
+	items := []GetCourierNearPickupPointRow{}
 	for rows.Next() {
-		var i Courier
-		if err := rows.Scan(
-			&i.ID,
-			&i.Verified,
-			&i.Status,
-			&i.Location,
-			&i.Ratings,
-			&i.Points,
-			&i.UserID,
-			&i.ProductID,
-			&i.TripID,
-			&i.CreatedAt,
-			&i.UpdatedAt,
-		); err != nil {
+		var i GetCourierNearPickupPointRow
+		if err := rows.Scan(&i.ID, &i.Location); err != nil {
 			return nil, err
 		}
 		items = append(items, i)
@@ -159,7 +152,10 @@ func (q *Queries) GetCourierStatus(ctx context.Context, userID uuid.NullUUID) (s
 }
 
 const getNearbyAvailableCourierProducts = `-- name: GetNearbyAvailableCourierProducts :many
-SELECT DISTINCT ON (p.relevance) c.id, p.id, p.name, p.description, p.weight_class, p.icon, p.relevance, p.created_at, p.updated_at FROM couriers c INNER JOIN products p ON ST_DWithin(c.location, $1::geography, $2) ORDER BY p.relevance DESC
+SELECT c.id, c.product_id, p.id, p.name, p.description, p.weight_class, p.icon, p.relevance, p.created_at, p.updated_at FROM couriers c
+JOIN products p
+ON ST_DWithin(c.location, $1::geography, $2)
+WHERE c.product_id = p.id
 `
 
 type GetNearbyAvailableCourierProductsParams struct {
@@ -168,15 +164,16 @@ type GetNearbyAvailableCourierProductsParams struct {
 }
 
 type GetNearbyAvailableCourierProductsRow struct {
-	ID          uuid.UUID `json:"id"`
-	ID_2        uuid.UUID `json:"id_2"`
-	Name        string    `json:"name"`
-	Description string    `json:"description"`
-	WeightClass int32     `json:"weight_class"`
-	Icon        string    `json:"icon"`
-	Relevance   int32     `json:"relevance"`
-	CreatedAt   time.Time `json:"created_at"`
-	UpdatedAt   time.Time `json:"updated_at"`
+	ID          uuid.UUID     `json:"id"`
+	ProductID   uuid.NullUUID `json:"product_id"`
+	ID_2        uuid.UUID     `json:"id_2"`
+	Name        string        `json:"name"`
+	Description string        `json:"description"`
+	WeightClass int32         `json:"weight_class"`
+	Icon        string        `json:"icon"`
+	Relevance   int32         `json:"relevance"`
+	CreatedAt   time.Time     `json:"created_at"`
+	UpdatedAt   time.Time     `json:"updated_at"`
 }
 
 func (q *Queries) GetNearbyAvailableCourierProducts(ctx context.Context, arg GetNearbyAvailableCourierProductsParams) ([]GetNearbyAvailableCourierProductsRow, error) {
@@ -190,6 +187,7 @@ func (q *Queries) GetNearbyAvailableCourierProducts(ctx context.Context, arg Get
 		var i GetNearbyAvailableCourierProductsRow
 		if err := rows.Scan(
 			&i.ID,
+			&i.ProductID,
 			&i.ID_2,
 			&i.Name,
 			&i.Description,

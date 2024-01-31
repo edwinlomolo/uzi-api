@@ -4,6 +4,7 @@ type Courier {
   verified: Boolean!
   status: CourierStatus!
   rating: Float!
+  location: Gps!
   trip_id: UUID
   completedTrips: Int!
   points: Int!
