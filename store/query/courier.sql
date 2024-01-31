@@ -46,7 +46,7 @@ RETURNING *;
 SELECT c.id, c.product_id, p.* FROM couriers c
 JOIN products p
 ON ST_DWithin(c.location, sqlc.arg(point)::geography, sqlc.arg(radius))
-WHERE c.product_id = p.id
+WHERE c.product_id = p.id AND c.status = 'ONLINE' AND c.verified = 'true'
 ORDER BY p.relevance ASC;
 
 -- name: GetCourierNearPickupPoint :many
