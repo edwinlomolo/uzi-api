@@ -28,7 +28,7 @@ func (r routeCache) cacheRoute(key string, value interface{}) error {
 		return cacheErr
 	}
 
-	if err := r.cache.Set(context.Background(), key, data, time.Minute*1).Err(); err != nil {
+	if err := r.cache.Set(context.Background(), key, data, time.Hour*24).Err(); err != nil {
 		cacheErr := model.UziErr{Err: err.Error(), Message: "setrouteinfocache", Code: 500}
 		r.logger.Errorf("%s: %s", cacheErr.Message, cacheErr.Err)
 		return cacheErr
