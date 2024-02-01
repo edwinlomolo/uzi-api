@@ -7,7 +7,7 @@ import (
 	"github.com/google/uuid"
 )
 
-func GetCourierIDFromRequestContext(ctx context.Context, courier courier.Courier) uuid.UUID {
+func GetCourierIDFromRequestContext(ctx context.Context, courier courier.CourierService) uuid.UUID {
 	userID := ctx.Value("userID").(string)
 
 	uid, err := uuid.Parse(userID)

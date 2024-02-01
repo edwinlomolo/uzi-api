@@ -41,6 +41,7 @@ type Config struct {
 }
 
 type ResolverRoot interface {
+	Courier() CourierResolver
 	Mutation() MutationResolver
 	Query() QueryResolver
 }
@@ -55,6 +56,8 @@ type ComplexityRoot struct {
 		ID             func(childComplexity int) int
 		Location       func(childComplexity int) int
 		Points         func(childComplexity int) int
+		Product        func(childComplexity int) int
+		ProductID      func(childComplexity int) int
 		Rating         func(childComplexity int) int
 		Status         func(childComplexity int) int
 		TripID         func(childComplexity int) int
@@ -168,6 +171,9 @@ type ComplexityRoot struct {
 	}
 }
 
+type CourierResolver interface {
+	Product(ctx context.Context, obj *model.Courier) (*model.Product, error)
+}
 type MutationResolver interface {
 	CreateCourierDocument(ctx context.Context, input model.CourierUploadInput) (bool, error)
 	TrackCourierGps(ctx context.Context, input model.GpsInput) (bool, error)
@@ -235,6 +241,20 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Courier.Points(childComplexity), true
+
+	case "Courier.product":
+		if e.complexity.Courier.Product == nil {
+			break
+		}
+
+		return e.complexity.Courier.Product(childComplexity), true
+
+	case "Courier.product_id":
+		if e.complexity.Courier.ProductID == nil {
+			break
+		}
+
+		return e.complexity.Courier.ProductID(childComplexity), true
 
 	case "Courier.rating":
 		if e.complexity.Courier.Rating == nil {
@@ -1389,6 +1409,107 @@ func (ec *executionContext) fieldContext_Courier_trip_id(ctx context.Context, fi
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("field of type UUID does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Courier_product_id(ctx context.Context, field graphql.CollectedField, obj *model.Courier) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Courier_product_id(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.ProductID, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(uuid.UUID)
+	fc.Result = res
+	return ec.marshalNUUID2githubᚗcomᚋgoogleᚋuuidᚐUUID(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Courier_product_id(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Courier",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type UUID does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Courier_product(ctx context.Context, field graphql.CollectedField, obj *model.Courier) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Courier_product(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Courier().Product(rctx, obj)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*model.Product)
+	fc.Result = res
+	return ec.marshalOProduct2ᚖgithubᚗcomᚋ3dw1nM0535ᚋuziᚑapiᚋmodelᚐProduct(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Courier_product(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Courier",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_Product_id(ctx, field)
+			case "name":
+				return ec.fieldContext_Product_name(ctx, field)
+			case "description":
+				return ec.fieldContext_Product_description(ctx, field)
+			case "icon_url":
+				return ec.fieldContext_Product_icon_url(ctx, field)
+			case "price":
+				return ec.fieldContext_Product_price(ctx, field)
+			case "created_at":
+				return ec.fieldContext_Product_created_at(ctx, field)
+			case "updated_at":
+				return ec.fieldContext_Product_updated_at(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Product", field.Name)
 		},
 	}
 	return fc, nil
@@ -2775,6 +2896,10 @@ func (ec *executionContext) fieldContext_Query_getCourierNearPickupPoint(ctx con
 				return ec.fieldContext_Courier_location(ctx, field)
 			case "trip_id":
 				return ec.fieldContext_Courier_trip_id(ctx, field)
+			case "product_id":
+				return ec.fieldContext_Courier_product_id(ctx, field)
+			case "product":
+				return ec.fieldContext_Courier_product(ctx, field)
 			case "completedTrips":
 				return ec.fieldContext_Courier_completedTrips(ctx, field)
 			case "points":
@@ -4743,6 +4868,10 @@ func (ec *executionContext) fieldContext_User_courier(ctx context.Context, field
 				return ec.fieldContext_Courier_location(ctx, field)
 			case "trip_id":
 				return ec.fieldContext_Courier_trip_id(ctx, field)
+			case "product_id":
+				return ec.fieldContext_Courier_product_id(ctx, field)
+			case "product":
+				return ec.fieldContext_Courier_product(ctx, field)
 			case "completedTrips":
 				return ec.fieldContext_Courier_completedTrips(ctx, field)
 			case "points":
@@ -6780,44 +6909,82 @@ func (ec *executionContext) _Courier(ctx context.Context, sel ast.SelectionSet, 
 		case "id":
 			out.Values[i] = ec._Courier_id(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				out.Invalids++
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "user_id":
 			out.Values[i] = ec._Courier_user_id(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				out.Invalids++
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "verified":
 			out.Values[i] = ec._Courier_verified(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				out.Invalids++
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "status":
 			out.Values[i] = ec._Courier_status(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				out.Invalids++
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "rating":
 			out.Values[i] = ec._Courier_rating(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				out.Invalids++
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "location":
 			out.Values[i] = ec._Courier_location(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				out.Invalids++
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "trip_id":
 			out.Values[i] = ec._Courier_trip_id(ctx, field, obj)
+		case "product_id":
+			out.Values[i] = ec._Courier_product_id(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "product":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Courier_product(ctx, field, obj)
+				return res
+			}
+
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
 		case "completedTrips":
 			out.Values[i] = ec._Courier_completedTrips(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				out.Invalids++
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "points":
 			out.Values[i] = ec._Courier_points(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				out.Invalids++
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "upload_id":
 			out.Values[i] = ec._Courier_upload_id(ctx, field, obj)
@@ -8698,6 +8865,13 @@ func (ec *executionContext) marshalOGeocode2ᚖgithubᚗcomᚋ3dw1nM0535ᚋuzi�
 		return graphql.Null
 	}
 	return ec._Geocode(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalOProduct2ᚖgithubᚗcomᚋ3dw1nM0535ᚋuziᚑapiᚋmodelᚐProduct(ctx context.Context, sel ast.SelectionSet, v *model.Product) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._Product(ctx, sel, v)
 }
 
 func (ec *executionContext) marshalORoute2ᚖgithubᚗcomᚋ3dw1nM0535ᚋuziᚑapiᚋmodelᚐRoute(ctx context.Context, sel ast.SelectionSet, v *model.Route) graphql.Marshaler {

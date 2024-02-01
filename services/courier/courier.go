@@ -6,7 +6,7 @@ import (
 	"github.com/google/uuid"
 )
 
-type Courier interface {
+type CourierService interface {
 	FindOrCreate(userID uuid.UUID) (*model.Courier, error)
 	IsCourier(userID uuid.UUID) (bool, error)
 	GetCourierStatus(userID uuid.UUID) (model.CourierStatus, error)
@@ -15,4 +15,5 @@ type Courier interface {
 	UpdateCourierStatus(userID uuid.UUID, status model.CourierStatus) (bool, error)
 	GetNearbyAvailableProducts(params sqlStore.GetNearbyAvailableCourierProductsParams, tripDistance int) ([]*model.Product, error)
 	GetCourierNearPickup(point model.GpsInput) ([]*model.Courier, error)
+	GetCourierProduct(product_id uuid.UUID) (*model.Product, error)
 }

@@ -19,6 +19,8 @@ type Courier struct {
 	Rating         float64       `json:"rating"`
 	Location       *Gps          `json:"location"`
 	TripID         *uuid.UUID    `json:"trip_id,omitempty"`
+	ProductID      uuid.UUID     `json:"product_id"`
+	Product        *Product      `json:"product,omitempty"`
 	CompletedTrips int           `json:"completedTrips"`
 	Points         int           `json:"points"`
 	UploadID       *uuid.UUID    `json:"upload_id,omitempty"`

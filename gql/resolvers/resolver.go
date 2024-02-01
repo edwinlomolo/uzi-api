@@ -16,7 +16,7 @@ import (
 
 type Resolver struct {
 	upload.Upload
-	courier.Courier
+	courier.CourierService
 	location.Location
 	trip.Trip
 }

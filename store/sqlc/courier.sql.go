@@ -99,7 +99,7 @@ func (q *Queries) GetCourier(ctx context.Context, userID uuid.NullUUID) (Courier
 }
 
 const getCourierNearPickupPoint = `-- name: GetCourierNearPickupPoint :many
-SELECT id, ST_AsGeoJSON(location) AS location FROM
+SELECT id, product_id, ST_AsGeoJSON(location) AS location FROM
 couriers
 WHERE ST_DWithin(location, $1::geography, $2) AND status = 'ONLINE' AND verified = 'true'
 `
@@ -110,8 +110,9 @@ type GetCourierNearPickupPointParams struct {
 }
 
 type GetCourierNearPickupPointRow struct {
-	ID       uuid.UUID   `json:"id"`
-	Location interface{} `json:"location"`
+	ID        uuid.UUID     `json:"id"`
+	ProductID uuid.NullUUID `json:"product_id"`
+	Location  interface{}   `json:"location"`
 }
 
 func (q *Queries) GetCourierNearPickupPoint(ctx context.Context, arg GetCourierNearPickupPointParams) ([]GetCourierNearPickupPointRow, error) {
@@ -123,7 +124,7 @@ func (q *Queries) GetCourierNearPickupPoint(ctx context.Context, arg GetCourierN
 	items := []GetCourierNearPickupPointRow{}
 	for rows.Next() {
 		var i GetCourierNearPickupPointRow
-		if err := rows.Scan(&i.ID, &i.Location); err != nil {
+		if err := rows.Scan(&i.ID, &i.ProductID, &i.Location); err != nil {
 			return nil, err
 		}
 		items = append(items, i)
@@ -135,6 +136,24 @@ func (q *Queries) GetCourierNearPickupPoint(ctx context.Context, arg GetCourierN
 		return nil, err
 	}
 	return items, nil
+}
+
+const getCourierProductByID = `-- name: GetCourierProductByID :one
+SELECT id, icon FROM products
+WHERE id = $1
+LIMIT 1
+`
+
+type GetCourierProductByIDRow struct {
+	ID   uuid.UUID `json:"id"`
+	Icon string    `json:"icon"`
+}
+
+func (q *Queries) GetCourierProductByID(ctx context.Context, id uuid.UUID) (GetCourierProductByIDRow, error) {
+	row := q.db.QueryRowContext(ctx, getCourierProductByID, id)
+	var i GetCourierProductByIDRow
+	err := row.Scan(&i.ID, &i.Icon)
+	return i, err
 }
 
 const getCourierStatus = `-- name: GetCourierStatus :one

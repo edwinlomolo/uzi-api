@@ -50,6 +50,11 @@ WHERE c.product_id = p.id AND c.status = 'ONLINE' AND c.verified = 'true'
 ORDER BY p.relevance ASC;
 
 -- name: GetCourierNearPickupPoint :many
-SELECT id, ST_AsGeoJSON(location) AS location FROM
+SELECT id, product_id, ST_AsGeoJSON(location) AS location FROM
 couriers
 WHERE ST_DWithin(location, sqlc.arg(point)::geography, sqlc.arg(radius)) AND status = 'ONLINE' AND verified = 'true';
+
+-- name: GetCourierProductByID :one
+SELECT id, icon FROM products
+WHERE id = $1
+LIMIT 1;

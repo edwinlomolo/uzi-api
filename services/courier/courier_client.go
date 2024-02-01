@@ -16,14 +16,16 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-var courierService Courier
+var (
+	courierService CourierService
+)
 
 type courierClient struct {
 	logger *logrus.Logger
 	store  *sqlStore.Queries
 }
 
-func GetCourierService() Courier {
+func GetCourierService() CourierService {
 	return courierService
 }
 
@@ -33,21 +35,20 @@ func NewCourierService() {
 	log.Infoln("Courier sevice...OK")
 }
 
+// TODO something ain't adding up here!
 func (c *courierClient) FindOrCreate(userID uuid.UUID) (*model.Courier, error) {
 	courier, err := c.store.GetCourier(context.Background(), uuid.NullUUID{UUID: userID, Valid: true})
 	if err == sql.ErrNoRows {
 		newCourier, err := c.store.CreateCourier(context.Background(), uuid.NullUUID{UUID: userID, Valid: true})
 		if err != nil {
-			courierErr := model.UziErr{Err: err.Error(), Message: "createcourier", Code: 400}
-			c.logger.Errorf("%s: %s", courierErr.Message, courierErr.Err)
-			return nil, courierErr
+			c.logger.Errorf(err.Error())
+			return nil, fmt.Errorf("%s:%v", "createcourier", err.Error())
 		}
 
 		return &model.Courier{ID: newCourier.ID}, nil
 	} else if err != nil {
-		courierErr := model.UziErr{Err: err.Error(), Message: "getcourier", Code: 404}
-		c.logger.Errorf("%s: %s", courierErr.Message, courierErr.Err)
-		return nil, courierErr
+		c.logger.Errorf(err.Error())
+		return nil, fmt.Errorf("%s:%v", "getcourier", err.Error())
 	}
 
 	return &model.Courier{ID: courier.ID}, nil
@@ -58,9 +59,8 @@ func (c *courierClient) IsCourier(userID uuid.UUID) (bool, error) {
 	if err == sql.ErrNoRows {
 		return false, nil
 	} else if err != nil {
-		courierErr := model.UziErr{Err: err.Error(), Message: "checkusercourierstatus", Code: 400}
-		c.logger.Errorf("%s: %s", courierErr.Message, courierErr.Err)
-		return false, courierErr
+		c.logger.Errorf(err.Error())
+		return false, fmt.Errorf("%s:%v", "checkusercourierstatus", err.Error())
 	}
 
 	return isCourier.Bool, nil
@@ -71,9 +71,8 @@ func (c *courierClient) GetCourierStatus(userID uuid.UUID) (model.CourierStatus,
 	if err == sql.ErrNoRows {
 		return model.CourierStatusOnboarding, nil
 	} else if err != nil {
-		courierErr := model.UziErr{Err: err.Error(), Message: "getcourierverificationstatus", Code: 500}
-		c.logger.Errorf("%s: %s", courierErr.Message, courierErr.Err)
-		return model.CourierStatusOffline, courierErr
+		c.logger.Errorf(err.Error())
+		return model.CourierStatusOffline, fmt.Errorf("%s:%v", "getcourierverificationstatus", err.Error())
 	}
 
 	return model.CourierStatus(status), nil
@@ -83,13 +82,12 @@ func (c *courierClient) getCourier(userID uuid.UUID) (*model.Courier, error) {
 	var courier model.Courier
 	foundCourier, err := c.store.GetCourier(context.Background(), uuid.NullUUID{UUID: userID, Valid: true})
 	if err == sql.ErrNoRows {
-		noCourierErr := model.UziErr{Err: errors.New("no courier found").Error(), Message: "nocourier", Code: 404}
+		noCourierErr := errors.New("no courier found")
 		c.logger.Errorf(noCourierErr.Error())
-		return nil, noCourierErr
+		return nil, fmt.Errorf("%s:%v", "nocourierfound", noCourierErr.Error())
 	} else if err != nil {
-		courierErr := model.UziErr{Err: err.Error(), Message: "getcourier", Code: 500}
-		c.logger.Errorf(courierErr.Error())
-		return nil, courierErr
+		c.logger.Errorf(err.Error())
+		return nil, fmt.Errorf("%s:%v", "getcourier", err.Error())
 	}
 
 	courier.ID = foundCourier.ID
@@ -124,9 +122,8 @@ func (c *courierClient) UpdateCourierStatus(userID uuid.UUID, status model.Couri
 		UserID: uuid.NullUUID{UUID: userID, Valid: true},
 	}
 	if _, setErr := c.store.SetCourierStatus(context.Background(), args); setErr != nil {
-		uziErr := model.UziErr{Err: setErr.Error(), Message: "setcourierstatus", Code: 500}
-		c.logger.Errorf(uziErr.Error())
-		return false, uziErr
+		c.logger.Errorf(setErr.Error())
+		return false, fmt.Errorf("%s:%v", "setcourierstatus", setErr.Error())
 	}
 
 	return true, nil
@@ -139,9 +136,8 @@ func (c *courierClient) GetNearbyAvailableProducts(params sqlStore.GetNearbyAvai
 	if nearbyErr == sql.ErrNoRows {
 		return make([]*model.Product, 0), nil
 	} else if nearbyErr != nil {
-		uziErr := model.UziErr{Err: nearbyErr.Error(), Message: "getnearbyavailablecourierproducts", Code: 500}
-		c.logger.Errorf(uziErr.Error())
-		return nil, uziErr
+		c.logger.Errorf(nearbyErr.Error())
+		return nil, fmt.Errorf("%s:%v", "getnearbyavailablecourierproducts", nearbyErr.Error())
 	}
 
 	for _, item := range nearbys {
@@ -171,15 +167,15 @@ func (c *courierClient) GetCourierNearPickup(point model.GpsInput) ([]*model.Cou
 	if err == sql.ErrNoRows {
 		return make([]*model.Courier, 0), nil
 	} else if err != nil {
-		uziErr := model.UziErr{Err: err.Error(), Message: "getcouriernearpickuppoint", Code: 500}
-		c.logger.Errorf(uziErr.Error())
-		return nil, uziErr
+		c.logger.Errorf(err.Error())
+		return nil, fmt.Errorf("%s: %v", "getcouriernearpickuppooint", err.Error())
 	}
 
 	for _, item := range foundCouriers {
 		courier := &model.Courier{
-			ID:       item.ID,
-			Location: parseCourierLocation(item.Location),
+			ID:        item.ID,
+			ProductID: item.ProductID.UUID,
+			Location:  parseCourierLocation(item.Location),
 		}
 
 		couriers = append(couriers, courier)
@@ -203,4 +199,17 @@ func parseCourierLocation(point interface{}) *model.Gps {
 	} else {
 		return nil
 	}
+}
+
+func (c *courierClient) GetCourierProduct(id uuid.UUID) (*model.Product, error) {
+	product, err := c.store.GetCourierProductByID(context.Background(), id)
+	if err != nil {
+		c.logger.Errorf(err.Error())
+		return nil, fmt.Errorf("%s:%v", "get courier product", err.Error())
+	}
+
+	return &model.Product{
+		ID:      product.ID,
+		IconURL: product.Icon,
+	}, nil
 }
