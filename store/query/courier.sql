@@ -55,6 +55,6 @@ couriers
 WHERE ST_DWithin(location, sqlc.arg(point)::geography, sqlc.arg(radius)) AND status = 'ONLINE' AND verified = 'true';
 
 -- name: GetCourierProductByID :one
-SELECT id, icon FROM products
+SELECT id, icon, name FROM products
 WHERE id = $1
 LIMIT 1;

@@ -211,5 +211,6 @@ func (c *courierClient) GetCourierProduct(id uuid.UUID) (*model.Product, error) 
 	return &model.Product{
 		ID:      product.ID,
 		IconURL: product.Icon,
+		Name:    product.Name,
 	}, nil
 }

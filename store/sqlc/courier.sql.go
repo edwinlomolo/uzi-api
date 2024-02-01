@@ -139,7 +139,7 @@ func (q *Queries) GetCourierNearPickupPoint(ctx context.Context, arg GetCourierN
 }
 
 const getCourierProductByID = `-- name: GetCourierProductByID :one
-SELECT id, icon FROM products
+SELECT id, icon, name FROM products
 WHERE id = $1
 LIMIT 1
 `
@@ -147,12 +147,13 @@ LIMIT 1
 type GetCourierProductByIDRow struct {
 	ID   uuid.UUID `json:"id"`
 	Icon string    `json:"icon"`
+	Name string    `json:"name"`
 }
 
 func (q *Queries) GetCourierProductByID(ctx context.Context, id uuid.UUID) (GetCourierProductByIDRow, error) {
 	row := q.db.QueryRowContext(ctx, getCourierProductByID, id)
 	var i GetCourierProductByIDRow
-	err := row.Scan(&i.ID, &i.Icon)
+	err := row.Scan(&i.ID, &i.Icon, &i.Name)
 	return i, err
 }
 
