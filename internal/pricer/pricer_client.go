@@ -4,7 +4,7 @@ import (
 	"math"
 
 	"github.com/3dw1nM0535/uzi-api/config"
-	"github.com/3dw1nM0535/uzi-api/pkg/logger"
+	"github.com/3dw1nM0535/uzi-api/internal/logger"
 	"github.com/3dw1nM0535/uzi-api/store"
 	sqlStore "github.com/3dw1nM0535/uzi-api/store/sqlc"
 	"github.com/sirupsen/logrus"

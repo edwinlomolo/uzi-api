@@ -6,9 +6,9 @@ import (
 	"net/http"
 	"strconv"
 
+	"github.com/3dw1nM0535/uzi-api/internal/logger"
+	"github.com/3dw1nM0535/uzi-api/internal/util"
 	"github.com/3dw1nM0535/uzi-api/model"
-	"github.com/3dw1nM0535/uzi-api/pkg/logger"
-	"github.com/3dw1nM0535/uzi-api/pkg/util"
 	"github.com/sirupsen/logrus"
 )
 

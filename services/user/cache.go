@@ -5,8 +5,8 @@ import (
 	"encoding/json"
 	"time"
 
+	"github.com/3dw1nM0535/uzi-api/internal/cache"
 	"github.com/3dw1nM0535/uzi-api/model"
-	"github.com/3dw1nM0535/uzi-api/pkg/cache"
 	"github.com/redis/go-redis/v9"
 	"github.com/sirupsen/logrus"
 )

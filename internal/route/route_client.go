@@ -7,10 +7,10 @@ import (
 	"net/http"
 
 	"github.com/3dw1nM0535/uzi-api/config"
+	"github.com/3dw1nM0535/uzi-api/internal/cache"
+	"github.com/3dw1nM0535/uzi-api/internal/logger"
+	"github.com/3dw1nM0535/uzi-api/internal/util"
 	"github.com/3dw1nM0535/uzi-api/model"
-	"github.com/3dw1nM0535/uzi-api/pkg/cache"
-	"github.com/3dw1nM0535/uzi-api/pkg/logger"
-	"github.com/3dw1nM0535/uzi-api/pkg/util"
 	"github.com/3dw1nM0535/uzi-api/services/courier"
 	"github.com/3dw1nM0535/uzi-api/services/location"
 	"github.com/3dw1nM0535/uzi-api/store"

@@ -5,9 +5,9 @@ import (
 	"database/sql"
 	"net/http"
 
+	"github.com/3dw1nM0535/uzi-api/internal/aws"
+	"github.com/3dw1nM0535/uzi-api/internal/logger"
 	"github.com/3dw1nM0535/uzi-api/model"
-	"github.com/3dw1nM0535/uzi-api/pkg/aws"
-	"github.com/3dw1nM0535/uzi-api/pkg/logger"
 	"github.com/3dw1nM0535/uzi-api/store"
 	sqlStore "github.com/3dw1nM0535/uzi-api/store/sqlc"
 	"github.com/google/uuid"

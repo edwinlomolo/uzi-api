@@ -5,7 +5,7 @@ import (
 	"fmt"
 
 	"github.com/3dw1nM0535/uzi-api/config"
-	"github.com/3dw1nM0535/uzi-api/pkg/logger"
+	"github.com/3dw1nM0535/uzi-api/internal/logger"
 	sqlStore "github.com/3dw1nM0535/uzi-api/store/sqlc"
 	"github.com/golang-migrate/migrate/v4"
 	"github.com/golang-migrate/migrate/v4/database/postgres"

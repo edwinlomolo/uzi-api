@@ -7,9 +7,9 @@ import (
 	"time"
 
 	"github.com/3dw1nM0535/uzi-api/config"
+	redisCache "github.com/3dw1nM0535/uzi-api/internal/cache"
+	"github.com/3dw1nM0535/uzi-api/internal/logger"
 	"github.com/3dw1nM0535/uzi-api/model"
-	redisCache "github.com/3dw1nM0535/uzi-api/pkg/cache"
-	"github.com/3dw1nM0535/uzi-api/pkg/logger"
 	"github.com/ipinfo/go/v2/ipinfo"
 	"github.com/ipinfo/go/v2/ipinfo/cache"
 	"github.com/redis/go-redis/v9"
