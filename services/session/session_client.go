@@ -3,11 +3,12 @@ package session
 import (
 	"context"
 	"database/sql"
+	"fmt"
 
 	"github.com/3dw1nM0535/uzi-api/config"
+	"github.com/3dw1nM0535/uzi-api/gql/model"
 	"github.com/3dw1nM0535/uzi-api/internal/jwt"
 	"github.com/3dw1nM0535/uzi-api/internal/logger"
-	"github.com/3dw1nM0535/uzi-api/model"
 	"github.com/3dw1nM0535/uzi-api/services/courier"
 	"github.com/3dw1nM0535/uzi-api/store"
 	sqlStore "github.com/3dw1nM0535/uzi-api/store/sqlc"
@@ -66,7 +67,7 @@ func (sc *sessionClient) createNewSession(userID uuid.UUID, ip, phone, userAgent
 	}
 	newSession, newSessErr := sc.store.CreateSession(context.Background(), sessParams)
 	if newSessErr != nil {
-		err := model.UziErr{Err: newSessErr.Error(), Message: "createnewsession", Code: 500}
+		err := fmt.Errorf("%s:%v", "create session", newSessErr)
 		sc.logger.Errorf(err.Error())
 		return nil, err
 	}
@@ -83,7 +84,7 @@ func (sc *sessionClient) createNewSession(userID uuid.UUID, ip, phone, userAgent
 
 	isUserOnboarding, isUserOnboardingErr := sc.store.IsUserOnboarding(context.Background(), userID)
 	if isUserOnboardingErr != nil {
-		onboardErr := model.UziErr{Err: isUserOnboardingErr.Error(), Message: "isuseronboarding", Code: 500}
+		onboardErr := fmt.Errorf("%s:%v", "get user onboarding", isUserOnboardingErr)
 		sc.logger.Errorf(onboardErr.Error())
 		return nil, onboardErr
 	}
@@ -110,7 +111,7 @@ func (sc *sessionClient) getSession(sessionID uuid.UUID) (*model.Session, error)
 	if sessErr == sql.ErrNoRows {
 		return nil, nil
 	} else if sessErr != nil {
-		err := model.UziErr{Err: sessErr.Error(), Message: "getsession", Code: 500}
+		err := fmt.Errorf("%s:%v", "get session", sessErr)
 		sc.logger.Errorf(err.Error())
 		return nil, err
 	}
@@ -127,7 +128,7 @@ func (sc *sessionClient) getSession(sessionID uuid.UUID) (*model.Session, error)
 
 	isUserOnboarding, isUserOnboardingErr := sc.store.IsUserOnboarding(context.Background(), foundSess.ID)
 	if isUserOnboardingErr != nil {
-		onboardErr := model.UziErr{Err: isUserOnboardingErr.Error(), Message: "isuseronboarding", Code: 500}
+		onboardErr := fmt.Errorf("%s:%v", "get user onboarding", isUserOnboardingErr)
 		sc.logger.Errorf(onboardErr.Error())
 		return nil, onboardErr
 	}

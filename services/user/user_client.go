@@ -4,17 +4,29 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	"fmt"
 
+	"github.com/3dw1nM0535/uzi-api/gql/model"
 	"github.com/3dw1nM0535/uzi-api/internal/cache"
 	"github.com/3dw1nM0535/uzi-api/internal/logger"
-	"github.com/3dw1nM0535/uzi-api/model"
 	"github.com/3dw1nM0535/uzi-api/store"
 	sqlStore "github.com/3dw1nM0535/uzi-api/store/sqlc"
 	"github.com/google/uuid"
 	"github.com/sirupsen/logrus"
 )
 
-var userService User
+var (
+	userService  User
+	userNotFound = errors.New("user not found")
+	noEmptyName  = errors.New("name can't be empty")
+)
+
+type SigninInput struct {
+	FirstName string `json:"firstName"`
+	LastName  string `json:"lastName"`
+	Phone     string `json:"phone"`
+	Courier   bool   `json:"courier"`
+}
 
 type userClient struct {
 	store  *sqlStore.Queries
@@ -36,7 +48,7 @@ func NewUserService() {
 	log.Infoln("User service...OK")
 }
 
-func (u *userClient) FindOrCreate(user model.SigninInput) (*model.User, error) {
+func (u *userClient) FindOrCreate(user SigninInput) (*model.User, error) {
 	foundUser, foundUserErr := u.getUser(user.Phone)
 	if foundUser == nil && foundUserErr == nil {
 		return u.createUser(user)
@@ -47,7 +59,7 @@ func (u *userClient) FindOrCreate(user model.SigninInput) (*model.User, error) {
 	return foundUser, nil
 }
 
-func (u *userClient) createUser(user model.SigninInput) (*model.User, error) {
+func (u *userClient) createUser(user SigninInput) (*model.User, error) {
 	var res model.User
 
 	foundUser, getUserErr := u.store.FindByPhone(context.Background(), user.Phone)
@@ -58,8 +70,8 @@ func (u *userClient) createUser(user model.SigninInput) (*model.User, error) {
 			Phone:     user.Phone,
 		})
 		if newUserErr != nil {
-			err := model.UziErr{Err: newUserErr.Error(), Message: "create user error", Code: 500}
-			u.logger.Errorf("%s: %s", err.Message, err.Err)
+			err := fmt.Errorf("%s:%v", "create user", newUserErr)
+			u.logger.Errorf(err.Error())
 			return nil, err
 		}
 
@@ -70,8 +82,8 @@ func (u *userClient) createUser(user model.SigninInput) (*model.User, error) {
 
 		return &res, nil
 	} else if getUserErr != nil {
-		err := model.UziErr{Err: getUserErr.Error(), Message: "get user", Code: 500}
-		u.logger.Errorf("%s: %s", err.Message, err.Err)
+		err := fmt.Errorf("%s:%v", "get user", getUserErr)
+		u.logger.Errorf(err.Error())
 		return nil, err
 	}
 
@@ -91,8 +103,8 @@ func (u *userClient) getUser(phone string) (*model.User, error) {
 		if getErr == sql.ErrNoRows {
 			return nil, nil
 		} else if getErr != nil {
-			err := model.UziErr{Err: getErr.Error(), Message: "findbyphone", Code: 500}
-			u.logger.Errorf("%s:%v", err.Message, err.Error())
+			err := fmt.Errorf("%s:%v", "get user by phone", getErr)
+			u.logger.Errorf(err.Error())
 			return nil, err
 		}
 
@@ -107,9 +119,7 @@ func (u *userClient) getUser(phone string) (*model.User, error) {
 
 		return &user, nil
 	} else if cacheErr != nil {
-		err := model.UziErr{Err: cacheErr.Error(), Message: "usercachegetbyphone", Code: 500}
-		u.logger.Errorf("%s: %s", err.Message, err.Err)
-		return nil, err
+		return nil, cacheErr
 	}
 
 	return (cacheUser).(*model.User), nil
@@ -125,12 +135,12 @@ func (u *userClient) findUserByID(id uuid.UUID) (*model.User, error) {
 		var user *model.User
 		foundUser, getErr := u.store.FindUserByID(context.Background(), id)
 		if getErr == sql.ErrNoRows {
-			err := model.UziErr{Err: errors.New("user not found").Error(), Message: "notfound", Code: 404}
-			u.logger.Errorf("%s: %v", err.Message, err.Error())
+			err := fmt.Errorf("%s:%v", "not found", userNotFound)
+			u.logger.Errorf(err.Error())
 			return nil, err
 		} else if getErr != nil {
-			err := model.UziErr{Err: getErr.Error(), Message: "finduserbyid", Code: 500}
-			u.logger.Errorf("%s:%v", err.Message, err.Error())
+			err := fmt.Errorf("%s:%v", "find user by id", getErr)
+			u.logger.Errorf(err.Error())
 			return nil, err
 		}
 
@@ -145,9 +155,7 @@ func (u *userClient) findUserByID(id uuid.UUID) (*model.User, error) {
 
 		return user, nil
 	} else if cacheErr != nil {
-		err := model.UziErr{Err: cacheErr.Error(), Message: "usercachegetbyid", Code: 500}
-		u.logger.Errorf("%s: %v", err.Message, err.Error())
-		return nil, err
+		return nil, cacheErr
 	}
 
 	return (cacheUser).(*model.User), nil
@@ -157,11 +165,11 @@ func (u *userClient) FindUserByID(id uuid.UUID) (*model.User, error) {
 	return u.findUserByID(id)
 }
 
-func (u *userClient) OnboardUser(user model.SigninInput) (*model.User, error) {
+func (u *userClient) OnboardUser(user SigninInput) (*model.User, error) {
 	var updatedUser model.User
 
 	if len(user.FirstName) == 0 || len(user.LastName) == 0 {
-		inputErr := model.UziErr{Err: errors.New("name can't be empty").Error(), Message: "onboarduser", Code: 400}
+		inputErr := fmt.Errorf("%s:%v", "invalid inputs", noEmptyName)
 		u.logger.Errorf(inputErr.Error())
 		return nil, inputErr
 	}
@@ -172,7 +180,7 @@ func (u *userClient) OnboardUser(user model.SigninInput) (*model.User, error) {
 		Phone:     user.Phone,
 	})
 	if onboardErr != nil {
-		err := model.UziErr{Err: onboardErr.Error(), Message: "updateusername", Code: 500}
+		err := fmt.Errorf("%s:%v", "update user name", onboardErr)
 		u.logger.Errorf(err.Error())
 		return nil, err
 	}
@@ -181,7 +189,7 @@ func (u *userClient) OnboardUser(user model.SigninInput) (*model.User, error) {
 		Phone:      user.Phone,
 		Onboarding: false,
 	}); err != nil {
-		onboardingErr := model.UziErr{Err: err.Error(), Message: "setuseronboarding", Code: 500}
+		onboardingErr := fmt.Errorf("%s:%v", "set user onboarding", err)
 		u.logger.Errorf(onboardingErr.Error())
 		return nil, onboardingErr
 	}

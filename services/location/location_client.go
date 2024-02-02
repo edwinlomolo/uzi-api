@@ -2,15 +2,22 @@ package location
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/3dw1nM0535/uzi-api/config"
+	"github.com/3dw1nM0535/uzi-api/gql/model"
 	"github.com/3dw1nM0535/uzi-api/internal/cache"
 	"github.com/3dw1nM0535/uzi-api/internal/logger"
 	"github.com/3dw1nM0535/uzi-api/internal/util"
-	"github.com/3dw1nM0535/uzi-api/model"
 	"github.com/sirupsen/logrus"
 	"googlemaps.github.io/maps"
 )
+
+type Geocode struct {
+	PlaceID          string
+	FormattedAddress string
+	Location         model.Gps
+}
 
 type locationClient struct {
 	nominatim       nominatim
@@ -32,6 +39,7 @@ func NewLocationService() {
 	places, placesErr := maps.NewClient(maps.WithAPIKey(apiKey))
 	if placesErr != nil {
 		log.Errorf("%s:%v", "new places", placesErr.Error())
+		panic(placesErr)
 	} else {
 		log.Infoln("Places service...OK")
 	}
@@ -39,6 +47,7 @@ func NewLocationService() {
 	geocode, geocodeErr := maps.NewClient(maps.WithAPIKey(apiKey))
 	if geocodeErr != nil {
 		log.Errorf("%s: %v", "new geocode err", geocodeErr.Error())
+		panic(geocodeErr)
 	} else {
 		log.Infoln("Geocode service...OK")
 	}
@@ -69,7 +78,7 @@ func (l *locationClient) AutocompletePlace(searchQuery string) ([]*model.Place, 
 
 	places, err := l.places.PlaceAutocomplete(context.Background(), req)
 	if err != nil {
-		placesErr := model.UziErr{Err: err.Error(), Message: "placeautocomplete", Code: 500}
+		placesErr := fmt.Errorf("%s:%v", "place autocomplete", err)
 		l.logger.Errorf(placesErr.Error())
 		return nil, placesErr
 	}
@@ -92,7 +101,7 @@ func (l *locationClient) AutocompletePlace(searchQuery string) ([]*model.Place, 
 	return p, nil
 }
 
-func (l *locationClient) GeocodeLatLng(input model.GpsInput) (*model.Geocode, error) {
+func (l *locationClient) GeocodeLatLng(input model.GpsInput) (*Geocode, error) {
 	cacheKey := util.FloatToString(input.Lat) + util.FloatToString(input.Lng)
 
 	geocodeCache, geocodeCacheErr := l.cache.Get(cacheKey)
@@ -101,21 +110,21 @@ func (l *locationClient) GeocodeLatLng(input model.GpsInput) (*model.Geocode, er
 	}
 
 	if geocodeCache != nil {
-		geo := (geocodeCache).(*model.Geocode)
+		geo := (geocodeCache).(*Geocode)
 		return geo, nil
 	}
 
 	return l.nominatim.ReverseGeocode(input)
 }
 
-func (l *locationClient) GetPlaceDetails(placeID string) (*model.Geocode, error) {
+func (l *locationClient) GetPlaceDetails(placeID string) (*Geocode, error) {
 	placeCache, placeCacheErr := l.cache.Get(placeID)
 	if placeCacheErr != nil {
 		return nil, placeCacheErr
 	}
 
 	if placeCache != nil {
-		return (placeCache).(*model.Geocode), nil
+		return (placeCache).(*Geocode), nil
 	}
 
 	req := &maps.PlaceDetailsRequest{
@@ -125,12 +134,12 @@ func (l *locationClient) GetPlaceDetails(placeID string) (*model.Geocode, error)
 
 	res, placeDetailsErr := l.places.PlaceDetails(context.Background(), req)
 	if placeDetailsErr != nil {
-		placeDetailsErr := model.UziErr{Err: placeDetailsErr.Error(), Message: "placedetails", Code: 500}
+		placeDetailsErr := fmt.Errorf("%s:%v", "get place details", placeDetailsErr)
 		l.logger.Errorf(placeDetailsErr.Error())
 		return nil, placeDetailsErr
 	}
 
-	placeDetails := &model.Geocode{
+	placeDetails := &Geocode{
 		Location: model.Gps{Lat: res.Geometry.Location.Lat, Lng: res.Geometry.Location.Lng},
 	}
 

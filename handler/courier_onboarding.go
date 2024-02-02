@@ -2,20 +2,19 @@ package handler
 
 import (
 	"encoding/json"
-	"errors"
+	"fmt"
 	"io"
 	"net/http"
 
 	"github.com/3dw1nM0535/uzi-api/internal/logger"
 	"github.com/3dw1nM0535/uzi-api/internal/util"
-	"github.com/3dw1nM0535/uzi-api/model"
 	"github.com/3dw1nM0535/uzi-api/services/session"
 	"github.com/3dw1nM0535/uzi-api/services/user"
 )
 
 func CourierOnboarding() http.HandlerFunc {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		var bodyReq model.SigninInput
+		var bodyReq user.SigninInput
 		logger := logger.GetLogger()
 		userService := user.GetUserService()
 		sessionService := session.GetSessionService()
@@ -23,16 +22,16 @@ func CourierOnboarding() http.HandlerFunc {
 
 		body, bodyErr := io.ReadAll(r.Body)
 		if bodyErr != nil {
-			uziErr := model.UziErr{Err: errors.New("CourierOnboardingBodyErr").Error(), Message: "ioread", Code: http.StatusBadRequest}
+			uziErr := fmt.Errorf("%s:%v", "reading body", bodyErr)
 			logger.Errorf(uziErr.Error())
-			http.Error(w, uziErr.Error(), uziErr.Code)
+			http.Error(w, uziErr.Error(), http.StatusBadRequest)
 			return
 		}
 
 		if err := json.Unmarshal(body, &bodyReq); err != nil {
-			uziErr := model.UziErr{Err: errors.New("UmarshalCourierBody").Error(), Message: "unmarshal", Code: http.StatusBadRequest}
+			uziErr := fmt.Errorf("%s:%v", "unmarshalbody", err)
 			logger.Errorf(uziErr.Error())
-			http.Error(w, uziErr.Error(), uziErr.Code)
+			http.Error(w, uziErr.Error(), http.StatusInternalServerError)
 			return
 		}
 
@@ -50,9 +49,9 @@ func CourierOnboarding() http.HandlerFunc {
 
 		res, resErr := json.Marshal(session)
 		if resErr != nil {
-			uziErr := model.UziErr{Err: errors.New("MarshalOnboardRes").Error(), Message: "unmarshal", Code: http.StatusInternalServerError}
+			uziErr := fmt.Errorf("%s:%v", "session marshal", resErr)
 			logger.Errorf(uziErr.Error())
-			http.Error(w, uziErr.Error(), uziErr.Code)
+			http.Error(w, uziErr.Error(), http.StatusInternalServerError)
 			return
 		}
 

@@ -8,7 +8,8 @@ import (
 	"context"
 
 	"github.com/3dw1nM0535/uzi-api/gql"
-	"github.com/3dw1nM0535/uzi-api/model"
+	"github.com/3dw1nM0535/uzi-api/gql/model"
+	"github.com/3dw1nM0535/uzi-api/services/location"
 	"github.com/google/uuid"
 )
 
@@ -70,7 +71,7 @@ func (r *queryResolver) SearchPlace(ctx context.Context, textQuery string) ([]*m
 }
 
 // ReverseGeocode is the resolver for the reverseGeocode field.
-func (r *queryResolver) ReverseGeocode(ctx context.Context, place model.GpsInput) (*model.Geocode, error) {
+func (r *queryResolver) ReverseGeocode(ctx context.Context, place model.GpsInput) (*location.Geocode, error) {
 	return r.GeocodeLatLng(place)
 }
 

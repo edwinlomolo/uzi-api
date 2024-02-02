@@ -8,11 +8,11 @@ import (
 	"context"
 
 	"github.com/3dw1nM0535/uzi-api/gql"
-	"github.com/3dw1nM0535/uzi-api/model"
+	model1 "github.com/3dw1nM0535/uzi-api/gql/model"
 )
 
 // Product is the resolver for the product field.
-func (r *courierResolver) Product(ctx context.Context, obj *model.Courier) (*model.Product, error) {
+func (r *courierResolver) Product(ctx context.Context, obj *model1.Courier) (*model1.Product, error) {
 	return r.GetCourierProduct(obj.ProductID)
 }
 

@@ -1,7 +1,7 @@
 package upload
 
 import (
-	"github.com/3dw1nM0535/uzi-api/model"
+	"github.com/3dw1nM0535/uzi-api/gql/model"
 	"github.com/google/uuid"
 )
 

@@ -3,11 +3,11 @@ package aws
 import (
 	"bytes"
 	"context"
+	"fmt"
 	"mime/multipart"
 
 	"github.com/3dw1nM0535/uzi-api/config"
 	"github.com/3dw1nM0535/uzi-api/internal/logger"
-	"github.com/3dw1nM0535/uzi-api/model"
 	"github.com/aws/aws-sdk-go-v2/aws"
 	awsConfig "github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/credentials"
@@ -52,9 +52,9 @@ func (a awsClient) UploadImage(file multipart.File, fileHeader *multipart.FileHe
 
 	uploadRes, err := a.s3.Upload(context.Background(), params)
 	if err != nil {
-		uploadErr := model.UziErr{Err: err.Error(), Message: "s3imageupload", Code: 400}
+		uploadErr := fmt.Errorf("%s:%v", "s3imageupload", err.Error())
 		a.logger.Errorf(uploadErr.Error())
-		return "", err
+		return "", uploadErr
 	}
 
 	return uploadRes.Location, nil

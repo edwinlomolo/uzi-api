@@ -2,15 +2,17 @@ package jwt
 
 import (
 	"errors"
-	"net/http"
+	"fmt"
 
 	"github.com/3dw1nM0535/uzi-api/config"
-	"github.com/3dw1nM0535/uzi-api/model"
 	jsonwebtoken "github.com/golang-jwt/jwt/v5"
 	"github.com/sirupsen/logrus"
 )
 
-var jwtService Jwt
+var (
+	jwtService           Jwt
+	invalidSignAlgorithm = errors.New("invalid signing algorithm")
+)
 
 type jwtclient struct {
 	logger *logrus.Logger
@@ -27,7 +29,7 @@ func NewJwtClient(logger *logrus.Logger, config config.Jwt) Jwt {
 func (jwtc *jwtclient) Sign(secret []byte, claims jsonwebtoken.Claims) (string, error) {
 	token, signJwtErr := jsonwebtoken.NewWithClaims(jsonwebtoken.SigningMethodHS256, claims).SignedString(secret)
 	if signJwtErr != nil {
-		uziErr := model.UziErr{Err: signJwtErr.Error(), Message: "signjwt", Code: http.StatusUnauthorized}
+		uziErr := fmt.Errorf("%s:%v", "signjwt", signJwtErr.Error())
 		jwtc.logger.Errorf(uziErr.Error())
 		return "", uziErr
 	}
@@ -38,9 +40,8 @@ func (jwtc *jwtclient) Sign(secret []byte, claims jsonwebtoken.Claims) (string, 
 func (jwtc *jwtclient) Validate(jwt string) (*jsonwebtoken.Token, error) {
 	keyFunc := func(tkn *jsonwebtoken.Token) (interface{}, error) {
 		if _, ok := tkn.Method.(*jsonwebtoken.SigningMethodHMAC); !ok {
-			uziErr := model.UziErr{Err: errors.New("TokenParser").Error(), Message: "invalidsigningalgorithm", Code: http.StatusUnauthorized}
-			jwtc.logger.Errorf(uziErr.Error())
-			return nil, uziErr
+			jwtc.logger.Errorf(invalidSignAlgorithm.Error())
+			return nil, invalidSignAlgorithm
 		}
 
 		return []byte(jwtc.config.Secret), nil
@@ -48,7 +49,7 @@ func (jwtc *jwtclient) Validate(jwt string) (*jsonwebtoken.Token, error) {
 
 	token, tokenErr := jsonwebtoken.ParseWithClaims(jwt, &Payload{}, keyFunc)
 	if tokenErr != nil {
-		uziErr := model.UziErr{Err: tokenErr.Error(), Message: "invalidtoken", Code: http.StatusUnauthorized}
+		uziErr := fmt.Errorf("%s:%v", "invalidtoken", tokenErr.Error())
 		jwtc.logger.Errorf(uziErr.Error())
 		return nil, uziErr
 	}

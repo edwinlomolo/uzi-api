@@ -13,7 +13,8 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/3dw1nM0535/uzi-api/model"
+	"github.com/3dw1nM0535/uzi-api/gql/model"
+	"github.com/3dw1nM0535/uzi-api/services/location"
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/99designs/gqlgen/graphql/introspection"
 	"github.com/google/uuid"
@@ -183,7 +184,7 @@ type QueryResolver interface {
 	Hello(ctx context.Context) (string, error)
 	GetCourierDocuments(ctx context.Context) ([]*model.Uploads, error)
 	SearchPlace(ctx context.Context, textQuery string) ([]*model.Place, error)
-	ReverseGeocode(ctx context.Context, place model.GpsInput) (*model.Geocode, error)
+	ReverseGeocode(ctx context.Context, place model.GpsInput) (*location.Geocode, error)
 	MakeTripRoute(ctx context.Context, input model.TripRouteInput) (*model.TripRoute, error)
 	GetCourierNearPickupPoint(ctx context.Context, point model.GpsInput) ([]*model.Courier, error)
 }
@@ -951,7 +952,7 @@ func (ec *executionContext) field_Mutation_createCourierDocument_args(ctx contex
 	var arg0 model.CourierUploadInput
 	if tmp, ok := rawArgs["input"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
-		arg0, err = ec.unmarshalNCourierUploadInput2githubᚗcomᚋ3dw1nM0535ᚋuziᚑapiᚋmodelᚐCourierUploadInput(ctx, tmp)
+		arg0, err = ec.unmarshalNCourierUploadInput2githubᚗcomᚋ3dw1nM0535ᚋuziᚑapiᚋgqlᚋmodelᚐCourierUploadInput(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -981,7 +982,7 @@ func (ec *executionContext) field_Mutation_trackCourierGps_args(ctx context.Cont
 	var arg0 model.GpsInput
 	if tmp, ok := rawArgs["input"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
-		arg0, err = ec.unmarshalNGpsInput2githubᚗcomᚋ3dw1nM0535ᚋuziᚑapiᚋmodelᚐGpsInput(ctx, tmp)
+		arg0, err = ec.unmarshalNGpsInput2githubᚗcomᚋ3dw1nM0535ᚋuziᚑapiᚋgqlᚋmodelᚐGpsInput(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -1011,7 +1012,7 @@ func (ec *executionContext) field_Query_getCourierNearPickupPoint_args(ctx conte
 	var arg0 model.GpsInput
 	if tmp, ok := rawArgs["point"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("point"))
-		arg0, err = ec.unmarshalNGpsInput2githubᚗcomᚋ3dw1nM0535ᚋuziᚑapiᚋmodelᚐGpsInput(ctx, tmp)
+		arg0, err = ec.unmarshalNGpsInput2githubᚗcomᚋ3dw1nM0535ᚋuziᚑapiᚋgqlᚋmodelᚐGpsInput(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -1026,7 +1027,7 @@ func (ec *executionContext) field_Query_makeTripRoute_args(ctx context.Context, 
 	var arg0 model.TripRouteInput
 	if tmp, ok := rawArgs["input"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
-		arg0, err = ec.unmarshalNTripRouteInput2githubᚗcomᚋ3dw1nM0535ᚋuziᚑapiᚋmodelᚐTripRouteInput(ctx, tmp)
+		arg0, err = ec.unmarshalNTripRouteInput2githubᚗcomᚋ3dw1nM0535ᚋuziᚑapiᚋgqlᚋmodelᚐTripRouteInput(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -1041,7 +1042,7 @@ func (ec *executionContext) field_Query_reverseGeocode_args(ctx context.Context,
 	var arg0 model.GpsInput
 	if tmp, ok := rawArgs["place"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("place"))
-		arg0, err = ec.unmarshalNGpsInput2githubᚗcomᚋ3dw1nM0535ᚋuziᚑapiᚋmodelᚐGpsInput(ctx, tmp)
+		arg0, err = ec.unmarshalNGpsInput2githubᚗcomᚋ3dw1nM0535ᚋuziᚑapiᚋgqlᚋmodelᚐGpsInput(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -1263,7 +1264,7 @@ func (ec *executionContext) _Courier_status(ctx context.Context, field graphql.C
 	}
 	res := resTmp.(model.CourierStatus)
 	fc.Result = res
-	return ec.marshalNCourierStatus2githubᚗcomᚋ3dw1nM0535ᚋuziᚑapiᚋmodelᚐCourierStatus(ctx, field.Selections, res)
+	return ec.marshalNCourierStatus2githubᚗcomᚋ3dw1nM0535ᚋuziᚑapiᚋgqlᚋmodelᚐCourierStatus(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Courier_status(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -1351,7 +1352,7 @@ func (ec *executionContext) _Courier_location(ctx context.Context, field graphql
 	}
 	res := resTmp.(*model.Gps)
 	fc.Result = res
-	return ec.marshalNGps2ᚖgithubᚗcomᚋ3dw1nM0535ᚋuziᚑapiᚋmodelᚐGps(ctx, field.Selections, res)
+	return ec.marshalNGps2ᚖgithubᚗcomᚋ3dw1nM0535ᚋuziᚑapiᚋgqlᚋmodelᚐGps(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Courier_location(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -1483,7 +1484,7 @@ func (ec *executionContext) _Courier_product(ctx context.Context, field graphql.
 	}
 	res := resTmp.(*model.Product)
 	fc.Result = res
-	return ec.marshalOProduct2ᚖgithubᚗcomᚋ3dw1nM0535ᚋuziᚑapiᚋmodelᚐProduct(ctx, field.Selections, res)
+	return ec.marshalOProduct2ᚖgithubᚗcomᚋ3dw1nM0535ᚋuziᚑapiᚋgqlᚋmodelᚐProduct(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Courier_product(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -1726,7 +1727,7 @@ func (ec *executionContext) fieldContext_Courier_updated_at(ctx context.Context,
 	return fc, nil
 }
 
-func (ec *executionContext) _Geocode_placeId(ctx context.Context, field graphql.CollectedField, obj *model.Geocode) (ret graphql.Marshaler) {
+func (ec *executionContext) _Geocode_placeId(ctx context.Context, field graphql.CollectedField, obj *location.Geocode) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Geocode_placeId(ctx, field)
 	if err != nil {
 		return graphql.Null
@@ -1770,7 +1771,7 @@ func (ec *executionContext) fieldContext_Geocode_placeId(ctx context.Context, fi
 	return fc, nil
 }
 
-func (ec *executionContext) _Geocode_formattedAddress(ctx context.Context, field graphql.CollectedField, obj *model.Geocode) (ret graphql.Marshaler) {
+func (ec *executionContext) _Geocode_formattedAddress(ctx context.Context, field graphql.CollectedField, obj *location.Geocode) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Geocode_formattedAddress(ctx, field)
 	if err != nil {
 		return graphql.Null
@@ -1814,7 +1815,7 @@ func (ec *executionContext) fieldContext_Geocode_formattedAddress(ctx context.Co
 	return fc, nil
 }
 
-func (ec *executionContext) _Geocode_location(ctx context.Context, field graphql.CollectedField, obj *model.Geocode) (ret graphql.Marshaler) {
+func (ec *executionContext) _Geocode_location(ctx context.Context, field graphql.CollectedField, obj *location.Geocode) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Geocode_location(ctx, field)
 	if err != nil {
 		return graphql.Null
@@ -1842,7 +1843,7 @@ func (ec *executionContext) _Geocode_location(ctx context.Context, field graphql
 	}
 	res := resTmp.(model.Gps)
 	fc.Result = res
-	return ec.marshalNGps2githubᚗcomᚋ3dw1nM0535ᚋuziᚑapiᚋmodelᚐGps(ctx, field.Selections, res)
+	return ec.marshalNGps2githubᚗcomᚋ3dw1nM0535ᚋuziᚑapiᚋgqlᚋmodelᚐGps(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Geocode_location(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -2623,7 +2624,7 @@ func (ec *executionContext) _Query_getCourierDocuments(ctx context.Context, fiel
 	}
 	res := resTmp.([]*model.Uploads)
 	fc.Result = res
-	return ec.marshalNUploads2ᚕᚖgithubᚗcomᚋ3dw1nM0535ᚋuziᚑapiᚋmodelᚐUploadsᚄ(ctx, field.Selections, res)
+	return ec.marshalNUploads2ᚕᚖgithubᚗcomᚋ3dw1nM0535ᚋuziᚑapiᚋgqlᚋmodelᚐUploadsᚄ(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Query_getCourierDocuments(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -2685,7 +2686,7 @@ func (ec *executionContext) _Query_searchPlace(ctx context.Context, field graphq
 	}
 	res := resTmp.([]*model.Place)
 	fc.Result = res
-	return ec.marshalNPlace2ᚕᚖgithubᚗcomᚋ3dw1nM0535ᚋuziᚑapiᚋmodelᚐPlaceᚄ(ctx, field.Selections, res)
+	return ec.marshalNPlace2ᚕᚖgithubᚗcomᚋ3dw1nM0535ᚋuziᚑapiᚋgqlᚋmodelᚐPlaceᚄ(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Query_searchPlace(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -2743,9 +2744,9 @@ func (ec *executionContext) _Query_reverseGeocode(ctx context.Context, field gra
 	if resTmp == nil {
 		return graphql.Null
 	}
-	res := resTmp.(*model.Geocode)
+	res := resTmp.(*location.Geocode)
 	fc.Result = res
-	return ec.marshalOGeocode2ᚖgithubᚗcomᚋ3dw1nM0535ᚋuziᚑapiᚋmodelᚐGeocode(ctx, field.Selections, res)
+	return ec.marshalOGeocode2ᚖgithubᚗcomᚋ3dw1nM0535ᚋuziᚑapiᚋservicesᚋlocationᚐGeocode(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Query_reverseGeocode(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -2808,7 +2809,7 @@ func (ec *executionContext) _Query_makeTripRoute(ctx context.Context, field grap
 	}
 	res := resTmp.(*model.TripRoute)
 	fc.Result = res
-	return ec.marshalNTripRoute2ᚖgithubᚗcomᚋ3dw1nM0535ᚋuziᚑapiᚋmodelᚐTripRoute(ctx, field.Selections, res)
+	return ec.marshalNTripRoute2ᚖgithubᚗcomᚋ3dw1nM0535ᚋuziᚑapiᚋgqlᚋmodelᚐTripRoute(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Query_makeTripRoute(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -2871,7 +2872,7 @@ func (ec *executionContext) _Query_getCourierNearPickupPoint(ctx context.Context
 	}
 	res := resTmp.([]*model.Courier)
 	fc.Result = res
-	return ec.marshalNCourier2ᚕᚖgithubᚗcomᚋ3dw1nM0535ᚋuziᚑapiᚋmodelᚐCourierᚄ(ctx, field.Selections, res)
+	return ec.marshalNCourier2ᚕᚖgithubᚗcomᚋ3dw1nM0535ᚋuziᚑapiᚋgqlᚋmodelᚐCourierᚄ(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Query_getCourierNearPickupPoint(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -3604,7 +3605,7 @@ func (ec *executionContext) _Session_courierStatus(ctx context.Context, field gr
 	}
 	res := resTmp.(*model.CourierStatus)
 	fc.Result = res
-	return ec.marshalOCourierStatus2ᚖgithubᚗcomᚋ3dw1nM0535ᚋuziᚑapiᚋmodelᚐCourierStatus(ctx, field.Selections, res)
+	return ec.marshalOCourierStatus2ᚖgithubᚗcomᚋ3dw1nM0535ᚋuziᚑapiᚋgqlᚋmodelᚐCourierStatus(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Session_courierStatus(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -3780,7 +3781,7 @@ func (ec *executionContext) _Trip_start_location(ctx context.Context, field grap
 	}
 	res := resTmp.(*model.Gps)
 	fc.Result = res
-	return ec.marshalNGps2ᚖgithubᚗcomᚋ3dw1nM0535ᚋuziᚑapiᚋmodelᚐGps(ctx, field.Selections, res)
+	return ec.marshalNGps2ᚖgithubᚗcomᚋ3dw1nM0535ᚋuziᚑapiᚋgqlᚋmodelᚐGps(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Trip_start_location(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -3830,7 +3831,7 @@ func (ec *executionContext) _Trip_end_location(ctx context.Context, field graphq
 	}
 	res := resTmp.(*model.Gps)
 	fc.Result = res
-	return ec.marshalNGps2ᚖgithubᚗcomᚋ3dw1nM0535ᚋuziᚑapiᚋmodelᚐGps(ctx, field.Selections, res)
+	return ec.marshalNGps2ᚖgithubᚗcomᚋ3dw1nM0535ᚋuziᚑapiᚋgqlᚋmodelᚐGps(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Trip_end_location(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -3880,7 +3881,7 @@ func (ec *executionContext) _Trip_status(ctx context.Context, field graphql.Coll
 	}
 	res := resTmp.(model.TripStatus)
 	fc.Result = res
-	return ec.marshalNTripStatus2githubᚗcomᚋ3dw1nM0535ᚋuziᚑapiᚋmodelᚐTripStatus(ctx, field.Selections, res)
+	return ec.marshalNTripStatus2githubᚗcomᚋ3dw1nM0535ᚋuziᚑapiᚋgqlᚋmodelᚐTripStatus(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Trip_status(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -4003,7 +4004,7 @@ func (ec *executionContext) _Trip_route(ctx context.Context, field graphql.Colle
 	}
 	res := resTmp.(*model.Route)
 	fc.Result = res
-	return ec.marshalORoute2ᚖgithubᚗcomᚋ3dw1nM0535ᚋuziᚑapiᚋmodelᚐRoute(ctx, field.Selections, res)
+	return ec.marshalORoute2ᚖgithubᚗcomᚋ3dw1nM0535ᚋuziᚑapiᚋgqlᚋmodelᚐRoute(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Trip_route(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -4229,7 +4230,7 @@ func (ec *executionContext) _TripRoute_availableProducts(ctx context.Context, fi
 	}
 	res := resTmp.([]*model.Product)
 	fc.Result = res
-	return ec.marshalNProduct2ᚕᚖgithubᚗcomᚋ3dw1nM0535ᚋuziᚑapiᚋmodelᚐProductᚄ(ctx, field.Selections, res)
+	return ec.marshalNProduct2ᚕᚖgithubᚗcomᚋ3dw1nM0535ᚋuziᚑapiᚋgqlᚋmodelᚐProductᚄ(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_TripRoute_availableProducts(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -4421,7 +4422,7 @@ func (ec *executionContext) _Uploads_verification(ctx context.Context, field gra
 	}
 	res := resTmp.(model.UploadVerificationStatus)
 	fc.Result = res
-	return ec.marshalNUploadVerificationStatus2githubᚗcomᚋ3dw1nM0535ᚋuziᚑapiᚋmodelᚐUploadVerificationStatus(ctx, field.Selections, res)
+	return ec.marshalNUploadVerificationStatus2githubᚗcomᚋ3dw1nM0535ᚋuziᚑapiᚋgqlᚋmodelᚐUploadVerificationStatus(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Uploads_verification(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -4843,7 +4844,7 @@ func (ec *executionContext) _User_courier(ctx context.Context, field graphql.Col
 	}
 	res := resTmp.(*model.Courier)
 	fc.Result = res
-	return ec.marshalOCourier2ᚖgithubᚗcomᚋ3dw1nM0535ᚋuziᚑapiᚋmodelᚐCourier(ctx, field.Selections, res)
+	return ec.marshalOCourier2ᚖgithubᚗcomᚋ3dw1nM0535ᚋuziᚑapiᚋgqlᚋmodelᚐCourier(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_User_courier(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -6760,7 +6761,7 @@ func (ec *executionContext) unmarshalInputCourierUploadInput(ctx context.Context
 		switch k {
 		case "type":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("type"))
-			data, err := ec.unmarshalNUploadFile2githubᚗcomᚋ3dw1nM0535ᚋuziᚑapiᚋmodelᚐUploadFile(ctx, v)
+			data, err := ec.unmarshalNUploadFile2githubᚗcomᚋ3dw1nM0535ᚋuziᚑapiᚋgqlᚋmodelᚐUploadFile(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -6842,7 +6843,7 @@ func (ec *executionContext) unmarshalInputTripInput(ctx context.Context, obj int
 			it.FormattedAddress = data
 		case "location":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("location"))
-			data, err := ec.unmarshalNGpsInput2ᚖgithubᚗcomᚋ3dw1nM0535ᚋuziᚑapiᚋmodelᚐGpsInput(ctx, v)
+			data, err := ec.unmarshalNGpsInput2ᚖgithubᚗcomᚋ3dw1nM0535ᚋuziᚑapiᚋgqlᚋmodelᚐGpsInput(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -6869,14 +6870,14 @@ func (ec *executionContext) unmarshalInputTripRouteInput(ctx context.Context, ob
 		switch k {
 		case "pickup":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("pickup"))
-			data, err := ec.unmarshalNTripInput2ᚖgithubᚗcomᚋ3dw1nM0535ᚋuziᚑapiᚋmodelᚐTripInput(ctx, v)
+			data, err := ec.unmarshalNTripInput2ᚖgithubᚗcomᚋ3dw1nM0535ᚋuziᚑapiᚋgqlᚋmodelᚐTripInput(ctx, v)
 			if err != nil {
 				return it, err
 			}
 			it.Pickup = data
 		case "dropoff":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("dropoff"))
-			data, err := ec.unmarshalNTripInput2ᚖgithubᚗcomᚋ3dw1nM0535ᚋuziᚑapiᚋmodelᚐTripInput(ctx, v)
+			data, err := ec.unmarshalNTripInput2ᚖgithubᚗcomᚋ3dw1nM0535ᚋuziᚑapiᚋgqlᚋmodelᚐTripInput(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -7017,7 +7018,7 @@ func (ec *executionContext) _Courier(ctx context.Context, sel ast.SelectionSet, 
 
 var geocodeImplementors = []string{"Geocode"}
 
-func (ec *executionContext) _Geocode(ctx context.Context, sel ast.SelectionSet, obj *model.Geocode) graphql.Marshaler {
+func (ec *executionContext) _Geocode(ctx context.Context, sel ast.SelectionSet, obj *location.Geocode) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, geocodeImplementors)
 
 	out := graphql.NewFieldSet(fields)
@@ -8174,7 +8175,7 @@ func (ec *executionContext) marshalNBoolean2bool(ctx context.Context, sel ast.Se
 	return res
 }
 
-func (ec *executionContext) marshalNCourier2ᚕᚖgithubᚗcomᚋ3dw1nM0535ᚋuziᚑapiᚋmodelᚐCourierᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.Courier) graphql.Marshaler {
+func (ec *executionContext) marshalNCourier2ᚕᚖgithubᚗcomᚋ3dw1nM0535ᚋuziᚑapiᚋgqlᚋmodelᚐCourierᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.Courier) graphql.Marshaler {
 	ret := make(graphql.Array, len(v))
 	var wg sync.WaitGroup
 	isLen1 := len(v) == 1
@@ -8198,7 +8199,7 @@ func (ec *executionContext) marshalNCourier2ᚕᚖgithubᚗcomᚋ3dw1nM0535ᚋuz
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalNCourier2ᚖgithubᚗcomᚋ3dw1nM0535ᚋuziᚑapiᚋmodelᚐCourier(ctx, sel, v[i])
+			ret[i] = ec.marshalNCourier2ᚖgithubᚗcomᚋ3dw1nM0535ᚋuziᚑapiᚋgqlᚋmodelᚐCourier(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -8218,7 +8219,7 @@ func (ec *executionContext) marshalNCourier2ᚕᚖgithubᚗcomᚋ3dw1nM0535ᚋuz
 	return ret
 }
 
-func (ec *executionContext) marshalNCourier2ᚖgithubᚗcomᚋ3dw1nM0535ᚋuziᚑapiᚋmodelᚐCourier(ctx context.Context, sel ast.SelectionSet, v *model.Courier) graphql.Marshaler {
+func (ec *executionContext) marshalNCourier2ᚖgithubᚗcomᚋ3dw1nM0535ᚋuziᚑapiᚋgqlᚋmodelᚐCourier(ctx context.Context, sel ast.SelectionSet, v *model.Courier) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
@@ -8228,17 +8229,17 @@ func (ec *executionContext) marshalNCourier2ᚖgithubᚗcomᚋ3dw1nM0535ᚋuzi�
 	return ec._Courier(ctx, sel, v)
 }
 
-func (ec *executionContext) unmarshalNCourierStatus2githubᚗcomᚋ3dw1nM0535ᚋuziᚑapiᚋmodelᚐCourierStatus(ctx context.Context, v interface{}) (model.CourierStatus, error) {
+func (ec *executionContext) unmarshalNCourierStatus2githubᚗcomᚋ3dw1nM0535ᚋuziᚑapiᚋgqlᚋmodelᚐCourierStatus(ctx context.Context, v interface{}) (model.CourierStatus, error) {
 	var res model.CourierStatus
 	err := res.UnmarshalGQL(v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalNCourierStatus2githubᚗcomᚋ3dw1nM0535ᚋuziᚑapiᚋmodelᚐCourierStatus(ctx context.Context, sel ast.SelectionSet, v model.CourierStatus) graphql.Marshaler {
+func (ec *executionContext) marshalNCourierStatus2githubᚗcomᚋ3dw1nM0535ᚋuziᚑapiᚋgqlᚋmodelᚐCourierStatus(ctx context.Context, sel ast.SelectionSet, v model.CourierStatus) graphql.Marshaler {
 	return v
 }
 
-func (ec *executionContext) unmarshalNCourierUploadInput2githubᚗcomᚋ3dw1nM0535ᚋuziᚑapiᚋmodelᚐCourierUploadInput(ctx context.Context, v interface{}) (model.CourierUploadInput, error) {
+func (ec *executionContext) unmarshalNCourierUploadInput2githubᚗcomᚋ3dw1nM0535ᚋuziᚑapiᚋgqlᚋmodelᚐCourierUploadInput(ctx context.Context, v interface{}) (model.CourierUploadInput, error) {
 	res, err := ec.unmarshalInputCourierUploadInput(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
@@ -8258,11 +8259,11 @@ func (ec *executionContext) marshalNFloat2float64(ctx context.Context, sel ast.S
 	return graphql.WrapContextMarshaler(ctx, res)
 }
 
-func (ec *executionContext) marshalNGps2githubᚗcomᚋ3dw1nM0535ᚋuziᚑapiᚋmodelᚐGps(ctx context.Context, sel ast.SelectionSet, v model.Gps) graphql.Marshaler {
+func (ec *executionContext) marshalNGps2githubᚗcomᚋ3dw1nM0535ᚋuziᚑapiᚋgqlᚋmodelᚐGps(ctx context.Context, sel ast.SelectionSet, v model.Gps) graphql.Marshaler {
 	return ec._Gps(ctx, sel, &v)
 }
 
-func (ec *executionContext) marshalNGps2ᚖgithubᚗcomᚋ3dw1nM0535ᚋuziᚑapiᚋmodelᚐGps(ctx context.Context, sel ast.SelectionSet, v *model.Gps) graphql.Marshaler {
+func (ec *executionContext) marshalNGps2ᚖgithubᚗcomᚋ3dw1nM0535ᚋuziᚑapiᚋgqlᚋmodelᚐGps(ctx context.Context, sel ast.SelectionSet, v *model.Gps) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
@@ -8272,12 +8273,12 @@ func (ec *executionContext) marshalNGps2ᚖgithubᚗcomᚋ3dw1nM0535ᚋuziᚑapi
 	return ec._Gps(ctx, sel, v)
 }
 
-func (ec *executionContext) unmarshalNGpsInput2githubᚗcomᚋ3dw1nM0535ᚋuziᚑapiᚋmodelᚐGpsInput(ctx context.Context, v interface{}) (model.GpsInput, error) {
+func (ec *executionContext) unmarshalNGpsInput2githubᚗcomᚋ3dw1nM0535ᚋuziᚑapiᚋgqlᚋmodelᚐGpsInput(ctx context.Context, v interface{}) (model.GpsInput, error) {
 	res, err := ec.unmarshalInputGpsInput(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) unmarshalNGpsInput2ᚖgithubᚗcomᚋ3dw1nM0535ᚋuziᚑapiᚋmodelᚐGpsInput(ctx context.Context, v interface{}) (*model.GpsInput, error) {
+func (ec *executionContext) unmarshalNGpsInput2ᚖgithubᚗcomᚋ3dw1nM0535ᚋuziᚑapiᚋgqlᚋmodelᚐGpsInput(ctx context.Context, v interface{}) (*model.GpsInput, error) {
 	res, err := ec.unmarshalInputGpsInput(ctx, v)
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
@@ -8297,7 +8298,7 @@ func (ec *executionContext) marshalNInt2int(ctx context.Context, sel ast.Selecti
 	return res
 }
 
-func (ec *executionContext) marshalNPlace2ᚕᚖgithubᚗcomᚋ3dw1nM0535ᚋuziᚑapiᚋmodelᚐPlaceᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.Place) graphql.Marshaler {
+func (ec *executionContext) marshalNPlace2ᚕᚖgithubᚗcomᚋ3dw1nM0535ᚋuziᚑapiᚋgqlᚋmodelᚐPlaceᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.Place) graphql.Marshaler {
 	ret := make(graphql.Array, len(v))
 	var wg sync.WaitGroup
 	isLen1 := len(v) == 1
@@ -8321,7 +8322,7 @@ func (ec *executionContext) marshalNPlace2ᚕᚖgithubᚗcomᚋ3dw1nM0535ᚋuzi�
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalNPlace2ᚖgithubᚗcomᚋ3dw1nM0535ᚋuziᚑapiᚋmodelᚐPlace(ctx, sel, v[i])
+			ret[i] = ec.marshalNPlace2ᚖgithubᚗcomᚋ3dw1nM0535ᚋuziᚑapiᚋgqlᚋmodelᚐPlace(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -8341,7 +8342,7 @@ func (ec *executionContext) marshalNPlace2ᚕᚖgithubᚗcomᚋ3dw1nM0535ᚋuzi�
 	return ret
 }
 
-func (ec *executionContext) marshalNPlace2ᚖgithubᚗcomᚋ3dw1nM0535ᚋuziᚑapiᚋmodelᚐPlace(ctx context.Context, sel ast.SelectionSet, v *model.Place) graphql.Marshaler {
+func (ec *executionContext) marshalNPlace2ᚖgithubᚗcomᚋ3dw1nM0535ᚋuziᚑapiᚋgqlᚋmodelᚐPlace(ctx context.Context, sel ast.SelectionSet, v *model.Place) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
@@ -8351,7 +8352,7 @@ func (ec *executionContext) marshalNPlace2ᚖgithubᚗcomᚋ3dw1nM0535ᚋuziᚑa
 	return ec._Place(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalNProduct2ᚕᚖgithubᚗcomᚋ3dw1nM0535ᚋuziᚑapiᚋmodelᚐProductᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.Product) graphql.Marshaler {
+func (ec *executionContext) marshalNProduct2ᚕᚖgithubᚗcomᚋ3dw1nM0535ᚋuziᚑapiᚋgqlᚋmodelᚐProductᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.Product) graphql.Marshaler {
 	ret := make(graphql.Array, len(v))
 	var wg sync.WaitGroup
 	isLen1 := len(v) == 1
@@ -8375,7 +8376,7 @@ func (ec *executionContext) marshalNProduct2ᚕᚖgithubᚗcomᚋ3dw1nM0535ᚋuz
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalNProduct2ᚖgithubᚗcomᚋ3dw1nM0535ᚋuziᚑapiᚋmodelᚐProduct(ctx, sel, v[i])
+			ret[i] = ec.marshalNProduct2ᚖgithubᚗcomᚋ3dw1nM0535ᚋuziᚑapiᚋgqlᚋmodelᚐProduct(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -8395,7 +8396,7 @@ func (ec *executionContext) marshalNProduct2ᚕᚖgithubᚗcomᚋ3dw1nM0535ᚋuz
 	return ret
 }
 
-func (ec *executionContext) marshalNProduct2ᚖgithubᚗcomᚋ3dw1nM0535ᚋuziᚑapiᚋmodelᚐProduct(ctx context.Context, sel ast.SelectionSet, v *model.Product) graphql.Marshaler {
+func (ec *executionContext) marshalNProduct2ᚖgithubᚗcomᚋ3dw1nM0535ᚋuziᚑapiᚋgqlᚋmodelᚐProduct(ctx context.Context, sel ast.SelectionSet, v *model.Product) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
@@ -8435,16 +8436,16 @@ func (ec *executionContext) marshalNTime2timeᚐTime(ctx context.Context, sel as
 	return res
 }
 
-func (ec *executionContext) unmarshalNTripInput2ᚖgithubᚗcomᚋ3dw1nM0535ᚋuziᚑapiᚋmodelᚐTripInput(ctx context.Context, v interface{}) (*model.TripInput, error) {
+func (ec *executionContext) unmarshalNTripInput2ᚖgithubᚗcomᚋ3dw1nM0535ᚋuziᚑapiᚋgqlᚋmodelᚐTripInput(ctx context.Context, v interface{}) (*model.TripInput, error) {
 	res, err := ec.unmarshalInputTripInput(ctx, v)
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalNTripRoute2githubᚗcomᚋ3dw1nM0535ᚋuziᚑapiᚋmodelᚐTripRoute(ctx context.Context, sel ast.SelectionSet, v model.TripRoute) graphql.Marshaler {
+func (ec *executionContext) marshalNTripRoute2githubᚗcomᚋ3dw1nM0535ᚋuziᚑapiᚋgqlᚋmodelᚐTripRoute(ctx context.Context, sel ast.SelectionSet, v model.TripRoute) graphql.Marshaler {
 	return ec._TripRoute(ctx, sel, &v)
 }
 
-func (ec *executionContext) marshalNTripRoute2ᚖgithubᚗcomᚋ3dw1nM0535ᚋuziᚑapiᚋmodelᚐTripRoute(ctx context.Context, sel ast.SelectionSet, v *model.TripRoute) graphql.Marshaler {
+func (ec *executionContext) marshalNTripRoute2ᚖgithubᚗcomᚋ3dw1nM0535ᚋuziᚑapiᚋgqlᚋmodelᚐTripRoute(ctx context.Context, sel ast.SelectionSet, v *model.TripRoute) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
@@ -8454,18 +8455,18 @@ func (ec *executionContext) marshalNTripRoute2ᚖgithubᚗcomᚋ3dw1nM0535ᚋuzi
 	return ec._TripRoute(ctx, sel, v)
 }
 
-func (ec *executionContext) unmarshalNTripRouteInput2githubᚗcomᚋ3dw1nM0535ᚋuziᚑapiᚋmodelᚐTripRouteInput(ctx context.Context, v interface{}) (model.TripRouteInput, error) {
+func (ec *executionContext) unmarshalNTripRouteInput2githubᚗcomᚋ3dw1nM0535ᚋuziᚑapiᚋgqlᚋmodelᚐTripRouteInput(ctx context.Context, v interface{}) (model.TripRouteInput, error) {
 	res, err := ec.unmarshalInputTripRouteInput(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) unmarshalNTripStatus2githubᚗcomᚋ3dw1nM0535ᚋuziᚑapiᚋmodelᚐTripStatus(ctx context.Context, v interface{}) (model.TripStatus, error) {
+func (ec *executionContext) unmarshalNTripStatus2githubᚗcomᚋ3dw1nM0535ᚋuziᚑapiᚋgqlᚋmodelᚐTripStatus(ctx context.Context, v interface{}) (model.TripStatus, error) {
 	var res model.TripStatus
 	err := res.UnmarshalGQL(v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalNTripStatus2githubᚗcomᚋ3dw1nM0535ᚋuziᚑapiᚋmodelᚐTripStatus(ctx context.Context, sel ast.SelectionSet, v model.TripStatus) graphql.Marshaler {
+func (ec *executionContext) marshalNTripStatus2githubᚗcomᚋ3dw1nM0535ᚋuziᚑapiᚋgqlᚋmodelᚐTripStatus(ctx context.Context, sel ast.SelectionSet, v model.TripStatus) graphql.Marshaler {
 	return v
 }
 
@@ -8484,27 +8485,27 @@ func (ec *executionContext) marshalNUUID2githubᚗcomᚋgoogleᚋuuidᚐUUID(ctx
 	return res
 }
 
-func (ec *executionContext) unmarshalNUploadFile2githubᚗcomᚋ3dw1nM0535ᚋuziᚑapiᚋmodelᚐUploadFile(ctx context.Context, v interface{}) (model.UploadFile, error) {
+func (ec *executionContext) unmarshalNUploadFile2githubᚗcomᚋ3dw1nM0535ᚋuziᚑapiᚋgqlᚋmodelᚐUploadFile(ctx context.Context, v interface{}) (model.UploadFile, error) {
 	var res model.UploadFile
 	err := res.UnmarshalGQL(v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalNUploadFile2githubᚗcomᚋ3dw1nM0535ᚋuziᚑapiᚋmodelᚐUploadFile(ctx context.Context, sel ast.SelectionSet, v model.UploadFile) graphql.Marshaler {
+func (ec *executionContext) marshalNUploadFile2githubᚗcomᚋ3dw1nM0535ᚋuziᚑapiᚋgqlᚋmodelᚐUploadFile(ctx context.Context, sel ast.SelectionSet, v model.UploadFile) graphql.Marshaler {
 	return v
 }
 
-func (ec *executionContext) unmarshalNUploadVerificationStatus2githubᚗcomᚋ3dw1nM0535ᚋuziᚑapiᚋmodelᚐUploadVerificationStatus(ctx context.Context, v interface{}) (model.UploadVerificationStatus, error) {
+func (ec *executionContext) unmarshalNUploadVerificationStatus2githubᚗcomᚋ3dw1nM0535ᚋuziᚑapiᚋgqlᚋmodelᚐUploadVerificationStatus(ctx context.Context, v interface{}) (model.UploadVerificationStatus, error) {
 	var res model.UploadVerificationStatus
 	err := res.UnmarshalGQL(v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalNUploadVerificationStatus2githubᚗcomᚋ3dw1nM0535ᚋuziᚑapiᚋmodelᚐUploadVerificationStatus(ctx context.Context, sel ast.SelectionSet, v model.UploadVerificationStatus) graphql.Marshaler {
+func (ec *executionContext) marshalNUploadVerificationStatus2githubᚗcomᚋ3dw1nM0535ᚋuziᚑapiᚋgqlᚋmodelᚐUploadVerificationStatus(ctx context.Context, sel ast.SelectionSet, v model.UploadVerificationStatus) graphql.Marshaler {
 	return v
 }
 
-func (ec *executionContext) marshalNUploads2ᚕᚖgithubᚗcomᚋ3dw1nM0535ᚋuziᚑapiᚋmodelᚐUploadsᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.Uploads) graphql.Marshaler {
+func (ec *executionContext) marshalNUploads2ᚕᚖgithubᚗcomᚋ3dw1nM0535ᚋuziᚑapiᚋgqlᚋmodelᚐUploadsᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.Uploads) graphql.Marshaler {
 	ret := make(graphql.Array, len(v))
 	var wg sync.WaitGroup
 	isLen1 := len(v) == 1
@@ -8528,7 +8529,7 @@ func (ec *executionContext) marshalNUploads2ᚕᚖgithubᚗcomᚋ3dw1nM0535ᚋuz
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalNUploads2ᚖgithubᚗcomᚋ3dw1nM0535ᚋuziᚑapiᚋmodelᚐUploads(ctx, sel, v[i])
+			ret[i] = ec.marshalNUploads2ᚖgithubᚗcomᚋ3dw1nM0535ᚋuziᚑapiᚋgqlᚋmodelᚐUploads(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -8548,7 +8549,7 @@ func (ec *executionContext) marshalNUploads2ᚕᚖgithubᚗcomᚋ3dw1nM0535ᚋuz
 	return ret
 }
 
-func (ec *executionContext) marshalNUploads2ᚖgithubᚗcomᚋ3dw1nM0535ᚋuziᚑapiᚋmodelᚐUploads(ctx context.Context, sel ast.SelectionSet, v *model.Uploads) graphql.Marshaler {
+func (ec *executionContext) marshalNUploads2ᚖgithubᚗcomᚋ3dw1nM0535ᚋuziᚑapiᚋgqlᚋmodelᚐUploads(ctx context.Context, sel ast.SelectionSet, v *model.Uploads) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
@@ -8837,14 +8838,14 @@ func (ec *executionContext) marshalOBoolean2ᚖbool(ctx context.Context, sel ast
 	return res
 }
 
-func (ec *executionContext) marshalOCourier2ᚖgithubᚗcomᚋ3dw1nM0535ᚋuziᚑapiᚋmodelᚐCourier(ctx context.Context, sel ast.SelectionSet, v *model.Courier) graphql.Marshaler {
+func (ec *executionContext) marshalOCourier2ᚖgithubᚗcomᚋ3dw1nM0535ᚋuziᚑapiᚋgqlᚋmodelᚐCourier(ctx context.Context, sel ast.SelectionSet, v *model.Courier) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec._Courier(ctx, sel, v)
 }
 
-func (ec *executionContext) unmarshalOCourierStatus2ᚖgithubᚗcomᚋ3dw1nM0535ᚋuziᚑapiᚋmodelᚐCourierStatus(ctx context.Context, v interface{}) (*model.CourierStatus, error) {
+func (ec *executionContext) unmarshalOCourierStatus2ᚖgithubᚗcomᚋ3dw1nM0535ᚋuziᚑapiᚋgqlᚋmodelᚐCourierStatus(ctx context.Context, v interface{}) (*model.CourierStatus, error) {
 	if v == nil {
 		return nil, nil
 	}
@@ -8853,28 +8854,28 @@ func (ec *executionContext) unmarshalOCourierStatus2ᚖgithubᚗcomᚋ3dw1nM0535
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalOCourierStatus2ᚖgithubᚗcomᚋ3dw1nM0535ᚋuziᚑapiᚋmodelᚐCourierStatus(ctx context.Context, sel ast.SelectionSet, v *model.CourierStatus) graphql.Marshaler {
+func (ec *executionContext) marshalOCourierStatus2ᚖgithubᚗcomᚋ3dw1nM0535ᚋuziᚑapiᚋgqlᚋmodelᚐCourierStatus(ctx context.Context, sel ast.SelectionSet, v *model.CourierStatus) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return v
 }
 
-func (ec *executionContext) marshalOGeocode2ᚖgithubᚗcomᚋ3dw1nM0535ᚋuziᚑapiᚋmodelᚐGeocode(ctx context.Context, sel ast.SelectionSet, v *model.Geocode) graphql.Marshaler {
+func (ec *executionContext) marshalOGeocode2ᚖgithubᚗcomᚋ3dw1nM0535ᚋuziᚑapiᚋservicesᚋlocationᚐGeocode(ctx context.Context, sel ast.SelectionSet, v *location.Geocode) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec._Geocode(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalOProduct2ᚖgithubᚗcomᚋ3dw1nM0535ᚋuziᚑapiᚋmodelᚐProduct(ctx context.Context, sel ast.SelectionSet, v *model.Product) graphql.Marshaler {
+func (ec *executionContext) marshalOProduct2ᚖgithubᚗcomᚋ3dw1nM0535ᚋuziᚑapiᚋgqlᚋmodelᚐProduct(ctx context.Context, sel ast.SelectionSet, v *model.Product) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec._Product(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalORoute2ᚖgithubᚗcomᚋ3dw1nM0535ᚋuziᚑapiᚋmodelᚐRoute(ctx context.Context, sel ast.SelectionSet, v *model.Route) graphql.Marshaler {
+func (ec *executionContext) marshalORoute2ᚖgithubᚗcomᚋ3dw1nM0535ᚋuziᚑapiᚋgqlᚋmodelᚐRoute(ctx context.Context, sel ast.SelectionSet, v *model.Route) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}

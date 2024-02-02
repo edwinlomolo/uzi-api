@@ -3,13 +3,13 @@ package ipinfo
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"net"
 	"time"
 
 	"github.com/3dw1nM0535/uzi-api/config"
 	redisCache "github.com/3dw1nM0535/uzi-api/internal/cache"
 	"github.com/3dw1nM0535/uzi-api/internal/logger"
-	"github.com/3dw1nM0535/uzi-api/model"
 	"github.com/ipinfo/go/v2/ipinfo"
 	"github.com/ipinfo/go/v2/ipinfo/cache"
 	"github.com/redis/go-redis/v9"
@@ -42,8 +42,8 @@ func GetIpinfoService() IpInfo {
 func (ipc *ipinfoClient) GetIpinfo(ip string) (*ipinfo.Core, error) {
 	info, err := ipc.client.GetIPInfo(net.ParseIP(ip))
 	if err != nil {
-		ipErr := model.UziErr{Err: err.Error(), Message: "IpinfoErr", Code: 500}
-		ipc.logger.Errorf("%s: %s", ipErr.Message, ipErr.Err)
+		ipErr := fmt.Errorf("%s:%v", "get ip info", err)
+		ipc.logger.Errorf(ipErr.Error())
 		return nil, ipErr
 	}
 
@@ -60,8 +60,9 @@ func (ipc *ipinfocacheClient) Get(key string) (interface{}, error) {
 
 	keyValue, err := ipc.redis.Get(context.Background(), key).Result()
 	if err != redis.Nil && err != nil {
-		ipc.logger.Errorf("%s: %v", "IpinfoGetValueErr", err.Error())
-		return nil, err
+		uziErr := fmt.Errorf("%s:%v", "get ip info cache", err)
+		ipc.logger.Errorf(uziErr.Error())
+		return nil, uziErr
 	}
 
 	if err := json.Unmarshal([]byte(keyValue), &res); err != nil {
@@ -79,8 +80,9 @@ func (ipc *ipinfocacheClient) Set(key string, value interface{}) error {
 	}
 
 	if err := ipc.redis.Set(context.Background(), key, data, time.Hour*24*365).Err(); err != nil {
-		ipc.logger.Errorf("%s: %v", "IpinfoCacheSetErr", err.Error())
-		return err
+		uziErr := fmt.Errorf("%s:%v", "set cache", err.Error())
+		ipc.logger.Errorf(uziErr.Error())
+		return uziErr
 	}
 
 	return nil

@@ -2,12 +2,11 @@ package handler
 
 import (
 	"encoding/json"
-	"errors"
+	"fmt"
 	"net/http"
 
 	"github.com/3dw1nM0535/uzi-api/internal/aws"
 	"github.com/3dw1nM0535/uzi-api/internal/logger"
-	"github.com/3dw1nM0535/uzi-api/model"
 )
 
 func UploadDocument() http.HandlerFunc {
@@ -18,17 +17,17 @@ func UploadDocument() http.HandlerFunc {
 
 		err := r.ParseMultipartForm(maxSize)
 		if err != nil {
-			uziErr := model.UziErr{Err: errors.New("FileTooLarge").Error(), Message: "uploadimage", Code: http.StatusBadRequest}
+			uziErr := fmt.Errorf("%s:%v", "parsing form multipart", err)
 			logger.Errorf(uziErr.Error())
-			http.Error(w, uziErr.Error(), uziErr.Code)
+			http.Error(w, uziErr.Error(), http.StatusBadRequest)
 			return
 		}
 
 		file, fileHeader, err := r.FormFile("file")
 		if err != nil {
-			uziErr := model.UziErr{Err: errors.New("ExpectedFile").Error(), Message: "nofile", Code: http.StatusBadRequest}
+			uziErr := fmt.Errorf("%s:%v", "reading form file", err)
 			logger.Errorf(uziErr.Error())
-			http.Error(w, uziErr.Error(), uziErr.Code)
+			http.Error(w, uziErr.Error(), http.StatusBadRequest)
 			return
 		}
 		defer file.Close()
@@ -43,9 +42,9 @@ func UploadDocument() http.HandlerFunc {
 			ImageUri string `json:"imageUri"`
 		}{ImageUri: imageUri})
 		if marshalErr != nil {
-			uziErr := model.UziErr{Err: errors.New("UploadImageMarshal").Error(), Message: "marshal", Code: http.StatusBadRequest}
+			uziErr := fmt.Errorf("%s:%v", "marshal upload res", marshalErr)
 			logger.Errorf(uziErr.Error())
-			http.Error(w, uziErr.Error(), uziErr.Code)
+			http.Error(w, uziErr.Error(), http.StatusInternalServerError)
 			return
 		}
 

@@ -7,10 +7,10 @@ import (
 	"net/http"
 
 	"github.com/3dw1nM0535/uzi-api/config"
+	"github.com/3dw1nM0535/uzi-api/gql/model"
 	"github.com/3dw1nM0535/uzi-api/internal/cache"
 	"github.com/3dw1nM0535/uzi-api/internal/logger"
 	"github.com/3dw1nM0535/uzi-api/internal/util"
-	"github.com/3dw1nM0535/uzi-api/model"
 	"github.com/3dw1nM0535/uzi-api/services/courier"
 	"github.com/3dw1nM0535/uzi-api/services/location"
 	"github.com/3dw1nM0535/uzi-api/store"
@@ -55,7 +55,7 @@ func (r *routeClient) ComputeTripRoute(input model.TripRouteInput) (*model.TripR
 	return r.computeRoute(*pickup, *dropoff)
 }
 
-func (r *routeClient) parsePickupDropoff(input model.TripInput) (*model.Geocode, error) {
+func (r *routeClient) parsePickupDropoff(input model.TripInput) (*location.Geocode, error) {
 	// Google place autocomplete select won't have cord in the request
 	if input.Location.Lat == 0.0 && input.Location.Lng == 0.0 {
 		placedetails, err := location.GetLocationService().GetPlaceDetails(input.PlaceID)
@@ -63,31 +63,31 @@ func (r *routeClient) parsePickupDropoff(input model.TripInput) (*model.Geocode,
 			return nil, err
 		}
 
-		return &model.Geocode{
+		return &location.Geocode{
 			PlaceID:          placedetails.PlaceID,
 			FormattedAddress: placedetails.FormattedAddress,
 			Location:         model.Gps{Lat: placedetails.Location.Lat, Lng: placedetails.Location.Lng},
 		}, nil
 	}
 
-	return &model.Geocode{
+	return &location.Geocode{
 		PlaceID:          input.PlaceID,
 		FormattedAddress: input.FormattedAddress,
 		Location:         model.Gps{Lat: input.Location.Lat, Lng: input.Location.Lng},
 	}, nil
 }
 
-func (r *routeClient) computeRoute(pickup, dropoff model.Geocode) (*model.TripRoute, error) {
-	routeResponse := &model.RouteResponse{}
+func (r *routeClient) computeRoute(pickup, dropoff location.Geocode) (*model.TripRoute, error) {
+	routeResponse := &RouteResponse{}
 
 	tripRoute := &model.TripRoute{}
 
 	routeParams := createRouteRequest(
-		model.LatLng{
+		LatLng{
 			Lat: pickup.Location.Lat,
 			Lng: pickup.Location.Lng,
 		},
-		model.LatLng{
+		LatLng{
 			Lat: dropoff.Location.Lat,
 			Lng: dropoff.Location.Lng,
 		},
@@ -131,19 +131,19 @@ func (r *routeClient) computeRoute(pickup, dropoff model.Geocode) (*model.TripRo
 	return tripRoute, nil
 }
 
-func (r *routeClient) requestRoute(routeParams model.RouteRequest, routeResponse *model.RouteResponse) (*model.RouteResponse, error) {
+func (r *routeClient) requestRoute(routeParams RouteRequest, routeResponse *RouteResponse) (*RouteResponse, error) {
 	reqPayload, payloadErr := json.Marshal(routeParams)
 	if payloadErr != nil {
-		uziErr := model.UziErr{Err: payloadErr.Error(), Message: "computeroutepayloadmarshal", Code: 500}
-		r.logger.Errorf(uziErr.Error())
-		return nil, uziErr
+		err := fmt.Errorf("%s:%v", "computeroutepayloadmarshal", payloadErr.Error())
+		r.logger.Errorf(err.Error())
+		return nil, err
 	}
 
 	req, reqErr := http.NewRequest("POST", routeV2, bytes.NewBuffer(reqPayload))
 	if reqErr != nil {
-		uziErr := model.UziErr{Err: reqErr.Error(), Message: "computerouterequest", Code: 500}
-		r.logger.Errorf(uziErr.Error())
-		return nil, uziErr
+		err := fmt.Errorf("%s:%v", "computerouterequest", reqErr.Error())
+		r.logger.Errorf(err.Error())
+		return nil, err
 	}
 	req.Header.Add("Content-Type", "application/json")
 	req.Header.Add("X-Goog-Api-Key", r.config.GoogleRoutesApiKey)
@@ -152,42 +152,42 @@ func (r *routeClient) requestRoute(routeParams model.RouteRequest, routeResponse
 	c := &http.Client{}
 	res, resErr := c.Do(req)
 	if resErr != nil {
-		uziErr := model.UziErr{Err: resErr.Error(), Message: "computerouteresponse", Code: 500}
-		r.logger.Errorf(uziErr.Error())
-		return nil, resErr
+		err := fmt.Errorf("%s:%v", "computerouteresponse", resErr.Error())
+		r.logger.Errorf(err.Error())
+		return nil, err
 	}
 
 	if err := json.NewDecoder(res.Body).Decode(&routeResponse); err != nil {
-		uziErr := model.UziErr{Err: err.Error(), Message: "computerouteresunmarshal", Code: 500}
-		r.logger.Errorf(uziErr.Error())
-		return nil, uziErr
+		jsonErr := fmt.Errorf("%s:%v", "computerouteresunmarshal", err.Error())
+		r.logger.Errorf(jsonErr.Error())
+		return nil, jsonErr
 	}
 
 	if routeResponse.Error.Code > 0 {
-		uziErr := model.UziErr{Err: routeResponse.Error.Message, Message: routeResponse.Error.Status, Code: routeResponse.Error.Code}
-		r.logger.Errorf(uziErr.Error())
-		return nil, uziErr
+		resErr := fmt.Errorf("%s:%v", routeResponse.Error.Status, routeResponse.Error.Message)
+		r.logger.Errorf(resErr.Error())
+		return nil, resErr
 	}
 
 	return routeResponse, nil
 }
 
-func createRouteRequest(pickup, dropoff model.LatLng) model.RouteRequest {
-	return model.RouteRequest{
-		Origin: model.Origin{
-			RoutePoint: model.RoutePoint{
+func createRouteRequest(pickup, dropoff LatLng) RouteRequest {
+	return RouteRequest{
+		Origin: Origin{
+			RoutePoint: RoutePoint{
 				Location: pickup,
 			},
 		},
-		Destination: model.Destination{
-			RoutePoint: model.RoutePoint{
+		Destination: Destination{
+			RoutePoint: RoutePoint{
 				Location: dropoff,
 			},
 		},
 		TravelMode:             "DRIVE",
 		ComputeAlternateRoutes: false,
 		RoutePreference:        "TRAFFIC_AWARE_OPTIMAL",
-		RouteModifiers: model.RouteModifiers{
+		RouteModifiers: RouteModifiers{
 			AvoidTolls:    false,
 			AvoidHighways: false,
 			AvoidFerries:  false,

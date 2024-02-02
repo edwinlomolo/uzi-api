@@ -3,11 +3,11 @@ package upload
 import (
 	"context"
 	"database/sql"
-	"net/http"
+	"fmt"
 
+	"github.com/3dw1nM0535/uzi-api/gql/model"
 	"github.com/3dw1nM0535/uzi-api/internal/aws"
 	"github.com/3dw1nM0535/uzi-api/internal/logger"
-	"github.com/3dw1nM0535/uzi-api/model"
 	"github.com/3dw1nM0535/uzi-api/store"
 	sqlStore "github.com/3dw1nM0535/uzi-api/store/sqlc"
 	"github.com/google/uuid"
@@ -55,16 +55,16 @@ func (u *uploadClient) createCourierUpload(reason, uri string, id uuid.UUID) err
 
 		_, createErr := u.store.CreateCourierUpload(context.Background(), createArgs)
 		if createErr != nil {
-			uziErr := model.UziErr{Err: createErr.Error(), Message: "createcourierupload", Code: 500}
+			uziErr := fmt.Errorf("%s:%v", "create courier upload", createErr)
 			u.logger.Errorf(uziErr.Error())
-			return createErr
+			return uziErr
 		}
 
 		return nil
 	} else if getErr != nil {
-		uziErr := model.UziErr{Err: getErr.Error(), Message: "getcourierupload", Code: 500}
+		uziErr := fmt.Errorf("%s:%v", "get courier upload", getErr)
 		u.logger.Errorf(uziErr.Error())
-		return getErr
+		return uziErr
 	}
 
 	return u.updateUploadUri(courierUpload.Uri, courierUpload.ID)
@@ -78,9 +78,9 @@ func (u *uploadClient) updateUploadUri(uri string, ID uuid.UUID) error {
 	}
 
 	if _, updateErr := u.store.UpdateUpload(context.Background(), updateParams); updateErr != nil {
-		uziErr := model.UziErr{Err: updateErr.Error(), Message: "updateupload", Code: 500}
+		uziErr := fmt.Errorf("%s:%v", "update courier upload", updateErr)
 		u.logger.Errorf(uziErr.Error())
-		return updateErr
+		return uziErr
 	}
 
 	return nil
@@ -92,9 +92,9 @@ func (u *uploadClient) updateUploadVerificationStatus(id uuid.UUID, status model
 		Verification: sql.NullString{String: status.String(), Valid: true},
 	}
 	if _, updateErr := u.store.UpdateUpload(context.Background(), args); updateErr != nil {
-		err := model.UziErr{Err: updateErr.Error(), Message: "updateuploadverificationstatus", Code: 500}
+		err := fmt.Errorf("%s:%v", "set upload verification", updateErr)
 		u.logger.Errorf(err.Error())
-		return updateErr
+		return err
 	}
 
 	return nil
@@ -111,14 +111,14 @@ func (u *uploadClient) createUserUpload(reason, uri string, ID uuid.UUID) error 
 	if foundErr == sql.ErrNoRows {
 		_, createErr := u.store.CreateUserUpload(context.Background(), createParams)
 		if createErr != nil {
-			uziErr := model.UziErr{Err: createErr.Error(), Message: "createuserupload", Code: 500}
+			uziErr := fmt.Errorf("%s:%v", "create user upload", createErr)
 			u.logger.Errorf(uziErr.Error())
-			return createErr
+			return uziErr
 		}
 	} else if foundErr != nil {
-		uziErr := model.UziErr{Err: foundErr.Error(), Message: "getuserupload", Code: 500}
+		uziErr := fmt.Errorf("%s:%v", "get user upload", foundErr)
 		u.logger.Errorf(uziErr.Error())
-		return foundErr
+		return uziErr
 	}
 
 	return u.updateUploadUri(foundUpload.Uri, foundUpload.ID)
@@ -130,7 +130,7 @@ func (u *uploadClient) GetCourierUploads(courierID uuid.UUID) ([]*model.Uploads,
 	args := uuid.NullUUID{UUID: courierID, Valid: true}
 	uplds, uploadsErr := u.store.GetCourierUploads(context.Background(), args)
 	if uploadsErr != nil {
-		uziErr := model.UziErr{Err: uploadsErr.Error(), Message: "getcourieruploads", Code: http.StatusInternalServerError}
+		uziErr := fmt.Errorf("%s:%v", "get courier uploads", uploadsErr)
 		u.logger.Errorf(uziErr.Error())
 		return nil, uziErr
 	}

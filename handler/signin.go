@@ -2,13 +2,12 @@ package handler
 
 import (
 	"encoding/json"
-	"errors"
+	"fmt"
 	"io"
 	"net/http"
 
 	"github.com/3dw1nM0535/uzi-api/internal/logger"
 	"github.com/3dw1nM0535/uzi-api/internal/util"
-	"github.com/3dw1nM0535/uzi-api/model"
 	"github.com/3dw1nM0535/uzi-api/services/courier"
 	"github.com/3dw1nM0535/uzi-api/services/session"
 	"github.com/3dw1nM0535/uzi-api/services/user"
@@ -16,7 +15,7 @@ import (
 
 func Signin() http.HandlerFunc {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		var loginInput model.SigninInput
+		var loginInput user.SigninInput
 		logger := logger.GetLogger()
 		userService := user.GetUserService()
 		sessionService := session.GetSessionService()
@@ -25,16 +24,16 @@ func Signin() http.HandlerFunc {
 
 		body, bodyErr := io.ReadAll(r.Body)
 		if bodyErr != nil {
-			uziErr := model.UziErr{Err: errors.New("ReadingSigninRequestBody").Error(), Message: "ioread", Code: http.StatusInternalServerError}
+			uziErr := fmt.Errorf("%s:%v", "reading body", bodyErr)
 			logger.Errorf(uziErr.Error())
-			http.Error(w, uziErr.Error(), uziErr.Code)
+			http.Error(w, uziErr.Error(), http.StatusInternalServerError)
 			return
 		}
 
 		if marshalErr := json.Unmarshal(body, &loginInput); marshalErr != nil {
-			uziErr := model.UziErr{Err: errors.New("SigninRequestBodyMarshal").Error(), Message: "marshal", Code: http.StatusInternalServerError}
+			uziErr := fmt.Errorf("%s:%v", "unmarshal body", marshalErr)
 			logger.Errorf(uziErr.Error())
-			http.Error(w, marshalErr.Error(), uziErr.Code)
+			http.Error(w, marshalErr.Error(), http.StatusInternalServerError)
 			return
 		}
 
@@ -60,9 +59,9 @@ func Signin() http.HandlerFunc {
 
 		jsonRes, jsonErr := json.Marshal(findSession)
 		if jsonErr != nil {
-			uziErr := model.UziErr{Err: errors.New("SigninResponseMarshal").Error(), Message: "marshal", Code: http.StatusInternalServerError}
+			uziErr := fmt.Errorf("%s:%v", "marshal session", jsonErr)
 			logger.Errorf(uziErr.Error())
-			http.Error(w, uziErr.Error(), uziErr.Code)
+			http.Error(w, uziErr.Error(), http.StatusInternalServerError)
 			return
 		}
 
