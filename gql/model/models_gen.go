@@ -109,6 +109,11 @@ type TripRouteInput struct {
 	Dropoff *TripInput `json:"dropoff"`
 }
 
+type UnixTime struct {
+	UnixTime  int    `json:"unixTime"`
+	TimeStamp string `json:"timeStamp"`
+}
+
 type Uploads struct {
 	ID           uuid.UUID                `json:"ID"`
 	Type         string                   `json:"type"`

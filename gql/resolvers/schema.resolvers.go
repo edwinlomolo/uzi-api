@@ -6,6 +6,7 @@ package resolvers
 
 import (
 	"context"
+	"time"
 
 	"github.com/3dw1nM0535/uzi-api/gql"
 	"github.com/3dw1nM0535/uzi-api/gql/model"
@@ -85,11 +86,42 @@ func (r *queryResolver) GetCourierNearPickupPoint(ctx context.Context, point mod
 	return r.GetCourierNearPickup(point)
 }
 
+// CurrentTime is the resolver for the currentTime field.
+func (r *subscriptionResolver) CurrentTime(ctx context.Context) (<-chan *model.UnixTime, error) {
+	ch := make(chan *model.UnixTime)
+
+	go func() {
+		defer close(ch)
+
+		for {
+			time.Sleep(1 * time.Second)
+
+			currentTime := time.Now()
+			t := &model.UnixTime{
+				UnixTime:  int(currentTime.Unix()),
+				TimeStamp: currentTime.Format(time.RFC3339),
+			}
+
+			select {
+			case <-ctx.Done():
+				return
+			case ch <- t:
+			}
+		}
+	}()
+
+	return ch, nil
+}
+
 // Mutation returns gql.MutationResolver implementation.
 func (r *Resolver) Mutation() gql.MutationResolver { return &mutationResolver{r} }
 
 // Query returns gql.QueryResolver implementation.
 func (r *Resolver) Query() gql.QueryResolver { return &queryResolver{r} }
 
+// Subscription returns gql.SubscriptionResolver implementation.
+func (r *Resolver) Subscription() gql.SubscriptionResolver { return &subscriptionResolver{r} }
+
 type mutationResolver struct{ *Resolver }
 type queryResolver struct{ *Resolver }
+type subscriptionResolver struct{ *Resolver }

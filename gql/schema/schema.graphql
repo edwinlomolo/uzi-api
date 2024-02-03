@@ -64,3 +64,13 @@ type Mutation {
   trackCourierGps(input: GpsInput!): Boolean!
   setCourierStatus(status: String!): Boolean!
 }
+
+# TODO testing purposes
+type UnixTime {
+  unixTime: Int!
+  timeStamp: String!
+}
+
+type Subscription {
+  currentTime: UnixTime!
+}

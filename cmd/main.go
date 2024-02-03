@@ -23,6 +23,7 @@ import (
 	"github.com/3dw1nM0535/uzi-api/services/user"
 	"github.com/3dw1nM0535/uzi-api/store"
 	gqlHandler "github.com/99designs/gqlgen/graphql/handler"
+	"github.com/99designs/gqlgen/graphql/handler/transport"
 	"github.com/99designs/gqlgen/graphql/playground"
 	"github.com/go-chi/chi/v5"
 	"github.com/rs/cors"
@@ -59,6 +60,7 @@ func main() {
 
 	// Graphql TODO refactor this to one setup func
 	srv := gqlHandler.NewDefaultServer(gql.NewExecutableSchema(resolvers.New()))
+	srv.AddTransport(&transport.Websocket{}) // Subscription support
 
 	// Routes TODO (look at first route setup comment)
 	r.Get("/ipinfo", handler.Ipinfo())
