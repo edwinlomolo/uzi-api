@@ -15,9 +15,9 @@ import (
 func CourierOnboarding() http.HandlerFunc {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		var bodyReq user.SigninInput
-		logger := logger.GetLogger()
-		userService := user.GetUserService()
-		sessionService := session.GetSessionService()
+		logger := logger.Logger
+		userService := user.User
+		sessionService := session.Session
 		ip := util.GetIp(r)
 
 		body, bodyErr := io.ReadAll(r.Body)

@@ -29,7 +29,7 @@ func Env() {
 	}
 }
 
-var configAll *Configuration
+var Config *Configuration
 
 // LoadConfig - load all configuration
 func LoadConfig() {
@@ -43,12 +43,7 @@ func LoadConfig() {
 	configuration.GoogleMaps = googleMapsConfig()
 	configuration.Pricer = pricerConfig()
 
-	configAll = &configuration
-}
-
-// GetConfig - get configurations
-func GetConfig() *Configuration {
-	return configAll
+	Config = &configuration
 }
 
 // serverConfig - load server configuration
@@ -178,13 +173,13 @@ func pricerConfig() Pricer {
 }
 
 func IsDev() bool {
-	return configAll.Server.Env == "development"
+	return Config.Server.Env == "development"
 }
 
 func IsProd() bool {
-	return configAll.Server.Env == "production"
+	return Config.Server.Env == "production"
 }
 
 func IsStaging() bool {
-	return configAll.Server.Env == "staging"
+	return Config.Server.Env == "staging"
 }

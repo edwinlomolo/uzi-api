@@ -7,6 +7,8 @@ import (
 	"time"
 
 	"github.com/3dw1nM0535/uzi-api/gql/model"
+	"github.com/3dw1nM0535/uzi-api/internal/cache"
+	"github.com/3dw1nM0535/uzi-api/internal/logger"
 	"github.com/redis/go-redis/v9"
 	"github.com/sirupsen/logrus"
 )
@@ -16,8 +18,8 @@ type routeCache struct {
 	logger *logrus.Logger
 }
 
-func newrouteCache(redis *redis.Client, logger *logrus.Logger) routeCache {
-	return routeCache{redis, logger}
+func newCache() routeCache {
+	return routeCache{cache.Redis, logger.Logger}
 }
 
 func (r routeCache) cacheRoute(key string, value interface{}) error {

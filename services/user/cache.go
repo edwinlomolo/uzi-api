@@ -8,20 +8,21 @@ import (
 
 	"github.com/3dw1nM0535/uzi-api/gql/model"
 	"github.com/3dw1nM0535/uzi-api/internal/cache"
+	"github.com/3dw1nM0535/uzi-api/internal/logger"
 	"github.com/redis/go-redis/v9"
 	"github.com/sirupsen/logrus"
 )
 
-type usercacheclient struct {
+type userCache struct {
 	redis  *redis.Client
 	logger *logrus.Logger
 }
 
-func newusercache(redis *redis.Client, logger *logrus.Logger) cache.Cache {
-	return &usercacheclient{redis, logger}
+func newCache() cache.Cache {
+	return &userCache{cache.Redis, logger.Logger}
 }
 
-func (usc *usercacheclient) Get(key string) (interface{}, error) {
+func (usc *userCache) Get(key string) (interface{}, error) {
 	var res model.User
 
 	keyValue, err := usc.redis.Get(context.Background(), key).Result()
@@ -42,7 +43,7 @@ func (usc *usercacheclient) Get(key string) (interface{}, error) {
 	return &res, nil
 }
 
-func (usc *usercacheclient) Set(key string, value interface{}) error {
+func (usc *userCache) Set(key string, value interface{}) error {
 	userinfo := value.(*model.User)
 	data, err := json.Marshal(userinfo)
 	if err != nil {

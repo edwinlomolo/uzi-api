@@ -15,18 +15,18 @@ import (
 //go:generate go run github.com/99designs/gqlgen generate --verbose
 
 type Resolver struct {
-	upload.Upload
+	upload.UploadService
 	courier.CourierService
-	location.Location
-	trip.Trip
+	location.LocationService
+	trip.TripService
 }
 
 func New() gql.Config {
 	c := gql.Config{Resolvers: &Resolver{
-		upload.GetUploadService(),
-		courier.GetCourierService(),
-		location.GetLocationService(),
-		trip.GetTripService(),
+		upload.Upload,
+		courier.Courier,
+		location.Location,
+		trip.Trip,
 	}}
 
 	return c

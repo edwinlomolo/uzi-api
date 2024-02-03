@@ -10,6 +10,7 @@ import (
 	"github.com/3dw1nM0535/uzi-api/handler"
 	"github.com/3dw1nM0535/uzi-api/internal/aws"
 	"github.com/3dw1nM0535/uzi-api/internal/cache"
+	"github.com/3dw1nM0535/uzi-api/internal/jwt"
 	"github.com/3dw1nM0535/uzi-api/internal/logger"
 	"github.com/3dw1nM0535/uzi-api/internal/middleware"
 	"github.com/3dw1nM0535/uzi-api/internal/pricer"
@@ -40,14 +41,11 @@ func main() {
 
 	// Services TODO refactor all these to one setup func
 	config.LoadConfig()
-	cfg := config.GetConfig()
 	logger.NewLogger()
-	log := logger.GetLogger()
 	store.InitializeStorage()
-	cache.NewCache(cfg.Database.Redis, log)
-	cache.GetCache()
+	cache.NewCache(config.Config.Database.Redis, logger.Logger)
 	ipinfo.NewIpinfoService()
-	store.GetDatabase()
+	jwt.NewJwtService()
 	user.NewUserService()
 	session.NewSessionService()
 	courier.NewCourierService()
@@ -72,7 +70,7 @@ func main() {
 
 	// Server
 	s := &http.Server{
-		Addr:    fmt.Sprintf("0.0.0.0:%s", cfg.Server.Port),
+		Addr:    fmt.Sprintf("0.0.0.0:%s", config.Config.Server.Port),
 		Handler: r,
 	}
 

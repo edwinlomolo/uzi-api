@@ -16,10 +16,10 @@ import (
 func Signin() http.HandlerFunc {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		var loginInput user.SigninInput
-		logger := logger.GetLogger()
-		userService := user.GetUserService()
-		sessionService := session.GetSessionService()
-		courierService := courier.GetCourierService()
+		logger := logger.Logger
+		userService := user.User
+		sessionService := session.Session
+		courierService := courier.Courier
 		userIp := util.GetIp(r)
 
 		body, bodyErr := io.ReadAll(r.Body)

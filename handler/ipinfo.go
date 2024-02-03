@@ -12,10 +12,10 @@ import (
 
 func Ipinfo() http.HandlerFunc {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		logger := logger.GetLogger()
+		logger := logger.Logger
 		ip := util.GetIp(r)
 
-		ipinfo, err := ipinfo.GetIpinfoService().GetIpinfo(ip)
+		ipinfo, err := ipinfo.IpInfo.GetIpinfo(ip)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return

@@ -13,11 +13,13 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-var dbClient *sqlStore.Queries
+var (
+	DB *sqlStore.Queries
+)
 
 func InitializeStorage() error {
-	log := logger.GetLogger()
-	configs := config.GetConfig()
+	log := logger.Logger
+	configs := config.Config
 	rdbmsConfig := configs.Database.Rdbms
 	isDevelopment := config.IsDev()
 	forceMigrate := configs.Database.ForceMigration
@@ -40,7 +42,7 @@ func InitializeStorage() error {
 		log.Infoln("Database connection...OK")
 	}
 
-	dbClient = sqlStore.New(db)
+	DB = sqlStore.New(db)
 
 	// Setup database schema
 	if err := runDatabaseMigration(db, log, isDevelopment, rdbmsConfig.MigrationUrl, forceMigrate); err != nil {
@@ -51,8 +53,6 @@ func InitializeStorage() error {
 
 	return nil
 }
-
-func GetDatabase() *sqlStore.Queries { return dbClient }
 
 // runDbMigration - setup database tables
 func runDatabaseMigration(db *sql.DB, logger *logrus.Logger, isDevelopment bool, migrationUrl string, forceMigrate bool) error {

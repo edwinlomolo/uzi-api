@@ -1,58 +1,58 @@
 package route
 
-type RoutePoint struct {
-	Location LatLng `json:"latLng"`
+type routepoint struct {
+	Location latlng `json:"latLng"`
 }
 
-type Origin struct {
-	RoutePoint `json:"location"`
+type origin struct {
+	routepoint `json:"location"`
 }
 
-type Destination struct {
-	RoutePoint `json:"location"`
+type destination struct {
+	routepoint `json:"location"`
 }
 
-type LatLng struct {
+type latlng struct {
 	Lat float64 `json:"latitude"`
 	Lng float64 `json:"longitude"`
 }
 
-type RouteModifiers struct {
+type routemodifiers struct {
 	AvoidTolls    bool `json:"avoidTolls"`
 	AvoidHighways bool `json:"avoidHighways"`
 	AvoidFerries  bool `json:"avoidFerries"`
 }
 
-type RouteRequest struct {
-	Origin                 `json:"origin"`
-	Destination            `json:"destination"`
+type routerequest struct {
+	origin                 `json:"origin"`
+	destination            `json:"destination"`
 	TravelMode             string         `json:"travelMode"`
 	RoutePreference        string         `json:"routingPreference"`
 	ComputeAlternateRoutes bool           `json:"computeAlternativeRoutes"`
-	RouteModifiers         RouteModifiers `json:"routeModifiers"`
+	RouteModifiers         routemodifiers `json:"routeModifiers"`
 	PolylineQuality        string         `json:"polylineQuality"`
 	Language               string         `json:"languageCode"`
 	Units                  string         `json:"units"`
 	RegionCode             string         `json:"regionCode"`
 }
 
-type Polyline struct {
+type polyline struct {
 	EncodedPolyline string `json:"encodedPolyline"`
 }
 
-type Routes struct {
+type routes struct {
 	Distance       int      `json:"distanceMeters"`
 	Duration       string   `json:"duration"`
 	StaticDuration string   `json:"staticDuration"`
-	Polyline       Polyline `json:"polyline"`
+	Polyline       polyline `json:"polyline"`
 }
 
-type RouteResponse struct {
-	Error  RouteError `json:"error"`
-	Routes []Routes   `json:"routes"`
+type routeresponse struct {
+	Error  routeerror `json:"error"`
+	Routes []routes   `json:"routes"`
 }
 
-type RouteError struct {
+type routeerror struct {
 	Code    int    `json:"code"`
 	Message string `json:"message"`
 	Status  string `json:"status"`

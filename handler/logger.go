@@ -10,7 +10,7 @@ import (
 func Logger(h http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		ip := util.GetIp(r)
-		log := logger.GetLogger()
+		log := logger.Logger
 		// Some info on what is happening with request(s)
 		log.Infof("%s-%s-%s-%s", ip, r.Method, r.URL, r.Proto)
 		h.ServeHTTP(w, r)

@@ -42,8 +42,8 @@ func Auth(h http.Handler) http.HandlerFunc {
 
 func validateAuthorizationHeader(r *http.Request) (*jsonwebtoken.Token, error) {
 	var tokenString string
-	logger := logger.GetLogger()
-	jwtService := jwt.GetJwtService()
+	logger := logger.Logger
+	jwtService := jwt.Jwt
 
 	authorizationHeader := strings.SplitN(r.Header.Get("Authorization"), " ", 2)
 	if len(authorizationHeader) != 2 || authorizationHeader[0] != "Bearer" {

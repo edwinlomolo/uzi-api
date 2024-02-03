@@ -12,7 +12,7 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-type NominatimResponse struct {
+type nominatimresponse struct {
 	PlaceID     int      `json:"place_id"`
 	Name        string   `json:"name"`
 	DisplayName string   `json:"display_name"`
@@ -20,10 +20,10 @@ type NominatimResponse struct {
 	Lon         string   `json:"lon"`
 	BoundingBox []string `json:"boundingbox"`
 	Type        string   `json:"type"`
-	Address     Address  `json:"address"`
+	Address     address  `json:"address"`
 }
 
-type Address struct {
+type address struct {
 	Village     string `json:"village,omitempty"`
 	County      string `json:"state,omitempty"`
 	Region      string `json:"region,omitempty"`
@@ -31,6 +31,7 @@ type Address struct {
 	Country     string `json:"country,omitempty"`
 	CountryCode string `json:"country_code,omitempty"`
 }
+
 type nominatim interface {
 	ReverseGeocode(model.GpsInput) (*Geocode, error)
 }
@@ -41,13 +42,13 @@ type nominatimClient struct {
 }
 
 func newNominatimService(cache locationCache) nominatim {
-	return &nominatimClient{logger.GetLogger(), cache}
+	return &nominatimClient{logger.Logger, cache}
 }
 
 func (n nominatimClient) ReverseGeocode(input model.GpsInput) (*Geocode, error) {
 	cacheKey := util.FloatToString(input.Lat) + util.FloatToString(input.Lng)
 
-	var nominatimRes NominatimResponse
+	var nominatimRes nominatimresponse
 	geo := &Geocode{}
 
 	url := fmt.Sprintf("%s/reverse?format=jsonv2&lat=%f&lon=%f", nominatimApi, input.Lat, input.Lng)
