@@ -25,7 +25,7 @@ type CourierService interface {
 	IsCourier(userID uuid.UUID) (bool, error)
 	GetCourierStatus(userID uuid.UUID) (model.CourierStatus, error)
 	GetCourier(userID uuid.UUID) (*model.Courier, error)
-	TrackCourierLocation(userID uuid.UUID, input model.GpsInput) (bool, error)
+	TrackCourierLocation(userID uuid.UUID, input model.GpsInput) error
 	UpdateCourierStatus(userID uuid.UUID, status model.CourierStatus) (bool, error)
 	GetNearbyAvailableProducts(params sqlStore.GetNearbyAvailableCourierProductsParams, tripDistance int) ([]*model.Product, error)
 	GetCourierNearPickup(point model.GpsInput) ([]*model.Courier, error)
@@ -118,9 +118,9 @@ func (c *courierClient) GetCourier(userID uuid.UUID) (*model.Courier, error) {
 	return c.getCourier(userID)
 }
 
-func (c *courierClient) TrackCourierLocation(userID uuid.UUID, input model.GpsInput) (bool, error) {
+func (c *courierClient) TrackCourierLocation(userID uuid.UUID, input model.GpsInput) error {
 	if _, err := c.getCourier(userID); err != nil {
-		return false, err
+		return err
 	}
 
 	args := sqlStore.TrackCourierLocationParams{
@@ -128,10 +128,12 @@ func (c *courierClient) TrackCourierLocation(userID uuid.UUID, input model.GpsIn
 		Location: fmt.Sprintf("SRID=4326;POINT(%.8f %.8f)", input.Lng, input.Lat),
 	}
 	if _, updateErr := c.store.TrackCourierLocation(context.Background(), args); updateErr != nil {
-		return false, updateErr
+		uziErr := fmt.Errorf("%s:%v", "trackcourierlocation", updateErr)
+		c.logger.Errorf(uziErr.Error())
+		return uziErr
 	}
 
-	return true, nil
+	return nil
 }
 
 func (c *courierClient) UpdateCourierStatus(userID uuid.UUID, status model.CourierStatus) (bool, error) {

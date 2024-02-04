@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"net/http"
+	"time"
 
 	"github.com/3dw1nM0535/uzi-api/config"
 	"github.com/3dw1nM0535/uzi-api/gql"
@@ -24,9 +25,11 @@ import (
 	"github.com/3dw1nM0535/uzi-api/services/user"
 	"github.com/3dw1nM0535/uzi-api/store"
 	gqlHandler "github.com/99designs/gqlgen/graphql/handler"
+	"github.com/99designs/gqlgen/graphql/handler/extension"
 	"github.com/99designs/gqlgen/graphql/handler/transport"
 	"github.com/99designs/gqlgen/graphql/playground"
 	"github.com/go-chi/chi/v5"
+	"github.com/gorilla/websocket"
 	"github.com/rs/cors"
 	"github.com/sirupsen/logrus"
 )
@@ -58,7 +61,16 @@ func main() {
 
 	// Graphql TODO refactor this to one setup func
 	srv := gqlHandler.NewDefaultServer(gql.NewExecutableSchema(resolvers.New()))
-	srv.AddTransport(&transport.Websocket{}) // Subscription support
+	srv.AddTransport(&transport.POST{})
+	srv.AddTransport(&transport.Websocket{
+		KeepAlivePingInterval: 10 * time.Second,
+		Upgrader: websocket.Upgrader{
+			CheckOrigin: func(r *http.Request) bool {
+				return true
+			},
+		},
+	})
+	srv.Use(extension.Introspection{})
 
 	// Routes TODO (look at first route setup comment)
 	r.Get("/ipinfo", handler.Ipinfo())

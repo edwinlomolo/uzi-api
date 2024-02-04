@@ -34,7 +34,8 @@ func (r *mutationResolver) TrackCourierGps(ctx context.Context, input model.GpsI
 		panic(err)
 	}
 
-	return r.TrackCourierLocation(uid, input)
+	go r.TrackCourierLocation(uid, input)
+	return true, nil
 }
 
 // SetCourierStatus is the resolver for the setCourierStatus field.
