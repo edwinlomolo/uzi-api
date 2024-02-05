@@ -10,7 +10,7 @@ import (
 	"github.com/3dw1nM0535/uzi-api/gql/model"
 	"github.com/3dw1nM0535/uzi-api/internal/cache"
 	"github.com/3dw1nM0535/uzi-api/internal/logger"
-	"github.com/3dw1nM0535/uzi-api/internal/route"
+	"github.com/3dw1nM0535/uzi-api/internal/pricer"
 	"github.com/3dw1nM0535/uzi-api/store"
 	sqlStore "github.com/3dw1nM0535/uzi-api/store/sqlc"
 	"github.com/google/uuid"
@@ -18,14 +18,19 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
+const (
+	TRIP_UPDATES = "trip_updates"
+)
+
 type TripService interface {
-	ComputeTripRoute(input model.TripRouteInput) (*model.TripRoute, error)
-	FindAvailableCourier(pickup model.GpsInput) ([]*model.Courier, error)
-	AssignTrip(tripID, courierID uuid.UUID) error
+	FindAvailableCourier(pickup model.GpsInput) (*model.Courier, error)
+	GetCourierNearPickupPoint(pickup model.GpsInput) ([]*model.Courier, error)
+	AssignTripToCourier(tripID, courierID uuid.UUID) error
 	UnassignTrip(courierID uuid.UUID) error
 	CreateTrip(sqlStore.CreateTripParams) (*model.Trip, error)
 	CreateTripCost(tripID uuid.UUID, cost int) error
 	SetTripStatus(tripID uuid.UUID, status model.TripStatus) error
+	GetNearbyAvailableProducts(params sqlStore.GetNearbyAvailableCourierProductsParams, tripDistance int) ([]*model.Product, error)
 }
 
 type point struct {
@@ -37,47 +42,34 @@ type tripClient struct {
 	redis  *redis.Client
 	logger *logrus.Logger
 	store  *sqlStore.Queries
-	route  route.Route
 }
 
 var Trip TripService
 
 func NewTripService() {
-	Trip = &tripClient{cache.Redis, logger.Logger, store.DB, route.Routing}
+	Trip = &tripClient{cache.Redis, logger.Logger, store.DB}
 	logger.Logger.Infoln("Trip service...OK")
 }
 
-func (t *tripClient) ComputeTripRoute(input model.TripRouteInput) (*model.TripRoute, error) {
-	return t.route.ComputeTripRoute(input)
-}
-
-func (t *tripClient) FindAvailableCourier(pickup model.GpsInput) ([]*model.Courier, error) {
-	var couriers []*model.Courier
-
-	args := sqlStore.GetCourierNearPickupPointParams{
+func (t *tripClient) FindAvailableCourier(pickup model.GpsInput) (*model.Courier, error) {
+	args := sqlStore.FindAvailableCourierParams{
 		Point:  fmt.Sprintf("SRID=4326;POINT(%.8f %.8f)", pickup.Lng, pickup.Lat),
 		Radius: 2000,
 	}
-	foundCouriers, err := t.store.GetCourierNearPickupPoint(context.Background(), args)
+	c, err := t.store.FindAvailableCourier(context.Background(), args)
 	if err == sql.ErrNoRows {
-		return make([]*model.Courier, 0), nil
+		return nil, nil
 	} else if err != nil {
 		uziErr := fmt.Errorf("%s: %v", "getcouriernearpickuppooint", err.Error())
 		t.logger.Errorf(uziErr.Error())
 		return nil, uziErr
 	}
 
-	for _, item := range foundCouriers {
-		courier := &model.Courier{
-			ID:        item.ID,
-			ProductID: item.ProductID.UUID,
-			Location:  parseCourierLocation(item.Location),
-		}
-
-		couriers = append(couriers, courier)
-	}
-
-	return couriers, nil
+	return &model.Courier{
+		ID:        c.ID,
+		ProductID: c.ProductID.UUID,
+		Location:  parseCourierLocation(c.Location),
+	}, nil
 }
 
 func parseCourierLocation(p interface{}) *model.Gps {
@@ -96,13 +88,23 @@ func parseCourierLocation(p interface{}) *model.Gps {
 		return nil
 	}
 }
-func (t *tripClient) AssignTrip(tripID, courierID uuid.UUID) error {
+func (t *tripClient) AssignTripToCourier(tripID, courierID uuid.UUID) error {
 	args := sqlStore.AssignTripToCourierParams{
 		ID:     courierID,
 		TripID: uuid.NullUUID{UUID: tripID, Valid: true},
 	}
 	if _, err := t.store.AssignTripToCourier(context.Background(), args); err != nil {
 		uziErr := fmt.Errorf("%s:%v", "assign trip to courier", err)
+		t.logger.Errorf(uziErr.Error())
+		return uziErr
+	}
+
+	courierArgs := sqlStore.AssignCourierToTripParams{
+		ID:        tripID,
+		CourierID: uuid.NullUUID{UUID: courierID, Valid: true},
+	}
+	if _, err := t.store.AssignCourierToTrip(context.Background(), courierArgs); err != nil {
+		uziErr := fmt.Errorf("%s:%v", "assign courier to trip", err)
 		t.logger.Errorf(uziErr.Error())
 		return uziErr
 	}
@@ -159,4 +161,61 @@ func (t *tripClient) SetTripStatus(tripID uuid.UUID, status model.TripStatus) er
 	}
 
 	return nil
+}
+
+func (t *tripClient) GetCourierNearPickupPoint(pickup model.GpsInput) ([]*model.Courier, error) {
+	var couriers []*model.Courier
+
+	args := sqlStore.GetCourierNearPickupPointParams{
+		Point:  fmt.Sprintf("SRID=4326;POINT(%.8f %.8f)", pickup.Lng, pickup.Lat),
+		Radius: 2000,
+	}
+	foundCouriers, err := t.store.GetCourierNearPickupPoint(context.Background(), args)
+	if err == sql.ErrNoRows {
+		return make([]*model.Courier, 0), nil
+	} else if err != nil {
+		uziErr := fmt.Errorf("%s: %v", "getcouriernearpickuppooint", err.Error())
+		t.logger.Errorf(uziErr.Error())
+		return nil, uziErr
+	}
+
+	for _, item := range foundCouriers {
+		courier := &model.Courier{
+			ID:        item.ID,
+			ProductID: item.ProductID.UUID,
+			Location:  parseCourierLocation(item.Location),
+		}
+
+		couriers = append(couriers, courier)
+	}
+
+	return couriers, nil
+}
+
+func (t *tripClient) GetNearbyAvailableProducts(params sqlStore.GetNearbyAvailableCourierProductsParams, tripDistance int) ([]*model.Product, error) {
+	var nearbyProducts []*model.Product
+
+	nearbys, nearbyErr := t.store.GetNearbyAvailableCourierProducts(context.Background(), params)
+	if nearbyErr == sql.ErrNoRows {
+		return make([]*model.Product, 0), nil
+	} else if nearbyErr != nil {
+		uziErr := fmt.Errorf("%s:%v", "get nearby available courier products", nearbyErr.Error())
+		t.logger.Errorf(uziErr.Error())
+		return nil, uziErr
+	}
+
+	for _, item := range nearbys {
+		earnWithFuel := item.Name != "UziX"
+		product := &model.Product{
+			ID:          item.ID_2,
+			Price:       pricer.Pricer.CalculateTripCost(int(item.WeightClass), tripDistance, earnWithFuel),
+			Name:        item.Name,
+			Description: item.Description,
+			IconURL:     item.Icon,
+		}
+
+		nearbyProducts = append(nearbyProducts, product)
+	}
+
+	return nearbyProducts, nil
 }

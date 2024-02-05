@@ -8,9 +8,41 @@ package sqlc
 import (
 	"context"
 	"database/sql"
+	"time"
 
 	"github.com/google/uuid"
 )
+
+const assignCourierToTrip = `-- name: AssignCourierToTrip :one
+UPDATE trips
+SET courier_id = $1
+WHERE id = $2
+RETURNING id, start_location, end_location, courier_id, user_id, route_id, product_id, cost, status, created_at, updated_at
+`
+
+type AssignCourierToTripParams struct {
+	CourierID uuid.NullUUID `json:"courier_id"`
+	ID        uuid.UUID     `json:"id"`
+}
+
+func (q *Queries) AssignCourierToTrip(ctx context.Context, arg AssignCourierToTripParams) (Trip, error) {
+	row := q.db.QueryRowContext(ctx, assignCourierToTrip, arg.CourierID, arg.ID)
+	var i Trip
+	err := row.Scan(
+		&i.ID,
+		&i.StartLocation,
+		&i.EndLocation,
+		&i.CourierID,
+		&i.UserID,
+		&i.RouteID,
+		&i.ProductID,
+		&i.Cost,
+		&i.Status,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
 
 const assignRouteToTrip = `-- name: AssignRouteToTrip :one
 UPDATE trips
@@ -20,8 +52,8 @@ RETURNING id, start_location, end_location, courier_id, user_id, route_id, produ
 `
 
 type AssignRouteToTripParams struct {
-	RouteID uuid.UUID `json:"route_id"`
-	ID      uuid.UUID `json:"id"`
+	RouteID uuid.NullUUID `json:"route_id"`
+	ID      uuid.UUID     `json:"id"`
 }
 
 func (q *Queries) AssignRouteToTrip(ctx context.Context, arg AssignRouteToTripParams) (Trip, error) {
@@ -76,9 +108,9 @@ func (q *Queries) AssignTripToCourier(ctx context.Context, arg AssignTripToCouri
 
 const createTrip = `-- name: CreateTrip :one
 INSERT INTO trips (
-  user_id, product_id, courier_id, route_id, start_location, end_location
+  user_id, product_id, start_location, end_location
 ) VALUES (
-  $1, $2, $3, $4, $5, $6
+  $1, $2, $3, $4
 )
 RETURNING id, start_location, end_location, courier_id, user_id, route_id, product_id, cost, status, created_at, updated_at
 `
@@ -86,8 +118,6 @@ RETURNING id, start_location, end_location, courier_id, user_id, route_id, produ
 type CreateTripParams struct {
 	UserID        uuid.UUID   `json:"user_id"`
 	ProductID     uuid.UUID   `json:"product_id"`
-	CourierID     uuid.UUID   `json:"courier_id"`
-	RouteID       uuid.UUID   `json:"route_id"`
 	StartLocation interface{} `json:"start_location"`
 	EndLocation   interface{} `json:"end_location"`
 }
@@ -96,8 +126,6 @@ func (q *Queries) CreateTrip(ctx context.Context, arg CreateTripParams) (Trip, e
 	row := q.db.QueryRowContext(ctx, createTrip,
 		arg.UserID,
 		arg.ProductID,
-		arg.CourierID,
-		arg.RouteID,
 		arg.StartLocation,
 		arg.EndLocation,
 	)
@@ -132,6 +160,156 @@ type CreateTripCostParams struct {
 
 func (q *Queries) CreateTripCost(ctx context.Context, arg CreateTripCostParams) (Trip, error) {
 	row := q.db.QueryRowContext(ctx, createTripCost, arg.Cost, arg.ID)
+	var i Trip
+	err := row.Scan(
+		&i.ID,
+		&i.StartLocation,
+		&i.EndLocation,
+		&i.CourierID,
+		&i.UserID,
+		&i.RouteID,
+		&i.ProductID,
+		&i.Cost,
+		&i.Status,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
+const findAvailableCourier = `-- name: FindAvailableCourier :one
+SELECT id, product_id, ST_AsGeoJSON(location) AS location FROM
+couriers
+WHERE ST_DWithin(location, $1::geography, $2) AND status = 'ONLINE' AND verified = 'true' AND trip_id IS null
+LIMIT 1
+`
+
+type FindAvailableCourierParams struct {
+	Point  interface{} `json:"point"`
+	Radius interface{} `json:"radius"`
+}
+
+type FindAvailableCourierRow struct {
+	ID        uuid.UUID     `json:"id"`
+	ProductID uuid.NullUUID `json:"product_id"`
+	Location  interface{}   `json:"location"`
+}
+
+func (q *Queries) FindAvailableCourier(ctx context.Context, arg FindAvailableCourierParams) (FindAvailableCourierRow, error) {
+	row := q.db.QueryRowContext(ctx, findAvailableCourier, arg.Point, arg.Radius)
+	var i FindAvailableCourierRow
+	err := row.Scan(&i.ID, &i.ProductID, &i.Location)
+	return i, err
+}
+
+const getCourierNearPickupPoint = `-- name: GetCourierNearPickupPoint :many
+SELECT id, product_id, ST_AsGeoJSON(location) AS location FROM
+couriers
+WHERE ST_DWithin(location, $1::geography, $2) AND status = 'ONLINE' AND verified = 'true'
+`
+
+type GetCourierNearPickupPointParams struct {
+	Point  interface{} `json:"point"`
+	Radius interface{} `json:"radius"`
+}
+
+type GetCourierNearPickupPointRow struct {
+	ID        uuid.UUID     `json:"id"`
+	ProductID uuid.NullUUID `json:"product_id"`
+	Location  interface{}   `json:"location"`
+}
+
+func (q *Queries) GetCourierNearPickupPoint(ctx context.Context, arg GetCourierNearPickupPointParams) ([]GetCourierNearPickupPointRow, error) {
+	rows, err := q.db.QueryContext(ctx, getCourierNearPickupPoint, arg.Point, arg.Radius)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []GetCourierNearPickupPointRow{}
+	for rows.Next() {
+		var i GetCourierNearPickupPointRow
+		if err := rows.Scan(&i.ID, &i.ProductID, &i.Location); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const getNearbyAvailableCourierProducts = `-- name: GetNearbyAvailableCourierProducts :many
+SELECT c.id, c.product_id, p.id, p.name, p.description, p.weight_class, p.icon, p.relevance, p.created_at, p.updated_at FROM couriers c
+JOIN products p
+ON ST_DWithin(c.location, $1::geography, $2)
+WHERE c.product_id = p.id AND c.status = 'ONLINE' AND c.verified = 'true'
+ORDER BY p.relevance ASC
+`
+
+type GetNearbyAvailableCourierProductsParams struct {
+	Point  interface{} `json:"point"`
+	Radius interface{} `json:"radius"`
+}
+
+type GetNearbyAvailableCourierProductsRow struct {
+	ID          uuid.UUID     `json:"id"`
+	ProductID   uuid.NullUUID `json:"product_id"`
+	ID_2        uuid.UUID     `json:"id_2"`
+	Name        string        `json:"name"`
+	Description string        `json:"description"`
+	WeightClass int32         `json:"weight_class"`
+	Icon        string        `json:"icon"`
+	Relevance   int32         `json:"relevance"`
+	CreatedAt   time.Time     `json:"created_at"`
+	UpdatedAt   time.Time     `json:"updated_at"`
+}
+
+func (q *Queries) GetNearbyAvailableCourierProducts(ctx context.Context, arg GetNearbyAvailableCourierProductsParams) ([]GetNearbyAvailableCourierProductsRow, error) {
+	rows, err := q.db.QueryContext(ctx, getNearbyAvailableCourierProducts, arg.Point, arg.Radius)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []GetNearbyAvailableCourierProductsRow{}
+	for rows.Next() {
+		var i GetNearbyAvailableCourierProductsRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.ProductID,
+			&i.ID_2,
+			&i.Name,
+			&i.Description,
+			&i.WeightClass,
+			&i.Icon,
+			&i.Relevance,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const getTrip = `-- name: GetTrip :one
+SELECT id, start_location, end_location, courier_id, user_id, route_id, product_id, cost, status, created_at, updated_at FROM trips
+WHERE id = $1
+LIMIT 1
+`
+
+func (q *Queries) GetTrip(ctx context.Context, id uuid.UUID) (Trip, error) {
+	row := q.db.QueryRowContext(ctx, getTrip, id)
 	var i Trip
 	err := row.Scan(
 		&i.ID,

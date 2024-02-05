@@ -12,27 +12,34 @@ import (
 
 const createRoute = `-- name: CreateRoute :one
 INSERT INTO routes (
-  distance, eta, polyline
+  distance, eta, state, polyline
 ) VALUES (
-  $1, $2, ST_GeographyFromText($3)
+  $1, $2, $3, ST_GeographyFromText($4)
 )
-RETURNING id, distance, polyline, eta, created_at, updated_at
+RETURNING id, distance, polyline, eta, state, created_at, updated_at
 `
 
 type CreateRouteParams struct {
 	Distance string      `json:"distance"`
 	Eta      time.Time   `json:"eta"`
+	State    string      `json:"state"`
 	Polyline interface{} `json:"polyline"`
 }
 
 func (q *Queries) CreateRoute(ctx context.Context, arg CreateRouteParams) (Route, error) {
-	row := q.db.QueryRowContext(ctx, createRoute, arg.Distance, arg.Eta, arg.Polyline)
+	row := q.db.QueryRowContext(ctx, createRoute,
+		arg.Distance,
+		arg.Eta,
+		arg.State,
+		arg.Polyline,
+	)
 	var i Route
 	err := row.Scan(
 		&i.ID,
 		&i.Distance,
 		&i.Polyline,
 		&i.Eta,
+		&i.State,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 	)

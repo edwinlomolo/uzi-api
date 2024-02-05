@@ -12,6 +12,7 @@ import (
 )
 
 type Querier interface {
+	AssignCourierToTrip(ctx context.Context, arg AssignCourierToTripParams) (Trip, error)
 	AssignRouteToTrip(ctx context.Context, arg AssignRouteToTripParams) (Trip, error)
 	AssignTripToCourier(ctx context.Context, arg AssignTripToCourierParams) (Courier, error)
 	CreateCourier(ctx context.Context, userID uuid.NullUUID) (Courier, error)
@@ -23,6 +24,7 @@ type Querier interface {
 	CreateUser(ctx context.Context, arg CreateUserParams) (User, error)
 	CreateUserUpload(ctx context.Context, arg CreateUserUploadParams) (Upload, error)
 	CreateVehicle(ctx context.Context, arg CreateVehicleParams) (Vehicle, error)
+	FindAvailableCourier(ctx context.Context, arg FindAvailableCourierParams) (FindAvailableCourierRow, error)
 	FindByPhone(ctx context.Context, phone string) (User, error)
 	FindUserByID(ctx context.Context, id uuid.UUID) (User, error)
 	GetCourier(ctx context.Context, userID uuid.NullUUID) (Courier, error)
@@ -33,6 +35,7 @@ type Querier interface {
 	GetCourierUploads(ctx context.Context, courierID uuid.NullUUID) ([]Upload, error)
 	GetNearbyAvailableCourierProducts(ctx context.Context, arg GetNearbyAvailableCourierProductsParams) ([]GetNearbyAvailableCourierProductsRow, error)
 	GetSession(ctx context.Context, id uuid.UUID) (Session, error)
+	GetTrip(ctx context.Context, id uuid.UUID) (Trip, error)
 	IsCourier(ctx context.Context, userID uuid.NullUUID) (sql.NullBool, error)
 	IsUserOnboarding(ctx context.Context, id uuid.UUID) (bool, error)
 	SetCourierStatus(ctx context.Context, arg SetCourierStatusParams) (Courier, error)

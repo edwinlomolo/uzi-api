@@ -36,18 +36,6 @@ SET location = sqlc.arg(location)
 WHERE user_id = $1
 RETURNING *;
 
--- name: GetNearbyAvailableCourierProducts :many
-SELECT c.id, c.product_id, p.* FROM couriers c
-JOIN products p
-ON ST_DWithin(c.location, sqlc.arg(point)::geography, sqlc.arg(radius))
-WHERE c.product_id = p.id AND c.status = 'ONLINE' AND c.verified = 'true'
-ORDER BY p.relevance ASC;
-
--- name: GetCourierNearPickupPoint :many
-SELECT id, product_id, ST_AsGeoJSON(location) AS location FROM
-couriers
-WHERE ST_DWithin(location, sqlc.arg(point)::geography, sqlc.arg(radius)) AND status = 'ONLINE' AND verified = 'true';
-
 -- name: GetCourierProductByID :one
 SELECT id, icon, name FROM products
 WHERE id = $1

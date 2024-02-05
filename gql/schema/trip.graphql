@@ -12,6 +12,7 @@ type Trip {
   updated_at: Time
 }
 
-type TripUpdates {
+type TripUpdate {
+  id: UUID!
   status: TripStatus!
 }

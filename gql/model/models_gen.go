@@ -34,8 +34,8 @@ type CourierUploadInput struct {
 }
 
 type CreateTripInput struct {
-	TripInput   *TripInput `json:"tripInput"`
-	TripProduct string     `json:"tripProduct"`
+	TripInput     *TripRouteInput `json:"tripInput"`
+	TripProductID string          `json:"tripProductId"`
 }
 
 type Gps struct {
@@ -114,7 +114,8 @@ type TripRouteInput struct {
 	Dropoff *TripInput `json:"dropoff"`
 }
 
-type TripUpdates struct {
+type TripUpdate struct {
+	ID     uuid.UUID  `json:"id"`
 	Status TripStatus `json:"status"`
 }
 

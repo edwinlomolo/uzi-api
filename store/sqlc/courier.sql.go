@@ -8,7 +8,6 @@ package sqlc
 import (
 	"context"
 	"database/sql"
-	"time"
 
 	"github.com/google/uuid"
 )
@@ -67,46 +66,6 @@ func (q *Queries) GetCourier(ctx context.Context, userID uuid.NullUUID) (Courier
 	return i, err
 }
 
-const getCourierNearPickupPoint = `-- name: GetCourierNearPickupPoint :many
-SELECT id, product_id, ST_AsGeoJSON(location) AS location FROM
-couriers
-WHERE ST_DWithin(location, $1::geography, $2) AND status = 'ONLINE' AND verified = 'true'
-`
-
-type GetCourierNearPickupPointParams struct {
-	Point  interface{} `json:"point"`
-	Radius interface{} `json:"radius"`
-}
-
-type GetCourierNearPickupPointRow struct {
-	ID        uuid.UUID     `json:"id"`
-	ProductID uuid.NullUUID `json:"product_id"`
-	Location  interface{}   `json:"location"`
-}
-
-func (q *Queries) GetCourierNearPickupPoint(ctx context.Context, arg GetCourierNearPickupPointParams) ([]GetCourierNearPickupPointRow, error) {
-	rows, err := q.db.QueryContext(ctx, getCourierNearPickupPoint, arg.Point, arg.Radius)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	items := []GetCourierNearPickupPointRow{}
-	for rows.Next() {
-		var i GetCourierNearPickupPointRow
-		if err := rows.Scan(&i.ID, &i.ProductID, &i.Location); err != nil {
-			return nil, err
-		}
-		items = append(items, i)
-	}
-	if err := rows.Close(); err != nil {
-		return nil, err
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
-}
-
 const getCourierProductByID = `-- name: GetCourierProductByID :one
 SELECT id, icon, name FROM products
 WHERE id = $1
@@ -138,66 +97,6 @@ func (q *Queries) GetCourierStatus(ctx context.Context, userID uuid.NullUUID) (s
 	var status string
 	err := row.Scan(&status)
 	return status, err
-}
-
-const getNearbyAvailableCourierProducts = `-- name: GetNearbyAvailableCourierProducts :many
-SELECT c.id, c.product_id, p.id, p.name, p.description, p.weight_class, p.icon, p.relevance, p.created_at, p.updated_at FROM couriers c
-JOIN products p
-ON ST_DWithin(c.location, $1::geography, $2)
-WHERE c.product_id = p.id AND c.status = 'ONLINE' AND c.verified = 'true'
-ORDER BY p.relevance ASC
-`
-
-type GetNearbyAvailableCourierProductsParams struct {
-	Point  interface{} `json:"point"`
-	Radius interface{} `json:"radius"`
-}
-
-type GetNearbyAvailableCourierProductsRow struct {
-	ID          uuid.UUID     `json:"id"`
-	ProductID   uuid.NullUUID `json:"product_id"`
-	ID_2        uuid.UUID     `json:"id_2"`
-	Name        string        `json:"name"`
-	Description string        `json:"description"`
-	WeightClass int32         `json:"weight_class"`
-	Icon        string        `json:"icon"`
-	Relevance   int32         `json:"relevance"`
-	CreatedAt   time.Time     `json:"created_at"`
-	UpdatedAt   time.Time     `json:"updated_at"`
-}
-
-func (q *Queries) GetNearbyAvailableCourierProducts(ctx context.Context, arg GetNearbyAvailableCourierProductsParams) ([]GetNearbyAvailableCourierProductsRow, error) {
-	rows, err := q.db.QueryContext(ctx, getNearbyAvailableCourierProducts, arg.Point, arg.Radius)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	items := []GetNearbyAvailableCourierProductsRow{}
-	for rows.Next() {
-		var i GetNearbyAvailableCourierProductsRow
-		if err := rows.Scan(
-			&i.ID,
-			&i.ProductID,
-			&i.ID_2,
-			&i.Name,
-			&i.Description,
-			&i.WeightClass,
-			&i.Icon,
-			&i.Relevance,
-			&i.CreatedAt,
-			&i.UpdatedAt,
-		); err != nil {
-			return nil, err
-		}
-		items = append(items, i)
-	}
-	if err := rows.Close(); err != nil {
-		return nil, err
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
 }
 
 const isCourier = `-- name: IsCourier :one

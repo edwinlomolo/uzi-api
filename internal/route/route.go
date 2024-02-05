@@ -11,8 +11,8 @@ import (
 	"github.com/3dw1nM0535/uzi-api/internal/cache"
 	"github.com/3dw1nM0535/uzi-api/internal/logger"
 	"github.com/3dw1nM0535/uzi-api/internal/util"
-	"github.com/3dw1nM0535/uzi-api/services/courier"
 	"github.com/3dw1nM0535/uzi-api/services/location"
+	"github.com/3dw1nM0535/uzi-api/services/trip"
 	"github.com/3dw1nM0535/uzi-api/store"
 	sqlStore "github.com/3dw1nM0535/uzi-api/store/sqlc"
 	"github.com/redis/go-redis/v9"
@@ -124,7 +124,7 @@ func (r *routeClient) computeRoute(pickup, dropoff location.Geocode) (*model.Tri
 		Point:  fmt.Sprintf("SRID=4326;POINT(%.8f %.8f)", pickup.Location.Lng, pickup.Location.Lat),
 		Radius: 2000,
 	}
-	nearbyProducts, nearbyErr := courier.Courier.GetNearbyAvailableProducts(nearbyParams, tripRoute.Distance)
+	nearbyProducts, nearbyErr := trip.Trip.GetNearbyAvailableProducts(nearbyParams, tripRoute.Distance)
 	if nearbyErr != nil {
 		return nil, nearbyErr
 	}

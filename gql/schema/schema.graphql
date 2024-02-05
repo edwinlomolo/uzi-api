@@ -51,8 +51,8 @@ input TripInput {
 }
 
 input CreateTripInput {
-  tripInput: TripInput!
-  tripProduct: String!
+  tripInput: TripRouteInput!
+  tripProductId: String!
 }
 
 type Query {
@@ -79,5 +79,5 @@ type UnixTime {
 
 type Subscription {
   currentTime: UnixTime!
-  tripUpdates(tripId: UUID!): TripUpdates!
+  tripUpdates(tripId: UUID!): TripUpdate!
 }
