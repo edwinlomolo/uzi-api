@@ -24,10 +24,16 @@ couriers
 WHERE user_id = $1
 LIMIT 1;
 
--- name: GetCourier :one
+-- name: GetCourierByUserID :one
 SELECT * FROM
 couriers
 WHERE user_id = $1
+LIMIT 1;
+
+-- name: GetCourierByID :one
+SELECT * FROM
+couriers
+WHERE id = $1
 LIMIT 1;
 
 -- name: TrackCourierLocation :one

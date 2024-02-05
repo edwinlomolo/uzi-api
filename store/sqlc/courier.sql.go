@@ -40,15 +40,41 @@ func (q *Queries) CreateCourier(ctx context.Context, userID uuid.NullUUID) (Cour
 	return i, err
 }
 
-const getCourier = `-- name: GetCourier :one
+const getCourierByID = `-- name: GetCourierByID :one
+SELECT id, verified, status, location, ratings, points, user_id, product_id, trip_id, created_at, updated_at FROM
+couriers
+WHERE id = $1
+LIMIT 1
+`
+
+func (q *Queries) GetCourierByID(ctx context.Context, id uuid.UUID) (Courier, error) {
+	row := q.db.QueryRowContext(ctx, getCourierByID, id)
+	var i Courier
+	err := row.Scan(
+		&i.ID,
+		&i.Verified,
+		&i.Status,
+		&i.Location,
+		&i.Ratings,
+		&i.Points,
+		&i.UserID,
+		&i.ProductID,
+		&i.TripID,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
+const getCourierByUserID = `-- name: GetCourierByUserID :one
 SELECT id, verified, status, location, ratings, points, user_id, product_id, trip_id, created_at, updated_at FROM
 couriers
 WHERE user_id = $1
 LIMIT 1
 `
 
-func (q *Queries) GetCourier(ctx context.Context, userID uuid.NullUUID) (Courier, error) {
-	row := q.db.QueryRowContext(ctx, getCourier, userID)
+func (q *Queries) GetCourierByUserID(ctx context.Context, userID uuid.NullUUID) (Courier, error) {
+	row := q.db.QueryRowContext(ctx, getCourierByUserID, userID)
 	var i Courier
 	err := row.Scan(
 		&i.ID,

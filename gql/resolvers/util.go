@@ -15,7 +15,7 @@ func getCourierIDFromResolverContext(ctx context.Context, courier courier.Courie
 		panic(err)
 	}
 
-	c, _ := courier.GetCourier(uid)
+	c, _ := courier.GetCourierByUserID(uid)
 	return c.ID
 }
 

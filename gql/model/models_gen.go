@@ -85,10 +85,10 @@ type Session struct {
 
 type Trip struct {
 	ID            uuid.UUID  `json:"id"`
-	CourierID     uuid.UUID  `json:"courier_id"`
+	CourierID     *uuid.UUID `json:"courier_id,omitempty"`
 	UserID        uuid.UUID  `json:"user_id"`
-	StartLocation *Gps       `json:"start_location"`
-	EndLocation   *Gps       `json:"end_location"`
+	StartLocation *Gps       `json:"start_location,omitempty"`
+	EndLocation   *Gps       `json:"end_location,omitempty"`
 	Status        TripStatus `json:"status"`
 	Cost          *string    `json:"cost,omitempty"`
 	RouteID       *uuid.UUID `json:"route_id,omitempty"`
@@ -192,6 +192,7 @@ const (
 	TripStatusComplete        TripStatus = "COMPLETE"
 	TripStatusCourierArriving TripStatus = "COURIER_ARRIVING"
 	TripStatusCourierFound    TripStatus = "COURIER_FOUND"
+	TripStatusCourierNotFound TripStatus = "COURIER_NOT_FOUND"
 )
 
 var AllTripStatus = []TripStatus{
@@ -200,11 +201,12 @@ var AllTripStatus = []TripStatus{
 	TripStatusComplete,
 	TripStatusCourierArriving,
 	TripStatusCourierFound,
+	TripStatusCourierNotFound,
 }
 
 func (e TripStatus) IsValid() bool {
 	switch e {
-	case TripStatusArriving, TripStatusEnRoute, TripStatusComplete, TripStatusCourierArriving, TripStatusCourierFound:
+	case TripStatusArriving, TripStatusEnRoute, TripStatusComplete, TripStatusCourierArriving, TripStatusCourierFound, TripStatusCourierNotFound:
 		return true
 	}
 	return false

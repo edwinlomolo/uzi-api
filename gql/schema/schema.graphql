@@ -29,6 +29,7 @@ enum TripStatus {
   COMPLETE
   COURIER_ARRIVING
   COURIER_FOUND
+  COURIER_NOT_FOUND
 }
 
 input CourierUploadInput {

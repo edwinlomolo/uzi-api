@@ -6,12 +6,15 @@ package resolvers
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"time"
 
 	"github.com/3dw1nM0535/uzi-api/gql"
 	"github.com/3dw1nM0535/uzi-api/gql/model"
+	"github.com/3dw1nM0535/uzi-api/internal/logger"
 	"github.com/3dw1nM0535/uzi-api/services/location"
+	t "github.com/3dw1nM0535/uzi-api/services/trip"
 	"github.com/3dw1nM0535/uzi-api/store/sqlc"
 	"github.com/google/uuid"
 )
@@ -46,13 +49,96 @@ func (r *mutationResolver) SetCourierStatus(ctx context.Context, status string) 
 
 // CreateTrip is the resolver for the createTrip field.
 func (r *mutationResolver) CreateTrip(ctx context.Context, input model.CreateTripInput) (*model.Trip, error) {
+	r.mutex.Lock()
+	defer r.mutex.Unlock()
+
 	userID := stringToUUID(ctx.Value("userID").(string))
 
 	params := sqlc.CreateTripParams{
-		UserID: userID,
+		UserID:        userID,
+		ProductID:     stringToUUID(input.TripProductID),
+		StartLocation: fmt.Sprintf("SRID=4326;POINT(%.8f %.8f)", input.TripInput.Pickup.Location.Lat, input.TripInput.Pickup.Location.Lng),
+		EndLocation:   fmt.Sprintf("SRID=4326;POINT(%.8f %.8f)", input.TripInput.Dropoff.Location.Lat, input.TripInput.Dropoff.Location.Lng),
 	}
 
 	trip, err := r.tripService.CreateTrip(params)
+	tripUpdate := model.TripUpdate{ID: trip.ID}
+
+	timeoutCtx, cancel := context.WithTimeout(context.Background(), time.Minute*5)
+	go func() {
+		logger.Logger.Infoln("Goroutine started...")
+		defer cancel()
+
+		for {
+			select {
+			case <-timeoutCtx.Done():
+				tripUpdate.Status = model.TripStatusCourierNotFound
+				u, marshalErr := json.Marshal(tripUpdate)
+				if marshalErr != nil {
+					logger.Logger.Errorf(marshalErr.Error())
+					logger.Logger.Infoln("Goroutine exiting due to error...")
+					return
+				}
+
+				notFoundErr := r.redisClient.Publish(context.Background(), t.TRIP_UPDATES, u).Err()
+				if notFoundErr != nil {
+					logger.Logger.Errorf(notFoundErr.Error())
+					logger.Logger.Infoln("Goroutine exiting due to error...")
+					return
+				}
+				logger.Logger.Infoln("Goroutine exiting")
+
+				return
+			default:
+				courier, err := r.tripService.FindAvailableCourier(*input.TripInput.Pickup.Location)
+				if err != nil {
+					logger.Logger.Errorf(err.Error())
+					logger.Logger.Infoln("Goroutine exiting due to error...")
+					return
+				}
+				logger.Logger.Infoln("Starting...")
+
+				if courier != nil {
+					logger.Logger.Infoln("Publishing found...")
+					tripUpdate.Status = model.TripStatusCourierFound
+					u, marshalErr := json.Marshal(tripUpdate)
+					if marshalErr != nil {
+						logger.Logger.Errorf(marshalErr.Error())
+						return
+					}
+
+					foundErr := r.redisClient.Publish(context.Background(), t.TRIP_UPDATES, u).Err()
+					if foundErr != nil {
+						logger.Logger.Errorf(foundErr.Error())
+						return
+					}
+
+					err := r.tripService.AssignTripToCourier(trip.ID, courier.ID)
+					if err != nil {
+						logger.Logger.Errorf(err.Error())
+						return
+					} else {
+						logger.Logger.Infoln("Courier assigned...")
+						logger.Logger.Infoln("Publishing arriving...")
+						tripUpdate.Status = model.TripStatusCourierArriving
+						u, marshalErr = json.Marshal(tripUpdate)
+						if marshalErr != nil {
+							logger.Logger.Errorf(marshalErr.Error())
+							return
+						}
+
+						arrivingErr := r.redisClient.Publish(context.Background(), t.TRIP_UPDATES, u).Err()
+						if arrivingErr != nil {
+							logger.Logger.Errorf(arrivingErr.Error())
+							return
+						}
+					}
+					logger.Logger.Infoln("Goroutine exiting due to courier found...")
+					return
+				}
+			}
+		}
+	}()
 
 	return trip, err
 }
@@ -86,44 +172,40 @@ func (r *queryResolver) ReverseGeocode(ctx context.Context, place model.GpsInput
 
 // GetRoute is the resolver for the getRoute field.
 func (r *queryResolver) ComputeTripRoute(ctx context.Context, input model.TripRouteInput) (*model.TripRoute, error) {
-	return r.tripService.ComputeTripRoute(input)
+	return r.routeService.ComputeTripRoute(input)
 }
 
 // GetCourierNearPickupPoint is the resolver for the getCourierNearPickupPoint field.
 func (r *queryResolver) GetCourierNearPickupPoint(ctx context.Context, point model.GpsInput) ([]*model.Courier, error) {
-	return r.tripService.FindAvailableCourier(point)
+	return r.tripService.GetCourierNearPickupPoint(point)
 }
 
-// CurrentTime is the resolver for the currentTime field.
-func (r *subscriptionResolver) CurrentTime(ctx context.Context) (<-chan *model.UnixTime, error) {
-	ch := make(chan *model.UnixTime)
+// TripUpdates is the resolver for the tripUpdates field.
+func (r *subscriptionResolver) TripUpdates(ctx context.Context, tripID uuid.UUID) (<-chan *model.TripUpdate, error) {
+	pubsub := r.redisClient.Subscribe(ctx, t.TRIP_UPDATES)
+
+	ch := make(chan *model.TripUpdate)
 
 	go func() {
-		defer close(ch)
-
 		for {
-			time.Sleep(1 * time.Second)
-
-			currentTime := time.Now()
-			t := &model.UnixTime{
-				UnixTime:  int(currentTime.Unix()),
-				TimeStamp: currentTime.Format(time.RFC3339),
-			}
-
-			select {
-			case <-ctx.Done():
+			msg, err := pubsub.ReceiveMessage(ctx)
+			if err != nil {
+				close(ch)
 				return
-			case ch <- t:
+			}
+			var update *model.TripUpdate
+			fmt.Println(msg.Payload)
+			if err := json.Unmarshal([]byte(msg.Payload), &update); err != nil {
+				return
+			}
+			fmt.Println(update)
+			if update.ID == tripID {
+				ch <- update
 			}
 		}
 	}()
 
 	return ch, nil
-}
-
-// TripUpdates is the resolver for the tripUpdates field.
-func (r *subscriptionResolver) TripUpdates(ctx context.Context, tripID uuid.UUID) (<-chan *model.TripUpdates, error) {
-	panic(fmt.Errorf("not implemented: TripUpdates - tripUpdates"))
 }
 
 // Mutation returns gql.MutationResolver implementation.

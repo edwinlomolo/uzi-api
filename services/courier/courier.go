@@ -22,7 +22,8 @@ type CourierService interface {
 	FindOrCreate(userID uuid.UUID) (*model.Courier, error)
 	IsCourier(userID uuid.UUID) (bool, error)
 	GetCourierStatus(userID uuid.UUID) (model.CourierStatus, error)
-	GetCourier(userID uuid.UUID) (*model.Courier, error)
+	GetCourierByUserID(userID uuid.UUID) (*model.Courier, error)
+	GetCourierByID(userID uuid.UUID) (*model.Courier, error)
 	TrackCourierLocation(userID uuid.UUID, input model.GpsInput) error
 	UpdateCourierStatus(userID uuid.UUID, status model.CourierStatus) (bool, error)
 	GetCourierProduct(product_id uuid.UUID) (*model.Product, error)
@@ -40,7 +41,7 @@ func NewCourierService() {
 
 // TODO something ain't adding up here!
 func (c *courierClient) FindOrCreate(userID uuid.UUID) (*model.Courier, error) {
-	courier, err := c.store.GetCourier(context.Background(), uuid.NullUUID{UUID: userID, Valid: true})
+	courier, err := c.store.GetCourierByUserID(context.Background(), uuid.NullUUID{UUID: userID, Valid: true})
 	if err == sql.ErrNoRows {
 		newCourier, err := c.store.CreateCourier(context.Background(), uuid.NullUUID{UUID: userID, Valid: true})
 		if err != nil {
@@ -87,7 +88,7 @@ func (c *courierClient) GetCourierStatus(userID uuid.UUID) (model.CourierStatus,
 
 func (c *courierClient) getCourier(userID uuid.UUID) (*model.Courier, error) {
 	var courier model.Courier
-	foundCourier, err := c.store.GetCourier(context.Background(), uuid.NullUUID{UUID: userID, Valid: true})
+	foundCourier, err := c.store.GetCourierByUserID(context.Background(), uuid.NullUUID{UUID: userID, Valid: true})
 	if err == sql.ErrNoRows {
 		noCourierErr := errors.New("no courier found")
 		uziErr := fmt.Errorf("%s:%v", "nocourierfound", noCourierErr.Error())
@@ -105,7 +106,7 @@ func (c *courierClient) getCourier(userID uuid.UUID) (*model.Courier, error) {
 	return &courier, nil
 }
 
-func (c *courierClient) GetCourier(userID uuid.UUID) (*model.Courier, error) {
+func (c *courierClient) GetCourierByUserID(userID uuid.UUID) (*model.Courier, error) {
 	return c.getCourier(userID)
 }
 
@@ -154,4 +155,15 @@ func (c *courierClient) GetCourierProduct(id uuid.UUID) (*model.Product, error) 
 		IconURL: product.Icon,
 		Name:    product.Name,
 	}, nil
+}
+
+func (c *courierClient) GetCourierByID(courierID uuid.UUID) (*model.Courier, error) {
+	courier, err := c.store.GetCourierByID(context.Background(), courierID)
+	if err != nil {
+		uziErr := fmt.Errorf("%s:%v", "get courier by id", err)
+		c.logger.Errorf(uziErr.Error())
+		return nil, uziErr
+	}
+
+	return &model.Courier{ID: courier.ID, TripID: &courier.TripID.UUID}, nil
 }

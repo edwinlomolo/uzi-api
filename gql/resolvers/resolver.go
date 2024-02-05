@@ -1,11 +1,16 @@
 package resolvers
 
 import (
+	"sync"
+
 	"github.com/3dw1nM0535/uzi-api/gql"
+	"github.com/3dw1nM0535/uzi-api/internal/cache"
+	"github.com/3dw1nM0535/uzi-api/internal/route"
 	"github.com/3dw1nM0535/uzi-api/services/courier"
 	"github.com/3dw1nM0535/uzi-api/services/location"
 	"github.com/3dw1nM0535/uzi-api/services/trip"
 	"github.com/3dw1nM0535/uzi-api/services/upload"
+	"github.com/redis/go-redis/v9"
 )
 
 // This file will not be regenerated automatically.
@@ -18,7 +23,10 @@ type Resolver struct {
 	upload.UploadService
 	courier.CourierService
 	location.LocationService
-	tripService trip.TripService
+	routeService route.Route
+	tripService  trip.TripService
+	redisClient  *redis.Client
+	mutex        sync.Mutex
 }
 
 func New() gql.Config {
@@ -26,7 +34,10 @@ func New() gql.Config {
 		upload.Upload,
 		courier.Courier,
 		location.Location,
+		route.Routing,
 		trip.Trip,
+		cache.Redis,
+		sync.Mutex{},
 	}}
 
 	return c

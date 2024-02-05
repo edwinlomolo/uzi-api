@@ -6,11 +6,13 @@ import (
 	"encoding/json"
 	"fmt"
 	"strconv"
+	"sync"
 
 	"github.com/3dw1nM0535/uzi-api/gql/model"
 	"github.com/3dw1nM0535/uzi-api/internal/cache"
 	"github.com/3dw1nM0535/uzi-api/internal/logger"
 	"github.com/3dw1nM0535/uzi-api/internal/pricer"
+	"github.com/3dw1nM0535/uzi-api/services/courier"
 	"github.com/3dw1nM0535/uzi-api/store"
 	sqlStore "github.com/3dw1nM0535/uzi-api/store/sqlc"
 	"github.com/google/uuid"
@@ -42,16 +44,20 @@ type tripClient struct {
 	redis  *redis.Client
 	logger *logrus.Logger
 	store  *sqlStore.Queries
+	mutex  *sync.Mutex
 }
 
 var Trip TripService
 
 func NewTripService() {
-	Trip = &tripClient{cache.Redis, logger.Logger, store.DB}
+	Trip = &tripClient{cache.Redis, logger.Logger, store.DB, &sync.Mutex{}}
 	logger.Logger.Infoln("Trip service...OK")
 }
 
 func (t *tripClient) FindAvailableCourier(pickup model.GpsInput) (*model.Courier, error) {
+	t.mutex.Lock()
+	defer t.mutex.Unlock()
+
 	args := sqlStore.FindAvailableCourierParams{
 		Point:  fmt.Sprintf("SRID=4326;POINT(%.8f %.8f)", pickup.Lng, pickup.Lat),
 		Radius: 2000,
@@ -89,6 +95,16 @@ func parseCourierLocation(p interface{}) *model.Gps {
 	}
 }
 func (t *tripClient) AssignTripToCourier(tripID, courierID uuid.UUID) error {
+	t.mutex.Lock()
+	defer t.mutex.Unlock()
+
+	courier, err := courier.Courier.GetCourierByID(courierID)
+	if err != nil {
+		return err
+	} else if courier.TripID != nil {
+		return t.AssignTripToCourier(tripID, courierID)
+	}
+
 	args := sqlStore.AssignTripToCourierParams{
 		ID:     courierID,
 		TripID: uuid.NullUUID{UUID: tripID, Valid: true},

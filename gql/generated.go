@@ -133,7 +133,6 @@ type ComplexityRoot struct {
 	}
 
 	Subscription struct {
-		CurrentTime func(childComplexity int) int
 		TripUpdates func(childComplexity int, tripID uuid.UUID) int
 	}
 
@@ -157,13 +156,9 @@ type ComplexityRoot struct {
 		Polyline          func(childComplexity int) int
 	}
 
-	TripUpdates struct {
+	TripUpdate struct {
+		ID     func(childComplexity int) int
 		Status func(childComplexity int) int
-	}
-
-	UnixTime struct {
-		TimeStamp func(childComplexity int) int
-		UnixTime  func(childComplexity int) int
 	}
 
 	Uploads struct {
@@ -207,8 +202,7 @@ type QueryResolver interface {
 	GetCourierNearPickupPoint(ctx context.Context, point model.GpsInput) ([]*model.Courier, error)
 }
 type SubscriptionResolver interface {
-	CurrentTime(ctx context.Context) (<-chan *model.UnixTime, error)
-	TripUpdates(ctx context.Context, tripID uuid.UUID) (<-chan *model.TripUpdates, error)
+	TripUpdates(ctx context.Context, tripID uuid.UUID) (<-chan *model.TripUpdate, error)
 }
 
 type executableSchema struct {
@@ -634,13 +628,6 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Session.UserAgent(childComplexity), true
 
-	case "Subscription.currentTime":
-		if e.complexity.Subscription.CurrentTime == nil {
-			break
-		}
-
-		return e.complexity.Subscription.CurrentTime(childComplexity), true
-
 	case "Subscription.tripUpdates":
 		if e.complexity.Subscription.TripUpdates == nil {
 			break
@@ -751,26 +738,19 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.TripRoute.Polyline(childComplexity), true
 
-	case "TripUpdates.status":
-		if e.complexity.TripUpdates.Status == nil {
+	case "TripUpdate.id":
+		if e.complexity.TripUpdate.ID == nil {
 			break
 		}
 
-		return e.complexity.TripUpdates.Status(childComplexity), true
+		return e.complexity.TripUpdate.ID(childComplexity), true
 
-	case "UnixTime.timeStamp":
-		if e.complexity.UnixTime.TimeStamp == nil {
+	case "TripUpdate.status":
+		if e.complexity.TripUpdate.Status == nil {
 			break
 		}
 
-		return e.complexity.UnixTime.TimeStamp(childComplexity), true
-
-	case "UnixTime.unixTime":
-		if e.complexity.UnixTime.UnixTime == nil {
-			break
-		}
-
-		return e.complexity.UnixTime.UnixTime(childComplexity), true
+		return e.complexity.TripUpdate.Status(childComplexity), true
 
 	case "Uploads.courier_id":
 		if e.complexity.Uploads.CourierID == nil {
@@ -3822,70 +3802,6 @@ func (ec *executionContext) fieldContext_Session_courierStatus(ctx context.Conte
 	return fc, nil
 }
 
-func (ec *executionContext) _Subscription_currentTime(ctx context.Context, field graphql.CollectedField) (ret func(ctx context.Context) graphql.Marshaler) {
-	fc, err := ec.fieldContext_Subscription_currentTime(ctx, field)
-	if err != nil {
-		return nil
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = nil
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Subscription().CurrentTime(rctx)
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return nil
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return nil
-	}
-	return func(ctx context.Context) graphql.Marshaler {
-		select {
-		case res, ok := <-resTmp.(<-chan *model.UnixTime):
-			if !ok {
-				return nil
-			}
-			return graphql.WriterFunc(func(w io.Writer) {
-				w.Write([]byte{'{'})
-				graphql.MarshalString(field.Alias).MarshalGQL(w)
-				w.Write([]byte{':'})
-				ec.marshalNUnixTime2ᚖgithubᚗcomᚋ3dw1nM0535ᚋuziᚑapiᚋgqlᚋmodelᚐUnixTime(ctx, field.Selections, res).MarshalGQL(w)
-				w.Write([]byte{'}'})
-			})
-		case <-ctx.Done():
-			return nil
-		}
-	}
-}
-
-func (ec *executionContext) fieldContext_Subscription_currentTime(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Subscription",
-		Field:      field,
-		IsMethod:   true,
-		IsResolver: true,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			switch field.Name {
-			case "unixTime":
-				return ec.fieldContext_UnixTime_unixTime(ctx, field)
-			case "timeStamp":
-				return ec.fieldContext_UnixTime_timeStamp(ctx, field)
-			}
-			return nil, fmt.Errorf("no field named %q was found under type UnixTime", field.Name)
-		},
-	}
-	return fc, nil
-}
-
 func (ec *executionContext) _Subscription_tripUpdates(ctx context.Context, field graphql.CollectedField) (ret func(ctx context.Context) graphql.Marshaler) {
 	fc, err := ec.fieldContext_Subscription_tripUpdates(ctx, field)
 	if err != nil {
@@ -3914,7 +3830,7 @@ func (ec *executionContext) _Subscription_tripUpdates(ctx context.Context, field
 	}
 	return func(ctx context.Context) graphql.Marshaler {
 		select {
-		case res, ok := <-resTmp.(<-chan *model.TripUpdates):
+		case res, ok := <-resTmp.(<-chan *model.TripUpdate):
 			if !ok {
 				return nil
 			}
@@ -3922,7 +3838,7 @@ func (ec *executionContext) _Subscription_tripUpdates(ctx context.Context, field
 				w.Write([]byte{'{'})
 				graphql.MarshalString(field.Alias).MarshalGQL(w)
 				w.Write([]byte{':'})
-				ec.marshalNTripUpdates2ᚖgithubᚗcomᚋ3dw1nM0535ᚋuziᚑapiᚋgqlᚋmodelᚐTripUpdates(ctx, field.Selections, res).MarshalGQL(w)
+				ec.marshalNTripUpdate2ᚖgithubᚗcomᚋ3dw1nM0535ᚋuziᚑapiᚋgqlᚋmodelᚐTripUpdate(ctx, field.Selections, res).MarshalGQL(w)
 				w.Write([]byte{'}'})
 			})
 		case <-ctx.Done():
@@ -3939,10 +3855,12 @@ func (ec *executionContext) fieldContext_Subscription_tripUpdates(ctx context.Co
 		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
+			case "id":
+				return ec.fieldContext_TripUpdate_id(ctx, field)
 			case "status":
-				return ec.fieldContext_TripUpdates_status(ctx, field)
+				return ec.fieldContext_TripUpdate_status(ctx, field)
 			}
-			return nil, fmt.Errorf("no field named %q was found under type TripUpdates", field.Name)
+			return nil, fmt.Errorf("no field named %q was found under type TripUpdate", field.Name)
 		},
 	}
 	defer func() {
@@ -4024,14 +3942,11 @@ func (ec *executionContext) _Trip_courier_id(ctx context.Context, field graphql.
 		return graphql.Null
 	}
 	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
 		return graphql.Null
 	}
-	res := resTmp.(uuid.UUID)
+	res := resTmp.(*uuid.UUID)
 	fc.Result = res
-	return ec.marshalNUUID2githubᚗcomᚋgoogleᚋuuidᚐUUID(ctx, field.Selections, res)
+	return ec.marshalOUUID2ᚖgithubᚗcomᚋgoogleᚋuuidᚐUUID(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Trip_courier_id(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -4112,14 +4027,11 @@ func (ec *executionContext) _Trip_start_location(ctx context.Context, field grap
 		return graphql.Null
 	}
 	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
 		return graphql.Null
 	}
 	res := resTmp.(*model.Gps)
 	fc.Result = res
-	return ec.marshalNGps2ᚖgithubᚗcomᚋ3dw1nM0535ᚋuziᚑapiᚋgqlᚋmodelᚐGps(ctx, field.Selections, res)
+	return ec.marshalOGps2ᚖgithubᚗcomᚋ3dw1nM0535ᚋuziᚑapiᚋgqlᚋmodelᚐGps(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Trip_start_location(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -4162,14 +4074,11 @@ func (ec *executionContext) _Trip_end_location(ctx context.Context, field graphq
 		return graphql.Null
 	}
 	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
 		return graphql.Null
 	}
 	res := resTmp.(*model.Gps)
 	fc.Result = res
-	return ec.marshalNGps2ᚖgithubᚗcomᚋ3dw1nM0535ᚋuziᚑapiᚋgqlᚋmodelᚐGps(ctx, field.Selections, res)
+	return ec.marshalOGps2ᚖgithubᚗcomᚋ3dw1nM0535ᚋuziᚑapiᚋgqlᚋmodelᚐGps(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Trip_end_location(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -4600,8 +4509,52 @@ func (ec *executionContext) fieldContext_TripRoute_availableProducts(ctx context
 	return fc, nil
 }
 
-func (ec *executionContext) _TripUpdates_status(ctx context.Context, field graphql.CollectedField, obj *model.TripUpdates) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_TripUpdates_status(ctx, field)
+func (ec *executionContext) _TripUpdate_id(ctx context.Context, field graphql.CollectedField, obj *model.TripUpdate) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_TripUpdate_id(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.ID, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(uuid.UUID)
+	fc.Result = res
+	return ec.marshalNUUID2githubᚗcomᚋgoogleᚋuuidᚐUUID(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_TripUpdate_id(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "TripUpdate",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type UUID does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _TripUpdate_status(ctx context.Context, field graphql.CollectedField, obj *model.TripUpdate) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_TripUpdate_status(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -4631,102 +4584,14 @@ func (ec *executionContext) _TripUpdates_status(ctx context.Context, field graph
 	return ec.marshalNTripStatus2githubᚗcomᚋ3dw1nM0535ᚋuziᚑapiᚋgqlᚋmodelᚐTripStatus(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_TripUpdates_status(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_TripUpdate_status(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
-		Object:     "TripUpdates",
+		Object:     "TripUpdate",
 		Field:      field,
 		IsMethod:   false,
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("field of type TripStatus does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _UnixTime_unixTime(ctx context.Context, field graphql.CollectedField, obj *model.UnixTime) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_UnixTime_unixTime(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.UnixTime, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(int)
-	fc.Result = res
-	return ec.marshalNInt2int(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_UnixTime_unixTime(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "UnixTime",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type Int does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _UnixTime_timeStamp(ctx context.Context, field graphql.CollectedField, obj *model.UnixTime) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_UnixTime_timeStamp(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.TimeStamp, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(string)
-	fc.Result = res
-	return ec.marshalNString2string(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_UnixTime_timeStamp(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "UnixTime",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
 		},
 	}
 	return fc, nil
@@ -7256,7 +7121,7 @@ func (ec *executionContext) unmarshalInputCreateTripInput(ctx context.Context, o
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"tripInput", "tripProduct"}
+	fieldsInOrder := [...]string{"tripInput", "tripProductId"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -7265,18 +7130,18 @@ func (ec *executionContext) unmarshalInputCreateTripInput(ctx context.Context, o
 		switch k {
 		case "tripInput":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("tripInput"))
-			data, err := ec.unmarshalNTripInput2ᚖgithubᚗcomᚋ3dw1nM0535ᚋuziᚑapiᚋgqlᚋmodelᚐTripInput(ctx, v)
+			data, err := ec.unmarshalNTripRouteInput2ᚖgithubᚗcomᚋ3dw1nM0535ᚋuziᚑapiᚋgqlᚋmodelᚐTripRouteInput(ctx, v)
 			if err != nil {
 				return it, err
 			}
 			it.TripInput = data
-		case "tripProduct":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("tripProduct"))
+		case "tripProductId":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("tripProductId"))
 			data, err := ec.unmarshalNString2string(ctx, v)
 			if err != nil {
 				return it, err
 			}
-			it.TripProduct = data
+			it.TripProductID = data
 		}
 	}
 
@@ -8111,8 +7976,6 @@ func (ec *executionContext) _Subscription(ctx context.Context, sel ast.Selection
 	}
 
 	switch fields[0].Name {
-	case "currentTime":
-		return ec._Subscription_currentTime(ctx, fields[0])
 	case "tripUpdates":
 		return ec._Subscription_tripUpdates(ctx, fields[0])
 	default:
@@ -8138,9 +8001,6 @@ func (ec *executionContext) _Trip(ctx context.Context, sel ast.SelectionSet, obj
 			}
 		case "courier_id":
 			out.Values[i] = ec._Trip_courier_id(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
 		case "user_id":
 			out.Values[i] = ec._Trip_user_id(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
@@ -8148,14 +8008,8 @@ func (ec *executionContext) _Trip(ctx context.Context, sel ast.SelectionSet, obj
 			}
 		case "start_location":
 			out.Values[i] = ec._Trip_start_location(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
 		case "end_location":
 			out.Values[i] = ec._Trip_end_location(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
 		case "status":
 			out.Values[i] = ec._Trip_status(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
@@ -8243,63 +8097,24 @@ func (ec *executionContext) _TripRoute(ctx context.Context, sel ast.SelectionSet
 	return out
 }
 
-var tripUpdatesImplementors = []string{"TripUpdates"}
+var tripUpdateImplementors = []string{"TripUpdate"}
 
-func (ec *executionContext) _TripUpdates(ctx context.Context, sel ast.SelectionSet, obj *model.TripUpdates) graphql.Marshaler {
-	fields := graphql.CollectFields(ec.OperationContext, sel, tripUpdatesImplementors)
+func (ec *executionContext) _TripUpdate(ctx context.Context, sel ast.SelectionSet, obj *model.TripUpdate) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, tripUpdateImplementors)
 
 	out := graphql.NewFieldSet(fields)
 	deferred := make(map[string]*graphql.FieldSet)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
-			out.Values[i] = graphql.MarshalString("TripUpdates")
+			out.Values[i] = graphql.MarshalString("TripUpdate")
+		case "id":
+			out.Values[i] = ec._TripUpdate_id(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
 		case "status":
-			out.Values[i] = ec._TripUpdates_status(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
-		default:
-			panic("unknown field " + strconv.Quote(field.Name))
-		}
-	}
-	out.Dispatch(ctx)
-	if out.Invalids > 0 {
-		return graphql.Null
-	}
-
-	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
-
-	for label, dfs := range deferred {
-		ec.processDeferredGroup(graphql.DeferredGroup{
-			Label:    label,
-			Path:     graphql.GetPath(ctx),
-			FieldSet: dfs,
-			Context:  ctx,
-		})
-	}
-
-	return out
-}
-
-var unixTimeImplementors = []string{"UnixTime"}
-
-func (ec *executionContext) _UnixTime(ctx context.Context, sel ast.SelectionSet, obj *model.UnixTime) graphql.Marshaler {
-	fields := graphql.CollectFields(ec.OperationContext, sel, unixTimeImplementors)
-
-	out := graphql.NewFieldSet(fields)
-	deferred := make(map[string]*graphql.FieldSet)
-	for i, field := range fields {
-		switch field.Name {
-		case "__typename":
-			out.Values[i] = graphql.MarshalString("UnixTime")
-		case "unixTime":
-			out.Values[i] = ec._UnixTime_unixTime(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
-		case "timeStamp":
-			out.Values[i] = ec._UnixTime_timeStamp(ctx, field, obj)
+			out.Values[i] = ec._TripUpdate_status(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
@@ -9095,6 +8910,11 @@ func (ec *executionContext) unmarshalNTripRouteInput2githubᚗcomᚋ3dw1nM0535�
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
+func (ec *executionContext) unmarshalNTripRouteInput2ᚖgithubᚗcomᚋ3dw1nM0535ᚋuziᚑapiᚋgqlᚋmodelᚐTripRouteInput(ctx context.Context, v interface{}) (*model.TripRouteInput, error) {
+	res, err := ec.unmarshalInputTripRouteInput(ctx, v)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
 func (ec *executionContext) unmarshalNTripStatus2githubᚗcomᚋ3dw1nM0535ᚋuziᚑapiᚋgqlᚋmodelᚐTripStatus(ctx context.Context, v interface{}) (model.TripStatus, error) {
 	var res model.TripStatus
 	err := res.UnmarshalGQL(v)
@@ -9105,18 +8925,18 @@ func (ec *executionContext) marshalNTripStatus2githubᚗcomᚋ3dw1nM0535ᚋuzi�
 	return v
 }
 
-func (ec *executionContext) marshalNTripUpdates2githubᚗcomᚋ3dw1nM0535ᚋuziᚑapiᚋgqlᚋmodelᚐTripUpdates(ctx context.Context, sel ast.SelectionSet, v model.TripUpdates) graphql.Marshaler {
-	return ec._TripUpdates(ctx, sel, &v)
+func (ec *executionContext) marshalNTripUpdate2githubᚗcomᚋ3dw1nM0535ᚋuziᚑapiᚋgqlᚋmodelᚐTripUpdate(ctx context.Context, sel ast.SelectionSet, v model.TripUpdate) graphql.Marshaler {
+	return ec._TripUpdate(ctx, sel, &v)
 }
 
-func (ec *executionContext) marshalNTripUpdates2ᚖgithubᚗcomᚋ3dw1nM0535ᚋuziᚑapiᚋgqlᚋmodelᚐTripUpdates(ctx context.Context, sel ast.SelectionSet, v *model.TripUpdates) graphql.Marshaler {
+func (ec *executionContext) marshalNTripUpdate2ᚖgithubᚗcomᚋ3dw1nM0535ᚋuziᚑapiᚋgqlᚋmodelᚐTripUpdate(ctx context.Context, sel ast.SelectionSet, v *model.TripUpdate) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
 		}
 		return graphql.Null
 	}
-	return ec._TripUpdates(ctx, sel, v)
+	return ec._TripUpdate(ctx, sel, v)
 }
 
 func (ec *executionContext) unmarshalNUUID2githubᚗcomᚋgoogleᚋuuidᚐUUID(ctx context.Context, v interface{}) (uuid.UUID, error) {
@@ -9132,20 +8952,6 @@ func (ec *executionContext) marshalNUUID2githubᚗcomᚋgoogleᚋuuidᚐUUID(ctx
 		}
 	}
 	return res
-}
-
-func (ec *executionContext) marshalNUnixTime2githubᚗcomᚋ3dw1nM0535ᚋuziᚑapiᚋgqlᚋmodelᚐUnixTime(ctx context.Context, sel ast.SelectionSet, v model.UnixTime) graphql.Marshaler {
-	return ec._UnixTime(ctx, sel, &v)
-}
-
-func (ec *executionContext) marshalNUnixTime2ᚖgithubᚗcomᚋ3dw1nM0535ᚋuziᚑapiᚋgqlᚋmodelᚐUnixTime(ctx context.Context, sel ast.SelectionSet, v *model.UnixTime) graphql.Marshaler {
-	if v == nil {
-		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
-		}
-		return graphql.Null
-	}
-	return ec._UnixTime(ctx, sel, v)
 }
 
 func (ec *executionContext) unmarshalNUploadFile2githubᚗcomᚋ3dw1nM0535ᚋuziᚑapiᚋgqlᚋmodelᚐUploadFile(ctx context.Context, v interface{}) (model.UploadFile, error) {
@@ -9529,6 +9335,13 @@ func (ec *executionContext) marshalOGeocode2ᚖgithubᚗcomᚋ3dw1nM0535ᚋuzi�
 		return graphql.Null
 	}
 	return ec._Geocode(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalOGps2ᚖgithubᚗcomᚋ3dw1nM0535ᚋuziᚑapiᚋgqlᚋmodelᚐGps(ctx context.Context, sel ast.SelectionSet, v *model.Gps) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._Gps(ctx, sel, v)
 }
 
 func (ec *executionContext) marshalOProduct2ᚖgithubᚗcomᚋ3dw1nM0535ᚋuziᚑapiᚋgqlᚋmodelᚐProduct(ctx context.Context, sel ast.SelectionSet, v *model.Product) graphql.Marshaler {
