@@ -19,6 +19,7 @@ type Querier interface {
 	CreateRoute(ctx context.Context, arg CreateRouteParams) (Route, error)
 	CreateSession(ctx context.Context, arg CreateSessionParams) (Session, error)
 	CreateTrip(ctx context.Context, arg CreateTripParams) (Trip, error)
+	CreateTripCost(ctx context.Context, arg CreateTripCostParams) (Trip, error)
 	CreateUser(ctx context.Context, arg CreateUserParams) (User, error)
 	CreateUserUpload(ctx context.Context, arg CreateUserUploadParams) (Upload, error)
 	CreateVehicle(ctx context.Context, arg CreateVehicleParams) (Vehicle, error)
@@ -36,7 +37,9 @@ type Querier interface {
 	IsUserOnboarding(ctx context.Context, id uuid.UUID) (bool, error)
 	SetCourierStatus(ctx context.Context, arg SetCourierStatusParams) (Courier, error)
 	SetOnboardingStatus(ctx context.Context, arg SetOnboardingStatusParams) (User, error)
+	SetTripStatus(ctx context.Context, arg SetTripStatusParams) (Trip, error)
 	TrackCourierLocation(ctx context.Context, arg TrackCourierLocationParams) (Courier, error)
+	UnassignTripToCourier(ctx context.Context, id uuid.UUID) (Courier, error)
 	UpdateUpload(ctx context.Context, arg UpdateUploadParams) (Upload, error)
 	UpdateUserName(ctx context.Context, arg UpdateUserNameParams) (User, error)
 }

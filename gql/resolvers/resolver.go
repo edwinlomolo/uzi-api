@@ -18,7 +18,7 @@ type Resolver struct {
 	upload.UploadService
 	courier.CourierService
 	location.LocationService
-	trip.TripService
+	tripService trip.TripService
 }
 
 func New() gql.Config {

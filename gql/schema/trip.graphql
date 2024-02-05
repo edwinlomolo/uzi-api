@@ -11,3 +11,7 @@ type Trip {
   created_at: Time
   updated_at: Time
 }
+
+type TripUpdates {
+  status: TripStatus!
+}

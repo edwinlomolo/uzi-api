@@ -3,7 +3,6 @@ package courier
 import (
 	"context"
 	"database/sql"
-	"encoding/json"
 	"errors"
 	"fmt"
 
@@ -28,13 +27,7 @@ type CourierService interface {
 	TrackCourierLocation(userID uuid.UUID, input model.GpsInput) error
 	UpdateCourierStatus(userID uuid.UUID, status model.CourierStatus) (bool, error)
 	GetNearbyAvailableProducts(params sqlStore.GetNearbyAvailableCourierProductsParams, tripDistance int) ([]*model.Product, error)
-	GetCourierNearPickup(point model.GpsInput) ([]*model.Courier, error)
 	GetCourierProduct(product_id uuid.UUID) (*model.Product, error)
-}
-
-type point struct {
-	Type        string    `json:"type"`
-	Coordinates []float64 `json:"coordinates"`
 }
 
 type courierClient struct {
@@ -176,52 +169,6 @@ func (c *courierClient) GetNearbyAvailableProducts(params sqlStore.GetNearbyAvai
 	}
 
 	return nearbyProducts, nil
-}
-
-func (c *courierClient) GetCourierNearPickup(point model.GpsInput) ([]*model.Courier, error) {
-	var couriers []*model.Courier
-
-	args := sqlStore.GetCourierNearPickupPointParams{
-		Point:  fmt.Sprintf("SRID=4326;POINT(%.8f %.8f)", point.Lng, point.Lat),
-		Radius: 2000,
-	}
-	foundCouriers, err := c.store.GetCourierNearPickupPoint(context.Background(), args)
-	if err == sql.ErrNoRows {
-		return make([]*model.Courier, 0), nil
-	} else if err != nil {
-		uziErr := fmt.Errorf("%s: %v", "getcouriernearpickuppooint", err.Error())
-		c.logger.Errorf(uziErr.Error())
-		return nil, uziErr
-	}
-
-	for _, item := range foundCouriers {
-		courier := &model.Courier{
-			ID:        item.ID,
-			ProductID: item.ProductID.UUID,
-			Location:  parseCourierLocation(item.Location),
-		}
-
-		couriers = append(couriers, courier)
-	}
-
-	return couriers, nil
-}
-
-func parseCourierLocation(p interface{}) *model.Gps {
-	var location *point
-
-	if p != nil {
-		json.Unmarshal([]byte((p).(string)), &location)
-
-		lat := &location.Coordinates[1]
-		lng := &location.Coordinates[0]
-		return &model.Gps{
-			Lat: *lat,
-			Lng: *lng,
-		}
-	} else {
-		return nil
-	}
 }
 
 func (c *courierClient) GetCourierProduct(id uuid.UUID) (*model.Product, error) {

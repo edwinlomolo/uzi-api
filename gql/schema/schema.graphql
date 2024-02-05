@@ -50,12 +50,17 @@ input TripInput {
   location: GpsInput!
 }
 
+input CreateTripInput {
+  tripInput: TripInput!
+  tripProduct: String!
+}
+
 type Query {
   hello: String!
   getCourierDocuments: [Uploads!]!
   searchPlace(textQuery: String!): [Place!]!
   reverseGeocode(place: GpsInput!): Geocode
-  makeTripRoute(input: TripRouteInput!): TripRoute!
+  computeTripRoute(input: TripRouteInput!): TripRoute!
   getCourierNearPickupPoint(point: GpsInput!): [Courier!]!
 }
 
@@ -63,6 +68,7 @@ type Mutation {
   createCourierDocument(input: CourierUploadInput!): Boolean!
   trackCourierGps(input: GpsInput!): Boolean!
   setCourierStatus(status: String!): Boolean!
+  createTrip(input: CreateTripInput!): Trip!
 }
 
 # TODO testing purposes
@@ -73,4 +79,5 @@ type UnixTime {
 
 type Subscription {
   currentTime: UnixTime!
+  tripUpdates(tripId: UUID!): TripUpdates!
 }

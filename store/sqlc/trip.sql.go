@@ -7,6 +7,7 @@ package sqlc
 
 import (
 	"context"
+	"database/sql"
 
 	"github.com/google/uuid"
 )
@@ -15,12 +16,12 @@ const assignRouteToTrip = `-- name: AssignRouteToTrip :one
 UPDATE trips
 SET route_id = $1
 WHERE id = $2
-RETURNING id, start_location, end_location, courier_id, user_id, route_id, cost, status, created_at, updated_at
+RETURNING id, start_location, end_location, courier_id, user_id, route_id, product_id, cost, status, created_at, updated_at
 `
 
 type AssignRouteToTripParams struct {
-	RouteID uuid.NullUUID `json:"route_id"`
-	ID      uuid.UUID     `json:"id"`
+	RouteID uuid.UUID `json:"route_id"`
+	ID      uuid.UUID `json:"id"`
 }
 
 func (q *Queries) AssignRouteToTrip(ctx context.Context, arg AssignRouteToTripParams) (Trip, error) {
@@ -33,6 +34,7 @@ func (q *Queries) AssignRouteToTrip(ctx context.Context, arg AssignRouteToTripPa
 		&i.CourierID,
 		&i.UserID,
 		&i.RouteID,
+		&i.ProductID,
 		&i.Cost,
 		&i.Status,
 		&i.CreatedAt,
@@ -41,23 +43,64 @@ func (q *Queries) AssignRouteToTrip(ctx context.Context, arg AssignRouteToTripPa
 	return i, err
 }
 
+const assignTripToCourier = `-- name: AssignTripToCourier :one
+UPDATE couriers
+SET trip_id = $1
+WHERE id = $2
+RETURNING id, verified, status, location, ratings, points, user_id, product_id, trip_id, created_at, updated_at
+`
+
+type AssignTripToCourierParams struct {
+	TripID uuid.NullUUID `json:"trip_id"`
+	ID     uuid.UUID     `json:"id"`
+}
+
+func (q *Queries) AssignTripToCourier(ctx context.Context, arg AssignTripToCourierParams) (Courier, error) {
+	row := q.db.QueryRowContext(ctx, assignTripToCourier, arg.TripID, arg.ID)
+	var i Courier
+	err := row.Scan(
+		&i.ID,
+		&i.Verified,
+		&i.Status,
+		&i.Location,
+		&i.Ratings,
+		&i.Points,
+		&i.UserID,
+		&i.ProductID,
+		&i.TripID,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
 const createTrip = `-- name: CreateTrip :one
 INSERT INTO trips (
-  user_id, start_location, end_location
+  user_id, product_id, courier_id, route_id, start_location, end_location
 ) VALUES (
-  $1, $2, $3
+  $1, $2, $3, $4, $5, $6
 )
-RETURNING id, start_location, end_location, courier_id, user_id, route_id, cost, status, created_at, updated_at
+RETURNING id, start_location, end_location, courier_id, user_id, route_id, product_id, cost, status, created_at, updated_at
 `
 
 type CreateTripParams struct {
-	UserID        uuid.NullUUID `json:"user_id"`
-	StartLocation interface{}   `json:"start_location"`
-	EndLocation   interface{}   `json:"end_location"`
+	UserID        uuid.UUID   `json:"user_id"`
+	ProductID     uuid.UUID   `json:"product_id"`
+	CourierID     uuid.UUID   `json:"courier_id"`
+	RouteID       uuid.UUID   `json:"route_id"`
+	StartLocation interface{} `json:"start_location"`
+	EndLocation   interface{} `json:"end_location"`
 }
 
 func (q *Queries) CreateTrip(ctx context.Context, arg CreateTripParams) (Trip, error) {
-	row := q.db.QueryRowContext(ctx, createTrip, arg.UserID, arg.StartLocation, arg.EndLocation)
+	row := q.db.QueryRowContext(ctx, createTrip,
+		arg.UserID,
+		arg.ProductID,
+		arg.CourierID,
+		arg.RouteID,
+		arg.StartLocation,
+		arg.EndLocation,
+	)
 	var i Trip
 	err := row.Scan(
 		&i.ID,
@@ -66,8 +109,97 @@ func (q *Queries) CreateTrip(ctx context.Context, arg CreateTripParams) (Trip, e
 		&i.CourierID,
 		&i.UserID,
 		&i.RouteID,
+		&i.ProductID,
 		&i.Cost,
 		&i.Status,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
+const createTripCost = `-- name: CreateTripCost :one
+UPDATE trips
+SET cost = $1
+WHERE id = $2
+RETURNING id, start_location, end_location, courier_id, user_id, route_id, product_id, cost, status, created_at, updated_at
+`
+
+type CreateTripCostParams struct {
+	Cost sql.NullString `json:"cost"`
+	ID   uuid.UUID      `json:"id"`
+}
+
+func (q *Queries) CreateTripCost(ctx context.Context, arg CreateTripCostParams) (Trip, error) {
+	row := q.db.QueryRowContext(ctx, createTripCost, arg.Cost, arg.ID)
+	var i Trip
+	err := row.Scan(
+		&i.ID,
+		&i.StartLocation,
+		&i.EndLocation,
+		&i.CourierID,
+		&i.UserID,
+		&i.RouteID,
+		&i.ProductID,
+		&i.Cost,
+		&i.Status,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
+const setTripStatus = `-- name: SetTripStatus :one
+UPDATE trips
+SET status = $1
+WHERE id = $2
+RETURNING id, start_location, end_location, courier_id, user_id, route_id, product_id, cost, status, created_at, updated_at
+`
+
+type SetTripStatusParams struct {
+	Status string    `json:"status"`
+	ID     uuid.UUID `json:"id"`
+}
+
+func (q *Queries) SetTripStatus(ctx context.Context, arg SetTripStatusParams) (Trip, error) {
+	row := q.db.QueryRowContext(ctx, setTripStatus, arg.Status, arg.ID)
+	var i Trip
+	err := row.Scan(
+		&i.ID,
+		&i.StartLocation,
+		&i.EndLocation,
+		&i.CourierID,
+		&i.UserID,
+		&i.RouteID,
+		&i.ProductID,
+		&i.Cost,
+		&i.Status,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
+const unassignTripToCourier = `-- name: UnassignTripToCourier :one
+UPDATE couriers
+SET trip_id = null
+WHERE id = $1
+RETURNING id, verified, status, location, ratings, points, user_id, product_id, trip_id, created_at, updated_at
+`
+
+func (q *Queries) UnassignTripToCourier(ctx context.Context, id uuid.UUID) (Courier, error) {
+	row := q.db.QueryRowContext(ctx, unassignTripToCourier, id)
+	var i Courier
+	err := row.Scan(
+		&i.ID,
+		&i.Verified,
+		&i.Status,
+		&i.Location,
+		&i.Ratings,
+		&i.Points,
+		&i.UserID,
+		&i.ProductID,
+		&i.TripID,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 	)

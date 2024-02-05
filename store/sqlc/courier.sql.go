@@ -13,37 +13,6 @@ import (
 	"github.com/google/uuid"
 )
 
-const assignTripToCourier = `-- name: AssignTripToCourier :one
-UPDATE couriers
-SET trip_id = $1
-WHERE id = $2
-RETURNING id, verified, status, location, ratings, points, user_id, product_id, trip_id, created_at, updated_at
-`
-
-type AssignTripToCourierParams struct {
-	TripID uuid.NullUUID `json:"trip_id"`
-	ID     uuid.UUID     `json:"id"`
-}
-
-func (q *Queries) AssignTripToCourier(ctx context.Context, arg AssignTripToCourierParams) (Courier, error) {
-	row := q.db.QueryRowContext(ctx, assignTripToCourier, arg.TripID, arg.ID)
-	var i Courier
-	err := row.Scan(
-		&i.ID,
-		&i.Verified,
-		&i.Status,
-		&i.Location,
-		&i.Ratings,
-		&i.Points,
-		&i.UserID,
-		&i.ProductID,
-		&i.TripID,
-		&i.CreatedAt,
-		&i.UpdatedAt,
-	)
-	return i, err
-}
-
 const createCourier = `-- name: CreateCourier :one
 INSERT INTO couriers (
   user_id

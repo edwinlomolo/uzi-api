@@ -18,12 +18,6 @@ couriers
 WHERE user_id = $1
 LIMIT 1;
 
--- name: AssignTripToCourier :one
-UPDATE couriers
-SET trip_id = $1
-WHERE id = $2
-RETURNING *;
-
 -- name: IsCourier :one
 SELECT verified FROM
 couriers

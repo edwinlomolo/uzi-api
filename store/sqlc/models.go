@@ -58,9 +58,10 @@ type Trip struct {
 	ID            uuid.UUID      `json:"id"`
 	StartLocation interface{}    `json:"start_location"`
 	EndLocation   interface{}    `json:"end_location"`
-	CourierID     uuid.NullUUID  `json:"courier_id"`
-	UserID        uuid.NullUUID  `json:"user_id"`
-	RouteID       uuid.NullUUID  `json:"route_id"`
+	CourierID     uuid.UUID      `json:"courier_id"`
+	UserID        uuid.UUID      `json:"user_id"`
+	RouteID       uuid.UUID      `json:"route_id"`
+	ProductID     uuid.UUID      `json:"product_id"`
 	Cost          sql.NullString `json:"cost"`
 	Status        string         `json:"status"`
 	CreatedAt     time.Time      `json:"created_at"`

@@ -6,17 +6,19 @@ package resolvers
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	"github.com/3dw1nM0535/uzi-api/gql"
 	"github.com/3dw1nM0535/uzi-api/gql/model"
 	"github.com/3dw1nM0535/uzi-api/services/location"
+	"github.com/3dw1nM0535/uzi-api/store/sqlc"
 	"github.com/google/uuid"
 )
 
 // CreateCourierDocument is the resolver for the createCourierDocument field.
 func (r *mutationResolver) CreateCourierDocument(ctx context.Context, input model.CourierUploadInput) (bool, error) {
-	courierID := GetCourierIDFromRequestContext(ctx, r)
+	courierID := getCourierIDFromResolverContext(ctx, r)
 
 	err := r.CreateCourierUpload(input.Type.String(), input.URI, courierID)
 	if err != nil {
@@ -28,26 +30,31 @@ func (r *mutationResolver) CreateCourierDocument(ctx context.Context, input mode
 
 // TrackCourierGps is the resolver for the trackCourierGps field.
 func (r *mutationResolver) TrackCourierGps(ctx context.Context, input model.GpsInput) (bool, error) {
-	userID := ctx.Value("userID").(string)
-	uid, err := uuid.Parse(userID)
-	if err != nil {
-		panic(err)
-	}
+	userID := stringToUUID(ctx.Value("userID").(string))
 
-	go r.TrackCourierLocation(uid, input)
+	go r.TrackCourierLocation(userID, input)
 	return true, nil
 }
 
 // SetCourierStatus is the resolver for the setCourierStatus field.
 func (r *mutationResolver) SetCourierStatus(ctx context.Context, status string) (bool, error) {
-	userID := ctx.Value("userID").(string)
-	uid, err := uuid.Parse(userID)
-	if err != nil {
-		panic(err)
-	}
+	userID := stringToUUID(ctx.Value("userID").(string))
 
 	s := model.CourierStatus(status)
-	return r.UpdateCourierStatus(uid, s)
+	return r.UpdateCourierStatus(userID, s)
+}
+
+// CreateTrip is the resolver for the createTrip field.
+func (r *mutationResolver) CreateTrip(ctx context.Context, input model.CreateTripInput) (*model.Trip, error) {
+	userID := stringToUUID(ctx.Value("userID").(string))
+
+	params := sqlc.CreateTripParams{
+		UserID: userID,
+	}
+
+	trip, err := r.tripService.CreateTrip(params)
+
+	return trip, err
 }
 
 // Hello is the resolver for the hello field.
@@ -57,7 +64,7 @@ func (r *queryResolver) Hello(ctx context.Context) (string, error) {
 
 // GetCourierDocuments is the resolver for the getCourierDocuments field.
 func (r *queryResolver) GetCourierDocuments(ctx context.Context) ([]*model.Uploads, error) {
-	courierID := GetCourierIDFromRequestContext(ctx, r)
+	courierID := getCourierIDFromResolverContext(ctx, r)
 
 	uploads, err := r.GetCourierUploads(courierID)
 	if err != nil {
@@ -78,13 +85,13 @@ func (r *queryResolver) ReverseGeocode(ctx context.Context, place model.GpsInput
 }
 
 // GetRoute is the resolver for the getRoute field.
-func (r *queryResolver) MakeTripRoute(ctx context.Context, input model.TripRouteInput) (*model.TripRoute, error) {
-	return r.ComputeTrip(input)
+func (r *queryResolver) ComputeTripRoute(ctx context.Context, input model.TripRouteInput) (*model.TripRoute, error) {
+	return r.tripService.ComputeTripRoute(input)
 }
 
 // GetCourierNearPickupPoint is the resolver for the getCourierNearPickupPoint field.
 func (r *queryResolver) GetCourierNearPickupPoint(ctx context.Context, point model.GpsInput) ([]*model.Courier, error) {
-	return r.GetCourierNearPickup(point)
+	return r.tripService.FindAvailableCourier(point)
 }
 
 // CurrentTime is the resolver for the currentTime field.
@@ -112,6 +119,11 @@ func (r *subscriptionResolver) CurrentTime(ctx context.Context) (<-chan *model.U
 	}()
 
 	return ch, nil
+}
+
+// TripUpdates is the resolver for the tripUpdates field.
+func (r *subscriptionResolver) TripUpdates(ctx context.Context, tripID uuid.UUID) (<-chan *model.TripUpdates, error) {
+	panic(fmt.Errorf("not implemented: TripUpdates - tripUpdates"))
 }
 
 // Mutation returns gql.MutationResolver implementation.

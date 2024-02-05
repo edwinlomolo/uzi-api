@@ -33,6 +33,11 @@ type CourierUploadInput struct {
 	URI  string     `json:"uri"`
 }
 
+type CreateTripInput struct {
+	TripInput   *TripInput `json:"tripInput"`
+	TripProduct string     `json:"tripProduct"`
+}
+
 type Gps struct {
 	Lat float64 `json:"lat"`
 	Lng float64 `json:"lng"`
@@ -107,6 +112,10 @@ type TripRoute struct {
 type TripRouteInput struct {
 	Pickup  *TripInput `json:"pickup"`
 	Dropoff *TripInput `json:"dropoff"`
+}
+
+type TripUpdates struct {
+	Status TripStatus `json:"status"`
 }
 
 type UnixTime struct {
