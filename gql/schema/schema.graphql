@@ -27,6 +27,8 @@ enum TripStatus {
   ARRIVING
   EN_ROUTE
   COMPLETE
+  COURIER_ARRIVING
+  COURIER_FOUND
 }
 
 input CourierUploadInput {
@@ -71,13 +73,6 @@ type Mutation {
   createTrip(input: CreateTripInput!): Trip!
 }
 
-# TODO testing purposes
-type UnixTime {
-  unixTime: Int!
-  timeStamp: String!
-}
-
 type Subscription {
-  currentTime: UnixTime!
   tripUpdates(tripId: UUID!): TripUpdate!
 }

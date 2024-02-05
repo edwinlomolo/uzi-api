@@ -119,11 +119,6 @@ type TripUpdate struct {
 	Status TripStatus `json:"status"`
 }
 
-type UnixTime struct {
-	UnixTime  int    `json:"unixTime"`
-	TimeStamp string `json:"timeStamp"`
-}
-
 type Uploads struct {
 	ID           uuid.UUID                `json:"ID"`
 	Type         string                   `json:"type"`
@@ -192,20 +187,24 @@ func (e CourierStatus) MarshalGQL(w io.Writer) {
 type TripStatus string
 
 const (
-	TripStatusArriving TripStatus = "ARRIVING"
-	TripStatusEnRoute  TripStatus = "EN_ROUTE"
-	TripStatusComplete TripStatus = "COMPLETE"
+	TripStatusArriving        TripStatus = "ARRIVING"
+	TripStatusEnRoute         TripStatus = "EN_ROUTE"
+	TripStatusComplete        TripStatus = "COMPLETE"
+	TripStatusCourierArriving TripStatus = "COURIER_ARRIVING"
+	TripStatusCourierFound    TripStatus = "COURIER_FOUND"
 )
 
 var AllTripStatus = []TripStatus{
 	TripStatusArriving,
 	TripStatusEnRoute,
 	TripStatusComplete,
+	TripStatusCourierArriving,
+	TripStatusCourierFound,
 }
 
 func (e TripStatus) IsValid() bool {
 	switch e {
-	case TripStatusArriving, TripStatusEnRoute, TripStatusComplete:
+	case TripStatusArriving, TripStatusEnRoute, TripStatusComplete, TripStatusCourierArriving, TripStatusCourierFound:
 		return true
 	}
 	return false
