@@ -1,8 +1,6 @@
 package resolvers
 
 import (
-	"sync"
-
 	"github.com/3dw1nM0535/uzi-api/gql"
 	"github.com/3dw1nM0535/uzi-api/internal/cache"
 	"github.com/3dw1nM0535/uzi-api/internal/route"
@@ -26,7 +24,6 @@ type Resolver struct {
 	routeService route.Route
 	tripService  trip.TripService
 	redisClient  *redis.Client
-	mutex        sync.Mutex
 }
 
 func New() gql.Config {
@@ -37,7 +34,6 @@ func New() gql.Config {
 		route.Routing,
 		trip.Trip,
 		cache.Redis,
-		sync.Mutex{},
 	}}
 
 	return c

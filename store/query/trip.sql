@@ -35,19 +35,19 @@ SET route_id = $1
 WHERE id = $2
 RETURNING *;
 
--- name: AssignTripToCourier :one
+-- name: AssignCourierToTrip :one
 UPDATE couriers
 SET trip_id = $1
 WHERE id = $2
 RETURNING *;
 
--- name: AssignCourierToTrip :one
+-- name: AssignTripToCourier :one
 UPDATE trips
 SET courier_id = $1
 WHERE id = $2
 RETURNING *;
 
--- name: UnassignTripToCourier :one
+-- name: UnassignCourierTrip :one
 UPDATE couriers
 SET trip_id = null
 WHERE id = $1
@@ -64,3 +64,8 @@ UPDATE trips
 SET status = $1
 WHERE id = $2
 RETURNING *;
+
+-- name: GetCourierAssignedTrip :one
+SELECT * FROM trips
+WHERE courier_id = $1
+LIMIT 1;

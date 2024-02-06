@@ -14,30 +14,30 @@ import (
 )
 
 const assignCourierToTrip = `-- name: AssignCourierToTrip :one
-UPDATE trips
-SET courier_id = $1
+UPDATE couriers
+SET trip_id = $1
 WHERE id = $2
-RETURNING id, start_location, end_location, courier_id, user_id, route_id, product_id, cost, status, created_at, updated_at
+RETURNING id, verified, status, location, ratings, points, user_id, product_id, trip_id, created_at, updated_at
 `
 
 type AssignCourierToTripParams struct {
-	CourierID uuid.NullUUID `json:"courier_id"`
-	ID        uuid.UUID     `json:"id"`
+	TripID uuid.NullUUID `json:"trip_id"`
+	ID     uuid.UUID     `json:"id"`
 }
 
-func (q *Queries) AssignCourierToTrip(ctx context.Context, arg AssignCourierToTripParams) (Trip, error) {
-	row := q.db.QueryRowContext(ctx, assignCourierToTrip, arg.CourierID, arg.ID)
-	var i Trip
+func (q *Queries) AssignCourierToTrip(ctx context.Context, arg AssignCourierToTripParams) (Courier, error) {
+	row := q.db.QueryRowContext(ctx, assignCourierToTrip, arg.TripID, arg.ID)
+	var i Courier
 	err := row.Scan(
 		&i.ID,
-		&i.StartLocation,
-		&i.EndLocation,
-		&i.CourierID,
-		&i.UserID,
-		&i.RouteID,
-		&i.ProductID,
-		&i.Cost,
+		&i.Verified,
 		&i.Status,
+		&i.Location,
+		&i.Ratings,
+		&i.Points,
+		&i.UserID,
+		&i.ProductID,
+		&i.TripID,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 	)
@@ -76,30 +76,30 @@ func (q *Queries) AssignRouteToTrip(ctx context.Context, arg AssignRouteToTripPa
 }
 
 const assignTripToCourier = `-- name: AssignTripToCourier :one
-UPDATE couriers
-SET trip_id = $1
+UPDATE trips
+SET courier_id = $1
 WHERE id = $2
-RETURNING id, verified, status, location, ratings, points, user_id, product_id, trip_id, created_at, updated_at
+RETURNING id, start_location, end_location, courier_id, user_id, route_id, product_id, cost, status, created_at, updated_at
 `
 
 type AssignTripToCourierParams struct {
-	TripID uuid.NullUUID `json:"trip_id"`
-	ID     uuid.UUID     `json:"id"`
+	CourierID uuid.NullUUID `json:"courier_id"`
+	ID        uuid.UUID     `json:"id"`
 }
 
-func (q *Queries) AssignTripToCourier(ctx context.Context, arg AssignTripToCourierParams) (Courier, error) {
-	row := q.db.QueryRowContext(ctx, assignTripToCourier, arg.TripID, arg.ID)
-	var i Courier
+func (q *Queries) AssignTripToCourier(ctx context.Context, arg AssignTripToCourierParams) (Trip, error) {
+	row := q.db.QueryRowContext(ctx, assignTripToCourier, arg.CourierID, arg.ID)
+	var i Trip
 	err := row.Scan(
 		&i.ID,
-		&i.Verified,
-		&i.Status,
-		&i.Location,
-		&i.Ratings,
-		&i.Points,
+		&i.StartLocation,
+		&i.EndLocation,
+		&i.CourierID,
 		&i.UserID,
+		&i.RouteID,
 		&i.ProductID,
-		&i.TripID,
+		&i.Cost,
+		&i.Status,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 	)
@@ -199,6 +199,31 @@ func (q *Queries) FindAvailableCourier(ctx context.Context, arg FindAvailableCou
 	row := q.db.QueryRowContext(ctx, findAvailableCourier, arg.Point, arg.Radius)
 	var i FindAvailableCourierRow
 	err := row.Scan(&i.ID, &i.ProductID, &i.Location)
+	return i, err
+}
+
+const getCourierAssignedTrip = `-- name: GetCourierAssignedTrip :one
+SELECT id, start_location, end_location, courier_id, user_id, route_id, product_id, cost, status, created_at, updated_at FROM trips
+WHERE courier_id = $1
+LIMIT 1
+`
+
+func (q *Queries) GetCourierAssignedTrip(ctx context.Context, courierID uuid.NullUUID) (Trip, error) {
+	row := q.db.QueryRowContext(ctx, getCourierAssignedTrip, courierID)
+	var i Trip
+	err := row.Scan(
+		&i.ID,
+		&i.StartLocation,
+		&i.EndLocation,
+		&i.CourierID,
+		&i.UserID,
+		&i.RouteID,
+		&i.ProductID,
+		&i.Cost,
+		&i.Status,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
 	return i, err
 }
 
@@ -358,15 +383,15 @@ func (q *Queries) SetTripStatus(ctx context.Context, arg SetTripStatusParams) (T
 	return i, err
 }
 
-const unassignTripToCourier = `-- name: UnassignTripToCourier :one
+const unassignCourierTrip = `-- name: UnassignCourierTrip :one
 UPDATE couriers
 SET trip_id = null
 WHERE id = $1
 RETURNING id, verified, status, location, ratings, points, user_id, product_id, trip_id, created_at, updated_at
 `
 
-func (q *Queries) UnassignTripToCourier(ctx context.Context, id uuid.UUID) (Courier, error) {
-	row := q.db.QueryRowContext(ctx, unassignTripToCourier, id)
+func (q *Queries) UnassignCourierTrip(ctx context.Context, id uuid.UUID) (Courier, error) {
+	row := q.db.QueryRowContext(ctx, unassignCourierTrip, id)
 	var i Courier
 	err := row.Scan(
 		&i.ID,

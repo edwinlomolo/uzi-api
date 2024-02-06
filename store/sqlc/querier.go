@@ -12,9 +12,9 @@ import (
 )
 
 type Querier interface {
-	AssignCourierToTrip(ctx context.Context, arg AssignCourierToTripParams) (Trip, error)
+	AssignCourierToTrip(ctx context.Context, arg AssignCourierToTripParams) (Courier, error)
 	AssignRouteToTrip(ctx context.Context, arg AssignRouteToTripParams) (Trip, error)
-	AssignTripToCourier(ctx context.Context, arg AssignTripToCourierParams) (Courier, error)
+	AssignTripToCourier(ctx context.Context, arg AssignTripToCourierParams) (Trip, error)
 	CreateCourier(ctx context.Context, userID uuid.NullUUID) (Courier, error)
 	CreateCourierUpload(ctx context.Context, arg CreateCourierUploadParams) (Upload, error)
 	CreateRoute(ctx context.Context, arg CreateRouteParams) (Route, error)
@@ -27,6 +27,7 @@ type Querier interface {
 	FindAvailableCourier(ctx context.Context, arg FindAvailableCourierParams) (FindAvailableCourierRow, error)
 	FindByPhone(ctx context.Context, phone string) (User, error)
 	FindUserByID(ctx context.Context, id uuid.UUID) (User, error)
+	GetCourierAssignedTrip(ctx context.Context, courierID uuid.NullUUID) (Trip, error)
 	GetCourierByID(ctx context.Context, id uuid.UUID) (Courier, error)
 	GetCourierByUserID(ctx context.Context, userID uuid.NullUUID) (Courier, error)
 	GetCourierNearPickupPoint(ctx context.Context, arg GetCourierNearPickupPointParams) ([]GetCourierNearPickupPointRow, error)
@@ -43,7 +44,7 @@ type Querier interface {
 	SetOnboardingStatus(ctx context.Context, arg SetOnboardingStatusParams) (User, error)
 	SetTripStatus(ctx context.Context, arg SetTripStatusParams) (Trip, error)
 	TrackCourierLocation(ctx context.Context, arg TrackCourierLocationParams) (Courier, error)
-	UnassignTripToCourier(ctx context.Context, id uuid.UUID) (Courier, error)
+	UnassignCourierTrip(ctx context.Context, id uuid.UUID) (Courier, error)
 	UpdateUpload(ctx context.Context, arg UpdateUploadParams) (Upload, error)
 	UpdateUserName(ctx context.Context, arg UpdateUserNameParams) (User, error)
 }

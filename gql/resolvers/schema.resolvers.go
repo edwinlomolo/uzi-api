@@ -8,11 +8,9 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"time"
 
 	"github.com/3dw1nM0535/uzi-api/gql"
 	"github.com/3dw1nM0535/uzi-api/gql/model"
-	"github.com/3dw1nM0535/uzi-api/internal/logger"
 	"github.com/3dw1nM0535/uzi-api/services/location"
 	t "github.com/3dw1nM0535/uzi-api/services/trip"
 	"github.com/3dw1nM0535/uzi-api/store/sqlc"
@@ -49,9 +47,6 @@ func (r *mutationResolver) SetCourierStatus(ctx context.Context, status string) 
 
 // CreateTrip is the resolver for the createTrip field.
 func (r *mutationResolver) CreateTrip(ctx context.Context, input model.CreateTripInput) (*model.Trip, error) {
-	r.mutex.Lock()
-	defer r.mutex.Unlock()
-
 	userID := stringToUUID(ctx.Value("userID").(string))
 
 	params := sqlc.CreateTripParams{
@@ -60,85 +55,9 @@ func (r *mutationResolver) CreateTrip(ctx context.Context, input model.CreateTri
 		StartLocation: fmt.Sprintf("SRID=4326;POINT(%.8f %.8f)", input.TripInput.Pickup.Location.Lat, input.TripInput.Pickup.Location.Lng),
 		EndLocation:   fmt.Sprintf("SRID=4326;POINT(%.8f %.8f)", input.TripInput.Dropoff.Location.Lat, input.TripInput.Dropoff.Location.Lng),
 	}
-
 	trip, err := r.tripService.CreateTrip(params)
-	tripUpdate := model.TripUpdate{ID: trip.ID}
 
-	timeoutCtx, cancel := context.WithTimeout(context.Background(), time.Minute*5)
-	go func() {
-		logger.Logger.Infoln("Goroutine started...")
-		defer cancel()
-
-		for {
-			select {
-			case <-timeoutCtx.Done():
-				tripUpdate.Status = model.TripStatusCourierNotFound
-				u, marshalErr := json.Marshal(tripUpdate)
-				if marshalErr != nil {
-					logger.Logger.Errorf(marshalErr.Error())
-					logger.Logger.Infoln("Goroutine exiting due to error...")
-					return
-				}
-
-				notFoundErr := r.redisClient.Publish(context.Background(), t.TRIP_UPDATES, u).Err()
-				if notFoundErr != nil {
-					logger.Logger.Errorf(notFoundErr.Error())
-					logger.Logger.Infoln("Goroutine exiting due to error...")
-					return
-				}
-				logger.Logger.Infoln("Goroutine exiting")
-
-				return
-			default:
-				courier, err := r.tripService.FindAvailableCourier(*input.TripInput.Pickup.Location)
-				if err != nil {
-					logger.Logger.Errorf(err.Error())
-					logger.Logger.Infoln("Goroutine exiting due to error...")
-					return
-				}
-				logger.Logger.Infoln("Starting...")
-
-				if courier != nil {
-					logger.Logger.Infoln("Publishing found...")
-					tripUpdate.Status = model.TripStatusCourierFound
-					u, marshalErr := json.Marshal(tripUpdate)
-					if marshalErr != nil {
-						logger.Logger.Errorf(marshalErr.Error())
-						return
-					}
-
-					foundErr := r.redisClient.Publish(context.Background(), t.TRIP_UPDATES, u).Err()
-					if foundErr != nil {
-						logger.Logger.Errorf(foundErr.Error())
-						return
-					}
-
-					err := r.tripService.AssignTripToCourier(trip.ID, courier.ID)
-					if err != nil {
-						logger.Logger.Errorf(err.Error())
-						return
-					} else {
-						logger.Logger.Infoln("Courier assigned...")
-						logger.Logger.Infoln("Publishing arriving...")
-						tripUpdate.Status = model.TripStatusCourierArriving
-						u, marshalErr = json.Marshal(tripUpdate)
-						if marshalErr != nil {
-							logger.Logger.Errorf(marshalErr.Error())
-							return
-						}
-
-						arrivingErr := r.redisClient.Publish(context.Background(), t.TRIP_UPDATES, u).Err()
-						if arrivingErr != nil {
-							logger.Logger.Errorf(arrivingErr.Error())
-							return
-						}
-					}
-					logger.Logger.Infoln("Goroutine exiting due to courier found...")
-					return
-				}
-			}
-		}
-	}()
+	r.tripService.MatchCourier(trip.ID, *input.TripInput.Pickup.Location)
 
 	return trip, err
 }
@@ -194,11 +113,9 @@ func (r *subscriptionResolver) TripUpdates(ctx context.Context, tripID uuid.UUID
 				return
 			}
 			var update *model.TripUpdate
-			fmt.Println(msg.Payload)
 			if err := json.Unmarshal([]byte(msg.Payload), &update); err != nil {
 				return
 			}
-			fmt.Println(update)
 			if update.ID == tripID {
 				ch <- update
 			}
