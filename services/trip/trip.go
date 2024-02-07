@@ -26,7 +26,7 @@ const (
 )
 
 var (
-	CourierAlreadyAssigned = errors.New("courier has active trip")
+	ErrCourierAlreadyAssigned = errors.New("courier has active trip")
 )
 
 type TripService interface {
@@ -107,7 +107,7 @@ func (t *tripClient) AssignCourierToTrip(tripID, courierID uuid.UUID) error {
 
 	trip, err := t.getCourierAssignedTrip(courierID)
 	if trip != nil {
-		return CourierAlreadyAssigned
+		return ErrCourierAlreadyAssigned
 	} else if err != nil {
 		return err
 	}
@@ -327,7 +327,7 @@ func (t *tripClient) MatchCourier(tripID uuid.UUID, pickup model.GpsInput) {
 					assignErr := t.AssignCourierToTrip(tripID, courier.ID)
 					if assignErr == nil {
 						return
-					} else if assignErr != nil && errors.Is(assignErr, CourierAlreadyAssigned) {
+					} else if assignErr != nil && errors.Is(assignErr, ErrCourierAlreadyAssigned) {
 						continue
 					} else if assignErr != nil {
 						logger.Logger.Errorf(err.Error())

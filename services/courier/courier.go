@@ -15,7 +15,8 @@ import (
 )
 
 var (
-	Courier CourierService
+	ErrNoCourierErr = errors.New("no courier found")
+	Courier         CourierService
 )
 
 type CourierService interface {
@@ -90,8 +91,7 @@ func (c *courierClient) getCourier(userID uuid.UUID) (*model.Courier, error) {
 	var courier model.Courier
 	foundCourier, err := c.store.GetCourierByUserID(context.Background(), uuid.NullUUID{UUID: userID, Valid: true})
 	if err == sql.ErrNoRows {
-		noCourierErr := errors.New("no courier found")
-		uziErr := fmt.Errorf("%s:%v", "nocourierfound", noCourierErr.Error())
+		uziErr := fmt.Errorf("%s:%v", "nocourierfound", ErrNoCourierErr.Error())
 		c.logger.Errorf(uziErr.Error())
 		return nil, uziErr
 	} else if err != nil {
