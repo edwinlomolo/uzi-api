@@ -34,8 +34,10 @@ type CourierUploadInput struct {
 }
 
 type CreateTripInput struct {
-	TripInput     *TripRouteInput `json:"tripInput"`
-	TripProductID string          `json:"tripProductId"`
+	TripInput       *TripRouteInput     `json:"tripInput"`
+	TripProductID   string              `json:"tripProductId"`
+	Recipient       *TripRecipientInput `json:"recipient"`
+	ConfirmedPickup *TripInput          `json:"confirmedPickup"`
 }
 
 type Gps struct {
@@ -62,6 +64,18 @@ type Product struct {
 	Price       int        `json:"price"`
 	CreatedAt   *time.Time `json:"created_at,omitempty"`
 	UpdatedAt   *time.Time `json:"updated_at,omitempty"`
+}
+
+type Recipient struct {
+	ID           uuid.UUID  `json:"id"`
+	Name         string     `json:"name"`
+	BuildingName *string    `json:"building_name,omitempty"`
+	UnitName     *string    `json:"unit_name,omitempty"`
+	Phone        string     `json:"phone"`
+	TripID       uuid.UUID  `json:"trip_id"`
+	Trip         *Trip      `json:"trip"`
+	CreatedAt    *time.Time `json:"created_at,omitempty"`
+	UpdatedAt    *time.Time `json:"updated_at,omitempty"`
 }
 
 type Route struct {
@@ -93,6 +107,7 @@ type Trip struct {
 	Cost          *string    `json:"cost,omitempty"`
 	RouteID       *uuid.UUID `json:"route_id,omitempty"`
 	Route         *Route     `json:"route,omitempty"`
+	Recipient     *Recipient `json:"recipient"`
 	CreatedAt     *time.Time `json:"created_at,omitempty"`
 	UpdatedAt     *time.Time `json:"updated_at,omitempty"`
 }
@@ -101,6 +116,13 @@ type TripInput struct {
 	PlaceID          string    `json:"placeId"`
 	FormattedAddress string    `json:"formattedAddress"`
 	Location         *GpsInput `json:"location"`
+}
+
+type TripRecipientInput struct {
+	Name         string  `json:"name"`
+	BuildingName *string `json:"building_name,omitempty"`
+	UnitName     *string `json:"unit_name,omitempty"`
+	Phone        string  `json:"phone"`
 }
 
 type TripRoute struct {

@@ -36,6 +36,17 @@ type Product struct {
 	UpdatedAt   time.Time `json:"updated_at"`
 }
 
+type Recipient struct {
+	ID        uuid.UUID      `json:"id"`
+	Name      string         `json:"name"`
+	Building  sql.NullString `json:"building"`
+	Unit      sql.NullString `json:"unit"`
+	Phone     string         `json:"phone"`
+	TripID    uuid.NullUUID  `json:"trip_id"`
+	CreatedAt time.Time      `json:"created_at"`
+	UpdatedAt time.Time      `json:"updated_at"`
+}
+
 type Route struct {
 	ID        uuid.UUID   `json:"id"`
 	Distance  string      `json:"distance"`

@@ -69,3 +69,16 @@ RETURNING *;
 SELECT * FROM trips
 WHERE courier_id = $1
 LIMIT 1;
+
+-- name: CreateRecipient :one
+INSERT INTO recipients (
+  name, building, unit, phone, trip_id
+) VALUES (
+  $1, $2, $3, $4, $5
+)
+RETURNING *;
+
+-- name: GetTripRecipient :one
+SELECT * FROM recipients
+WHERE trip_id = $1
+LIMIT 1;

@@ -106,6 +106,45 @@ func (q *Queries) AssignTripToCourier(ctx context.Context, arg AssignTripToCouri
 	return i, err
 }
 
+const createRecipient = `-- name: CreateRecipient :one
+INSERT INTO recipients (
+  name, building, unit, phone, trip_id
+) VALUES (
+  $1, $2, $3, $4, $5
+)
+RETURNING id, name, building, unit, phone, trip_id, created_at, updated_at
+`
+
+type CreateRecipientParams struct {
+	Name     string         `json:"name"`
+	Building sql.NullString `json:"building"`
+	Unit     sql.NullString `json:"unit"`
+	Phone    string         `json:"phone"`
+	TripID   uuid.NullUUID  `json:"trip_id"`
+}
+
+func (q *Queries) CreateRecipient(ctx context.Context, arg CreateRecipientParams) (Recipient, error) {
+	row := q.db.QueryRowContext(ctx, createRecipient,
+		arg.Name,
+		arg.Building,
+		arg.Unit,
+		arg.Phone,
+		arg.TripID,
+	)
+	var i Recipient
+	err := row.Scan(
+		&i.ID,
+		&i.Name,
+		&i.Building,
+		&i.Unit,
+		&i.Phone,
+		&i.TripID,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
 const createTrip = `-- name: CreateTrip :one
 INSERT INTO trips (
   user_id, product_id, start_location, end_location
@@ -346,6 +385,28 @@ func (q *Queries) GetTrip(ctx context.Context, id uuid.UUID) (Trip, error) {
 		&i.ProductID,
 		&i.Cost,
 		&i.Status,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
+const getTripRecipient = `-- name: GetTripRecipient :one
+SELECT id, name, building, unit, phone, trip_id, created_at, updated_at FROM recipients
+WHERE trip_id = $1
+LIMIT 1
+`
+
+func (q *Queries) GetTripRecipient(ctx context.Context, tripID uuid.NullUUID) (Recipient, error) {
+	row := q.db.QueryRowContext(ctx, getTripRecipient, tripID)
+	var i Recipient
+	err := row.Scan(
+		&i.ID,
+		&i.Name,
+		&i.Building,
+		&i.Unit,
+		&i.Phone,
+		&i.TripID,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 	)

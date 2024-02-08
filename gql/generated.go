@@ -46,7 +46,9 @@ type ResolverRoot interface {
 	Courier() CourierResolver
 	Mutation() MutationResolver
 	Query() QueryResolver
+	Recipient() RecipientResolver
 	Subscription() SubscriptionResolver
+	Trip() TripResolver
 }
 
 type DirectiveRoot struct {
@@ -113,6 +115,18 @@ type ComplexityRoot struct {
 		SearchPlace               func(childComplexity int, textQuery string) int
 	}
 
+	Recipient struct {
+		BuildingName func(childComplexity int) int
+		CreatedAt    func(childComplexity int) int
+		ID           func(childComplexity int) int
+		Name         func(childComplexity int) int
+		Phone        func(childComplexity int) int
+		Trip         func(childComplexity int) int
+		TripID       func(childComplexity int) int
+		UnitName     func(childComplexity int) int
+		UpdatedAt    func(childComplexity int) int
+	}
+
 	Route struct {
 		CreatedAt func(childComplexity int) int
 		Distance  func(childComplexity int) int
@@ -142,6 +156,7 @@ type ComplexityRoot struct {
 		CreatedAt     func(childComplexity int) int
 		EndLocation   func(childComplexity int) int
 		ID            func(childComplexity int) int
+		Recipient     func(childComplexity int) int
 		Route         func(childComplexity int) int
 		RouteID       func(childComplexity int) int
 		StartLocation func(childComplexity int) int
@@ -201,8 +216,14 @@ type QueryResolver interface {
 	ComputeTripRoute(ctx context.Context, input model.TripRouteInput) (*model.TripRoute, error)
 	GetCourierNearPickupPoint(ctx context.Context, point model.GpsInput) ([]*model.Courier, error)
 }
+type RecipientResolver interface {
+	Trip(ctx context.Context, obj *model.Recipient) (*model.Trip, error)
+}
 type SubscriptionResolver interface {
 	TripUpdates(ctx context.Context, tripID uuid.UUID) (<-chan *model.TripUpdate, error)
+}
+type TripResolver interface {
+	Recipient(ctx context.Context, obj *model.Trip) (*model.Recipient, error)
 }
 
 type executableSchema struct {
@@ -537,6 +558,69 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Query.SearchPlace(childComplexity, args["textQuery"].(string)), true
 
+	case "Recipient.building_name":
+		if e.complexity.Recipient.BuildingName == nil {
+			break
+		}
+
+		return e.complexity.Recipient.BuildingName(childComplexity), true
+
+	case "Recipient.created_at":
+		if e.complexity.Recipient.CreatedAt == nil {
+			break
+		}
+
+		return e.complexity.Recipient.CreatedAt(childComplexity), true
+
+	case "Recipient.id":
+		if e.complexity.Recipient.ID == nil {
+			break
+		}
+
+		return e.complexity.Recipient.ID(childComplexity), true
+
+	case "Recipient.name":
+		if e.complexity.Recipient.Name == nil {
+			break
+		}
+
+		return e.complexity.Recipient.Name(childComplexity), true
+
+	case "Recipient.phone":
+		if e.complexity.Recipient.Phone == nil {
+			break
+		}
+
+		return e.complexity.Recipient.Phone(childComplexity), true
+
+	case "Recipient.trip":
+		if e.complexity.Recipient.Trip == nil {
+			break
+		}
+
+		return e.complexity.Recipient.Trip(childComplexity), true
+
+	case "Recipient.trip_id":
+		if e.complexity.Recipient.TripID == nil {
+			break
+		}
+
+		return e.complexity.Recipient.TripID(childComplexity), true
+
+	case "Recipient.unit_name":
+		if e.complexity.Recipient.UnitName == nil {
+			break
+		}
+
+		return e.complexity.Recipient.UnitName(childComplexity), true
+
+	case "Recipient.updated_at":
+		if e.complexity.Recipient.UpdatedAt == nil {
+			break
+		}
+
+		return e.complexity.Recipient.UpdatedAt(childComplexity), true
+
 	case "Route.created_at":
 		if e.complexity.Route.CreatedAt == nil {
 			break
@@ -674,6 +758,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Trip.ID(childComplexity), true
+
+	case "Trip.recipient":
+		if e.complexity.Trip.Recipient == nil {
+			break
+		}
+
+		return e.complexity.Trip.Recipient(childComplexity), true
 
 	case "Trip.route":
 		if e.complexity.Trip.Route == nil {
@@ -876,6 +967,7 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 		ec.unmarshalInputCreateTripInput,
 		ec.unmarshalInputGpsInput,
 		ec.unmarshalInputTripInput,
+		ec.unmarshalInputTripRecipientInput,
 		ec.unmarshalInputTripRouteInput,
 	)
 	first := true
@@ -2277,6 +2369,8 @@ func (ec *executionContext) fieldContext_Mutation_createTrip(ctx context.Context
 				return ec.fieldContext_Trip_route_id(ctx, field)
 			case "route":
 				return ec.fieldContext_Trip_route(ctx, field)
+			case "recipient":
+				return ec.fieldContext_Trip_recipient(ctx, field)
 			case "created_at":
 				return ec.fieldContext_Trip_created_at(ctx, field)
 			case "updated_at":
@@ -3234,6 +3328,416 @@ func (ec *executionContext) fieldContext_Query___schema(ctx context.Context, fie
 				return ec.fieldContext___Schema_directives(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type __Schema", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Recipient_id(ctx context.Context, field graphql.CollectedField, obj *model.Recipient) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Recipient_id(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.ID, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(uuid.UUID)
+	fc.Result = res
+	return ec.marshalNUUID2githubᚗcomᚋgoogleᚋuuidᚐUUID(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Recipient_id(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Recipient",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type UUID does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Recipient_name(ctx context.Context, field graphql.CollectedField, obj *model.Recipient) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Recipient_name(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Name, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Recipient_name(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Recipient",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Recipient_building_name(ctx context.Context, field graphql.CollectedField, obj *model.Recipient) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Recipient_building_name(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.BuildingName, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*string)
+	fc.Result = res
+	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Recipient_building_name(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Recipient",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Recipient_unit_name(ctx context.Context, field graphql.CollectedField, obj *model.Recipient) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Recipient_unit_name(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.UnitName, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*string)
+	fc.Result = res
+	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Recipient_unit_name(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Recipient",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Recipient_phone(ctx context.Context, field graphql.CollectedField, obj *model.Recipient) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Recipient_phone(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Phone, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Recipient_phone(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Recipient",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Recipient_trip_id(ctx context.Context, field graphql.CollectedField, obj *model.Recipient) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Recipient_trip_id(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.TripID, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(uuid.UUID)
+	fc.Result = res
+	return ec.marshalNUUID2githubᚗcomᚋgoogleᚋuuidᚐUUID(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Recipient_trip_id(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Recipient",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type UUID does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Recipient_trip(ctx context.Context, field graphql.CollectedField, obj *model.Recipient) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Recipient_trip(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Recipient().Trip(rctx, obj)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*model.Trip)
+	fc.Result = res
+	return ec.marshalNTrip2ᚖgithubᚗcomᚋ3dw1nM0535ᚋuziᚑapiᚋgqlᚋmodelᚐTrip(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Recipient_trip(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Recipient",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_Trip_id(ctx, field)
+			case "courier_id":
+				return ec.fieldContext_Trip_courier_id(ctx, field)
+			case "user_id":
+				return ec.fieldContext_Trip_user_id(ctx, field)
+			case "start_location":
+				return ec.fieldContext_Trip_start_location(ctx, field)
+			case "end_location":
+				return ec.fieldContext_Trip_end_location(ctx, field)
+			case "status":
+				return ec.fieldContext_Trip_status(ctx, field)
+			case "cost":
+				return ec.fieldContext_Trip_cost(ctx, field)
+			case "route_id":
+				return ec.fieldContext_Trip_route_id(ctx, field)
+			case "route":
+				return ec.fieldContext_Trip_route(ctx, field)
+			case "recipient":
+				return ec.fieldContext_Trip_recipient(ctx, field)
+			case "created_at":
+				return ec.fieldContext_Trip_created_at(ctx, field)
+			case "updated_at":
+				return ec.fieldContext_Trip_updated_at(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Trip", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Recipient_created_at(ctx context.Context, field graphql.CollectedField, obj *model.Recipient) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Recipient_created_at(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.CreatedAt, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*time.Time)
+	fc.Result = res
+	return ec.marshalOTime2ᚖtimeᚐTime(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Recipient_created_at(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Recipient",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Time does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Recipient_updated_at(ctx context.Context, field graphql.CollectedField, obj *model.Recipient) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Recipient_updated_at(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.UpdatedAt, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*time.Time)
+	fc.Result = res
+	return ec.marshalOTime2ᚖtimeᚐTime(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Recipient_updated_at(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Recipient",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Time does not have child fields")
 		},
 	}
 	return fc, nil
@@ -4274,6 +4778,70 @@ func (ec *executionContext) fieldContext_Trip_route(ctx context.Context, field g
 				return ec.fieldContext_Route_updated_at(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Route", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Trip_recipient(ctx context.Context, field graphql.CollectedField, obj *model.Trip) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Trip_recipient(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Trip().Recipient(rctx, obj)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*model.Recipient)
+	fc.Result = res
+	return ec.marshalNRecipient2ᚖgithubᚗcomᚋ3dw1nM0535ᚋuziᚑapiᚋgqlᚋmodelᚐRecipient(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Trip_recipient(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Trip",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_Recipient_id(ctx, field)
+			case "name":
+				return ec.fieldContext_Recipient_name(ctx, field)
+			case "building_name":
+				return ec.fieldContext_Recipient_building_name(ctx, field)
+			case "unit_name":
+				return ec.fieldContext_Recipient_unit_name(ctx, field)
+			case "phone":
+				return ec.fieldContext_Recipient_phone(ctx, field)
+			case "trip_id":
+				return ec.fieldContext_Recipient_trip_id(ctx, field)
+			case "trip":
+				return ec.fieldContext_Recipient_trip(ctx, field)
+			case "created_at":
+				return ec.fieldContext_Recipient_created_at(ctx, field)
+			case "updated_at":
+				return ec.fieldContext_Recipient_updated_at(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Recipient", field.Name)
 		},
 	}
 	return fc, nil
@@ -7121,7 +7689,7 @@ func (ec *executionContext) unmarshalInputCreateTripInput(ctx context.Context, o
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"tripInput", "tripProductId"}
+	fieldsInOrder := [...]string{"tripInput", "tripProductId", "recipient", "confirmedPickup"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -7142,6 +7710,20 @@ func (ec *executionContext) unmarshalInputCreateTripInput(ctx context.Context, o
 				return it, err
 			}
 			it.TripProductID = data
+		case "recipient":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("recipient"))
+			data, err := ec.unmarshalNTripRecipientInput2ᚖgithubᚗcomᚋ3dw1nM0535ᚋuziᚑapiᚋgqlᚋmodelᚐTripRecipientInput(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Recipient = data
+		case "confirmedPickup":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("confirmedPickup"))
+			data, err := ec.unmarshalNTripInput2ᚖgithubᚗcomᚋ3dw1nM0535ᚋuziᚑapiᚋgqlᚋmodelᚐTripInput(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.ConfirmedPickup = data
 		}
 	}
 
@@ -7217,6 +7799,54 @@ func (ec *executionContext) unmarshalInputTripInput(ctx context.Context, obj int
 				return it, err
 			}
 			it.Location = data
+		}
+	}
+
+	return it, nil
+}
+
+func (ec *executionContext) unmarshalInputTripRecipientInput(ctx context.Context, obj interface{}) (model.TripRecipientInput, error) {
+	var it model.TripRecipientInput
+	asMap := map[string]interface{}{}
+	for k, v := range obj.(map[string]interface{}) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"name", "building_name", "unit_name", "phone"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "name":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("name"))
+			data, err := ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Name = data
+		case "building_name":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("building_name"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.BuildingName = data
+		case "unit_name":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("unit_name"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.UnitName = data
+		case "phone":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("phone"))
+			data, err := ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Phone = data
 		}
 	}
 
@@ -7839,6 +8469,104 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 	return out
 }
 
+var recipientImplementors = []string{"Recipient"}
+
+func (ec *executionContext) _Recipient(ctx context.Context, sel ast.SelectionSet, obj *model.Recipient) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, recipientImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("Recipient")
+		case "id":
+			out.Values[i] = ec._Recipient_id(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "name":
+			out.Values[i] = ec._Recipient_name(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "building_name":
+			out.Values[i] = ec._Recipient_building_name(ctx, field, obj)
+		case "unit_name":
+			out.Values[i] = ec._Recipient_unit_name(ctx, field, obj)
+		case "phone":
+			out.Values[i] = ec._Recipient_phone(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "trip_id":
+			out.Values[i] = ec._Recipient_trip_id(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "trip":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Recipient_trip(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+		case "created_at":
+			out.Values[i] = ec._Recipient_created_at(ctx, field, obj)
+		case "updated_at":
+			out.Values[i] = ec._Recipient_updated_at(ctx, field, obj)
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
 var routeImplementors = []string{"Route"}
 
 func (ec *executionContext) _Route(ctx context.Context, sel ast.SelectionSet, obj *model.Route) graphql.Marshaler {
@@ -7997,14 +8725,14 @@ func (ec *executionContext) _Trip(ctx context.Context, sel ast.SelectionSet, obj
 		case "id":
 			out.Values[i] = ec._Trip_id(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				out.Invalids++
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "courier_id":
 			out.Values[i] = ec._Trip_courier_id(ctx, field, obj)
 		case "user_id":
 			out.Values[i] = ec._Trip_user_id(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				out.Invalids++
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "start_location":
 			out.Values[i] = ec._Trip_start_location(ctx, field, obj)
@@ -8013,7 +8741,7 @@ func (ec *executionContext) _Trip(ctx context.Context, sel ast.SelectionSet, obj
 		case "status":
 			out.Values[i] = ec._Trip_status(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				out.Invalids++
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "cost":
 			out.Values[i] = ec._Trip_cost(ctx, field, obj)
@@ -8021,6 +8749,42 @@ func (ec *executionContext) _Trip(ctx context.Context, sel ast.SelectionSet, obj
 			out.Values[i] = ec._Trip_route_id(ctx, field, obj)
 		case "route":
 			out.Values[i] = ec._Trip_route(ctx, field, obj)
+		case "recipient":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Trip_recipient(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
 		case "created_at":
 			out.Values[i] = ec._Trip_created_at(ctx, field, obj)
 		case "updated_at":
@@ -8842,6 +9606,20 @@ func (ec *executionContext) marshalNProduct2ᚖgithubᚗcomᚋ3dw1nM0535ᚋuzi�
 	return ec._Product(ctx, sel, v)
 }
 
+func (ec *executionContext) marshalNRecipient2githubᚗcomᚋ3dw1nM0535ᚋuziᚑapiᚋgqlᚋmodelᚐRecipient(ctx context.Context, sel ast.SelectionSet, v model.Recipient) graphql.Marshaler {
+	return ec._Recipient(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNRecipient2ᚖgithubᚗcomᚋ3dw1nM0535ᚋuziᚑapiᚋgqlᚋmodelᚐRecipient(ctx context.Context, sel ast.SelectionSet, v *model.Recipient) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._Recipient(ctx, sel, v)
+}
+
 func (ec *executionContext) unmarshalNString2string(ctx context.Context, v interface{}) (string, error) {
 	res, err := graphql.UnmarshalString(v)
 	return res, graphql.ErrorOnPath(ctx, err)
@@ -8888,6 +9666,11 @@ func (ec *executionContext) marshalNTrip2ᚖgithubᚗcomᚋ3dw1nM0535ᚋuziᚑap
 
 func (ec *executionContext) unmarshalNTripInput2ᚖgithubᚗcomᚋ3dw1nM0535ᚋuziᚑapiᚋgqlᚋmodelᚐTripInput(ctx context.Context, v interface{}) (*model.TripInput, error) {
 	res, err := ec.unmarshalInputTripInput(ctx, v)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) unmarshalNTripRecipientInput2ᚖgithubᚗcomᚋ3dw1nM0535ᚋuziᚑapiᚋgqlᚋmodelᚐTripRecipientInput(ctx context.Context, v interface{}) (*model.TripRecipientInput, error) {
+	res, err := ec.unmarshalInputTripRecipientInput(ctx, v)
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
 

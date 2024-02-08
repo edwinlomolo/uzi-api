@@ -8,6 +8,7 @@ type Trip {
   cost: String
   route_id: UUID
   route: Route
+  recipient: Recipient!
   created_at: Time
   updated_at: Time
 }
@@ -15,4 +16,16 @@ type Trip {
 type TripUpdate {
   id: UUID!
   status: TripStatus!
+}
+
+type Recipient {
+  id: UUID!
+  name: String!
+  building_name: String
+  unit_name: String
+  phone: String!
+  trip_id: UUID!
+  trip: Trip!
+  created_at: Time
+  updated_at: Time
 }

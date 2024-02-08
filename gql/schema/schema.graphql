@@ -53,9 +53,18 @@ input TripInput {
   location: GpsInput!
 }
 
+input TripRecipientInput {
+  name: String!
+  building_name: String
+  unit_name: String
+  phone: String!
+}
+
 input CreateTripInput {
   tripInput: TripRouteInput!
   tripProductId: String!
+  recipient: TripRecipientInput!
+  confirmedPickup: TripInput!
 }
 
 type Query {

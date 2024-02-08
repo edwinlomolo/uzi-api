@@ -39,6 +39,9 @@ type TripService interface {
 	SetTripStatus(tripID uuid.UUID, status model.TripStatus) error
 	GetNearbyAvailableProducts(params sqlStore.GetNearbyAvailableCourierProductsParams, tripDistance int) ([]*model.Product, error)
 	MatchCourier(tripID uuid.UUID, pickup model.GpsInput)
+	CreateTripRecipient(tripID uuid.UUID, input model.TripRecipientInput) error
+	GetTripRecipient(tripID uuid.UUID) (*model.Recipient, error)
+	GetTrip(tripID uuid.UUID) (*model.Trip, error)
 }
 
 type point struct {
@@ -337,4 +340,43 @@ func (t *tripClient) MatchCourier(tripID uuid.UUID, pickup model.GpsInput) {
 			}
 		}
 	}()
+}
+
+func (t *tripClient) CreateTripRecipient(tripID uuid.UUID, input model.TripRecipientInput) error {
+	rArgs := sqlStore.CreateRecipientParams{
+		Name:     input.Name,
+		Phone:    input.Phone,
+		Building: sql.NullString{String: *input.BuildingName, Valid: true},
+		Unit:     sql.NullString{String: *input.UnitName, Valid: true},
+		TripID:   uuid.NullUUID{UUID: tripID, Valid: true},
+	}
+	if _, err := t.store.CreateRecipient(context.Background(), rArgs); err != nil {
+		uziErr := fmt.Errorf("%s:%v", "create recipient", err)
+		t.logger.Errorf(uziErr.Error())
+		return uziErr
+	}
+
+	return nil
+}
+
+func (t *tripClient) GetTripRecipient(tripID uuid.UUID) (*model.Recipient, error) {
+	r, err := t.store.GetTripRecipient(context.Background(), uuid.NullUUID{UUID: tripID, Valid: true})
+	if err != nil {
+		uziErr := fmt.Errorf("%s:%v", "get trip recipient", err)
+		t.logger.Errorf(uziErr.Error())
+		return nil, uziErr
+	}
+
+	return &model.Recipient{ID: r.ID, Name: r.Name, BuildingName: &r.Building.String, UnitName: &r.Unit.String, TripID: r.TripID.UUID}, nil
+}
+
+func (t *tripClient) GetTrip(tripID uuid.UUID) (*model.Trip, error) {
+	trip, err := t.store.GetTrip(context.Background(), tripID)
+	if err != nil {
+		uziErr := fmt.Errorf("%s:%v", "get trip", err)
+		t.logger.Errorf(uziErr.Error())
+		return nil, uziErr
+	}
+
+	return &model.Trip{ID: trip.ID, Status: model.TripStatus(trip.Status)}, nil
 }

@@ -93,3 +93,11 @@ models:
     fields:
       product:
         resolver: true
+  Trip:
+    fields:
+      recipient:
+        resolver: true
+  Recipient:
+    fields:
+      trip:
+        resolver: true
