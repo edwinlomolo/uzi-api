@@ -13,6 +13,7 @@ import (
 	"github.com/3dw1nM0535/uzi-api/internal/cache"
 	"github.com/3dw1nM0535/uzi-api/internal/jwt"
 	"github.com/3dw1nM0535/uzi-api/internal/logger"
+	"github.com/3dw1nM0535/uzi-api/internal/middleware"
 	"github.com/3dw1nM0535/uzi-api/internal/pricer"
 	"github.com/3dw1nM0535/uzi-api/internal/route"
 	"github.com/3dw1nM0535/uzi-api/services/courier"
@@ -74,7 +75,7 @@ func main() {
 	// Routes TODO (look at first route setup comment)
 	r.Get("/ipinfo", handler.Ipinfo())
 	r.Get("/", playground.Handler("GraphQL playground", "/api"))
-	r.Handle("/api", srv)
+	r.Handle("/api", middleware.Auth(srv))
 	r.Post("/signin", handler.Signin())
 	r.Post("/courier/onboard", handler.CourierOnboarding())
 	r.Post("/courier/upload/document", handler.UploadDocument())
