@@ -1,7 +1,7 @@
 package cache
 
 import (
-	"github.com/3dw1nM0535/uzi-api/config"
+	"github.com/edwinlomolo/uzi-api/config"
 	"github.com/redis/go-redis/v9"
 	"github.com/sirupsen/logrus"
 )

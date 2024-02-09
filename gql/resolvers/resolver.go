@@ -1,13 +1,13 @@
 package resolvers
 
 import (
-	"github.com/3dw1nM0535/uzi-api/gql"
-	"github.com/3dw1nM0535/uzi-api/internal/cache"
-	"github.com/3dw1nM0535/uzi-api/internal/route"
-	"github.com/3dw1nM0535/uzi-api/services/courier"
-	"github.com/3dw1nM0535/uzi-api/services/location"
-	"github.com/3dw1nM0535/uzi-api/services/trip"
-	"github.com/3dw1nM0535/uzi-api/services/upload"
+	"github.com/edwinlomolo/uzi-api/gql"
+	"github.com/edwinlomolo/uzi-api/internal/cache"
+	"github.com/edwinlomolo/uzi-api/internal/route"
+	"github.com/edwinlomolo/uzi-api/services/courier"
+	"github.com/edwinlomolo/uzi-api/services/location"
+	"github.com/edwinlomolo/uzi-api/services/trip"
+	"github.com/edwinlomolo/uzi-api/services/upload"
 	"github.com/redis/go-redis/v9"
 )
 

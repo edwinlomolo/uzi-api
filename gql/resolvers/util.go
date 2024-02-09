@@ -3,7 +3,7 @@ package resolvers
 import (
 	"context"
 
-	"github.com/3dw1nM0535/uzi-api/services/courier"
+	"github.com/edwinlomolo/uzi-api/services/courier"
 	"github.com/google/uuid"
 )
 

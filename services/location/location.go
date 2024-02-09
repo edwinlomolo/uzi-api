@@ -4,10 +4,10 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/3dw1nM0535/uzi-api/config"
-	"github.com/3dw1nM0535/uzi-api/gql/model"
-	"github.com/3dw1nM0535/uzi-api/internal/logger"
-	"github.com/3dw1nM0535/uzi-api/internal/util"
+	"github.com/edwinlomolo/uzi-api/config"
+	"github.com/edwinlomolo/uzi-api/gql/model"
+	"github.com/edwinlomolo/uzi-api/internal/logger"
+	"github.com/edwinlomolo/uzi-api/internal/util"
 	"github.com/sirupsen/logrus"
 	"googlemaps.github.io/maps"
 )

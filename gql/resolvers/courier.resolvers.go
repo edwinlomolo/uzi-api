@@ -7,8 +7,8 @@ package resolvers
 import (
 	"context"
 
-	"github.com/3dw1nM0535/uzi-api/gql"
-	model1 "github.com/3dw1nM0535/uzi-api/gql/model"
+	"github.com/edwinlomolo/uzi-api/gql"
+	model1 "github.com/edwinlomolo/uzi-api/gql/model"
 )
 
 // Product is the resolver for the product field.

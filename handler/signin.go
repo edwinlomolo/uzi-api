@@ -6,11 +6,11 @@ import (
 	"io"
 	"net/http"
 
-	"github.com/3dw1nM0535/uzi-api/internal/logger"
-	"github.com/3dw1nM0535/uzi-api/internal/util"
-	"github.com/3dw1nM0535/uzi-api/services/courier"
-	"github.com/3dw1nM0535/uzi-api/services/session"
-	"github.com/3dw1nM0535/uzi-api/services/user"
+	"github.com/edwinlomolo/uzi-api/internal/logger"
+	"github.com/edwinlomolo/uzi-api/internal/util"
+	"github.com/edwinlomolo/uzi-api/services/courier"
+	"github.com/edwinlomolo/uzi-api/services/session"
+	"github.com/edwinlomolo/uzi-api/services/user"
 )
 
 func Signin() http.HandlerFunc {

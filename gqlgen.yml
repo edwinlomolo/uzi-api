@@ -65,7 +65,7 @@ struct_tag: gqlgen
 # gqlgen will search for any type names in the schema in these go packages
 # if they match it will use them, otherwise it will generate them.
 # autobind:
-# - github.com/3dw1nM0535/uzi-api/model
+# - github.com/edwinlomolo/uzi-api/model
 
 # This section declares type mapping between the GraphQL and go type systems
 #
@@ -88,7 +88,7 @@ models:
     model:
       - github.com/99designs/gqlgen/graphql.UUID
   Geocode:
-    model: github.com/3dw1nM0535/uzi-api/services/location.Geocode
+    model: github.com/edwinlomolo/uzi-api/services/location.Geocode
   Courier:
     fields:
       product:

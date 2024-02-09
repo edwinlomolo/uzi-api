@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/3dw1nM0535/uzi-api/internal/aws"
-	"github.com/3dw1nM0535/uzi-api/internal/logger"
+	"github.com/edwinlomolo/uzi-api/internal/aws"
+	"github.com/edwinlomolo/uzi-api/internal/logger"
 )
 
 func UploadDocument() http.HandlerFunc {

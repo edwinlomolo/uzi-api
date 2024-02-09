@@ -3,8 +3,8 @@ package pricer
 import (
 	"math"
 
-	"github.com/3dw1nM0535/uzi-api/config"
-	"github.com/3dw1nM0535/uzi-api/internal/logger"
+	"github.com/edwinlomolo/uzi-api/config"
+	"github.com/edwinlomolo/uzi-api/internal/logger"
 	"github.com/sirupsen/logrus"
 )
 

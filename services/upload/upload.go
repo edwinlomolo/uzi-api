@@ -5,11 +5,11 @@ import (
 	"database/sql"
 	"fmt"
 
-	"github.com/3dw1nM0535/uzi-api/gql/model"
-	"github.com/3dw1nM0535/uzi-api/internal/aws"
-	"github.com/3dw1nM0535/uzi-api/internal/logger"
-	"github.com/3dw1nM0535/uzi-api/store"
-	sqlStore "github.com/3dw1nM0535/uzi-api/store/sqlc"
+	"github.com/edwinlomolo/uzi-api/gql/model"
+	"github.com/edwinlomolo/uzi-api/internal/aws"
+	"github.com/edwinlomolo/uzi-api/internal/logger"
+	"github.com/edwinlomolo/uzi-api/store"
+	sqlStore "github.com/edwinlomolo/uzi-api/store/sqlc"
 	"github.com/google/uuid"
 	"github.com/sirupsen/logrus"
 )

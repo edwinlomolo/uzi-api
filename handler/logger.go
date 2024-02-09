@@ -3,8 +3,8 @@ package handler
 import (
 	"net/http"
 
-	"github.com/3dw1nM0535/uzi-api/internal/logger"
-	"github.com/3dw1nM0535/uzi-api/internal/util"
+	"github.com/edwinlomolo/uzi-api/internal/logger"
+	"github.com/edwinlomolo/uzi-api/internal/util"
 )
 
 func Logger(h http.Handler) http.Handler {

@@ -9,11 +9,11 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"github.com/3dw1nM0535/uzi-api/gql"
-	"github.com/3dw1nM0535/uzi-api/gql/model"
-	"github.com/3dw1nM0535/uzi-api/services/location"
-	t "github.com/3dw1nM0535/uzi-api/services/trip"
-	"github.com/3dw1nM0535/uzi-api/store/sqlc"
+	"github.com/edwinlomolo/uzi-api/gql"
+	"github.com/edwinlomolo/uzi-api/gql/model"
+	"github.com/edwinlomolo/uzi-api/services/location"
+	t "github.com/edwinlomolo/uzi-api/services/trip"
+	"github.com/edwinlomolo/uzi-api/store/sqlc"
 	"github.com/google/uuid"
 )
 

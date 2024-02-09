@@ -5,7 +5,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/3dw1nM0535/uzi-api/internal/util"
+	"github.com/edwinlomolo/uzi-api/internal/util"
 	"github.com/joho/godotenv"
 	"github.com/sirupsen/logrus"
 )

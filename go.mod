@@ -1,4 +1,4 @@
-module github.com/3dw1nM0535/uzi-api
+module github.com/edwinlomolo/uzi-api
 
 go 1.21.4
 
