@@ -180,7 +180,7 @@ func (t *tripClient) CreateTrip(args sqlStore.CreateTripParams) (*model.Trip, er
 		return nil, uziErr
 	}
 
-	return &model.Trip{ID: createTrip.ID}, nil
+	return &model.Trip{ID: createTrip.ID, Status: model.TripStatus(createTrip.Status)}, nil
 }
 
 func (t *tripClient) CreateTripCost(tripID uuid.UUID, cost int) error {
@@ -233,7 +233,7 @@ func (t *tripClient) GetCourierNearPickupPoint(pickup model.GpsInput) ([]*model.
 	if err == sql.ErrNoRows {
 		return make([]*model.Courier, 0), nil
 	} else if err != nil {
-		uziErr := fmt.Errorf("%s: %v", "getcouriernearpickuppooint", err.Error())
+		uziErr := fmt.Errorf("%s: %v", "get courier near pickup point", err.Error())
 		t.logger.Errorf(uziErr.Error())
 		return nil, uziErr
 	}
@@ -351,7 +351,7 @@ func (t *tripClient) CreateTripRecipient(tripID uuid.UUID, input model.TripRecip
 		TripID:   uuid.NullUUID{UUID: tripID, Valid: true},
 	}
 	if _, err := t.store.CreateRecipient(context.Background(), rArgs); err != nil {
-		uziErr := fmt.Errorf("%s:%v", "create recipient", err)
+		uziErr := fmt.Errorf("%s:%v", "create trip recipient", err)
 		t.logger.Errorf(uziErr.Error())
 		return uziErr
 	}

@@ -56,7 +56,7 @@ func (r *mutationResolver) CreateTrip(ctx context.Context, input model.CreateTri
 		EndLocation:   fmt.Sprintf("SRID=4326;POINT(%.8f %.8f)", input.TripInput.Dropoff.Location.Lat, input.TripInput.Dropoff.Location.Lng),
 	}
 	trip, err := r.tripService.CreateTrip(params)
-	r.tripService.CreateTripRecipient(trip.ID, *input.Recipient)
+	go r.tripService.CreateTripRecipient(trip.ID, *input.Recipient)
 
 	r.tripService.MatchCourier(trip.ID, *input.TripInput.Pickup.Location)
 

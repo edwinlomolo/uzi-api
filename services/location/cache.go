@@ -73,7 +73,7 @@ func (lc *locationCache) placesSetCache(key string, value interface{}) error {
 		return cacheErr
 	}
 
-	if err := lc.redis.Set(context.Background(), key, data, time.Minute*5).Err(); err != nil {
+	if err := lc.redis.Set(context.Background(), key, data, time.Hour*24).Err(); err != nil {
 		cacheErr := fmt.Errorf("%s:%v", "set place cache", err)
 		lc.logger.Errorf(cacheErr.Error())
 		return cacheErr
@@ -91,7 +91,7 @@ func (lc *locationCache) Set(key string, value interface{}) error {
 		return cacheErr
 	}
 
-	if err := lc.redis.Set(context.Background(), key, data, time.Minute*5).Err(); err != nil {
+	if err := lc.redis.Set(context.Background(), key, data, time.Hour*24).Err(); err != nil {
 		cacheErr := fmt.Errorf("%s:%v", "set location cache", err)
 		lc.logger.Errorf(cacheErr.Error())
 		return cacheErr

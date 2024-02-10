@@ -63,7 +63,8 @@ func NewLocationService() {
 }
 
 func (l *locationClient) AutocompletePlace(searchQuery string) ([]*model.Place, error) {
-	placesCache, placesCacheErr := l.cache.placesGetCache(searchQuery)
+	cacheKey := util.Base64Key(searchQuery)
+	placesCache, placesCacheErr := l.cache.placesGetCache(cacheKey)
 	if placesCacheErr != nil {
 		return nil, placesCacheErr
 	}
@@ -99,9 +100,7 @@ func (l *locationClient) AutocompletePlace(searchQuery string) ([]*model.Place, 
 		p = append(p, &place)
 	}
 
-	if err := l.cache.placesSetCache(searchQuery, p); err != nil {
-		return nil, err
-	}
+	go l.cache.placesSetCache(cacheKey, p)
 
 	return p, nil
 }
@@ -148,9 +147,7 @@ func (l *locationClient) GetPlaceDetails(placeID string) (*Geocode, error) {
 		Location: model.Gps{Lat: res.Geometry.Location.Lat, Lng: res.Geometry.Location.Lng},
 	}
 
-	if err := l.cache.Set(placeDetails.PlaceID, placeDetails); err != nil {
-		return nil, err
-	}
+	go l.cache.Set(placeDetails.PlaceID, placeDetails)
 
 	return placeDetails, nil
 }

@@ -111,9 +111,7 @@ func (r *routeClient) computeRoute(pickup, dropoff location.Geocode) (*model.Tri
 		tripRoute.Polyline = routeRes.Routes[0].Polyline.EncodedPolyline
 		tripRoute.Distance = routeRes.Routes[0].Distance
 
-		if cacheErr := r.cache.cacheRoute(cacheKey, tripRoute); cacheErr != nil {
-			return nil, cacheErr
-		}
+		go r.cache.cacheRoute(cacheKey, tripRoute)
 	} else {
 		route := (tripInfo).(*model.TripRoute)
 		tripRoute.Polyline = route.Polyline
