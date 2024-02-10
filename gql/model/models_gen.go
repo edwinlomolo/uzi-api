@@ -137,8 +137,9 @@ type TripRouteInput struct {
 }
 
 type TripUpdate struct {
-	ID     uuid.UUID  `json:"id"`
-	Status TripStatus `json:"status"`
+	ID       uuid.UUID  `json:"id"`
+	Status   TripStatus `json:"status"`
+	Location *Gps       `json:"location,omitempty"`
 }
 
 type Uploads struct {

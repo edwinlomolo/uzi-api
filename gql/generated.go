@@ -172,8 +172,9 @@ type ComplexityRoot struct {
 	}
 
 	TripUpdate struct {
-		ID     func(childComplexity int) int
-		Status func(childComplexity int) int
+		ID       func(childComplexity int) int
+		Location func(childComplexity int) int
+		Status   func(childComplexity int) int
 	}
 
 	Uploads struct {
@@ -835,6 +836,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.TripUpdate.ID(childComplexity), true
+
+	case "TripUpdate.location":
+		if e.complexity.TripUpdate.Location == nil {
+			break
+		}
+
+		return e.complexity.TripUpdate.Location(childComplexity), true
 
 	case "TripUpdate.status":
 		if e.complexity.TripUpdate.Status == nil {
@@ -4363,6 +4371,8 @@ func (ec *executionContext) fieldContext_Subscription_tripUpdates(ctx context.Co
 				return ec.fieldContext_TripUpdate_id(ctx, field)
 			case "status":
 				return ec.fieldContext_TripUpdate_status(ctx, field)
+			case "location":
+				return ec.fieldContext_TripUpdate_location(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type TripUpdate", field.Name)
 		},
@@ -5160,6 +5170,53 @@ func (ec *executionContext) fieldContext_TripUpdate_status(ctx context.Context, 
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("field of type TripStatus does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _TripUpdate_location(ctx context.Context, field graphql.CollectedField, obj *model.TripUpdate) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_TripUpdate_location(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Location, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*model.Gps)
+	fc.Result = res
+	return ec.marshalOGps2ᚖgithubᚗcomᚋedwinlomoloᚋuziᚑapiᚋgqlᚋmodelᚐGps(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_TripUpdate_location(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "TripUpdate",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "lat":
+				return ec.fieldContext_Gps_lat(ctx, field)
+			case "lng":
+				return ec.fieldContext_Gps_lng(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Gps", field.Name)
 		},
 	}
 	return fc, nil
@@ -8882,6 +8939,8 @@ func (ec *executionContext) _TripUpdate(ctx context.Context, sel ast.SelectionSe
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
+		case "location":
+			out.Values[i] = ec._TripUpdate_location(ctx, field, obj)
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
