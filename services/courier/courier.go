@@ -27,7 +27,7 @@ type CourierService interface {
 	GetCourierByID(courierID uuid.UUID) (*model.Courier, error)
 	TrackCourierLocation(userID uuid.UUID, input model.GpsInput) error
 	UpdateCourierStatus(userID uuid.UUID, status model.CourierStatus) (bool, error)
-	GetCourierProduct(product_id uuid.UUID) (*model.Product, error)
+	GetCourierProduct(productID uuid.UUID) (*model.Product, error)
 }
 
 type courierClient struct {
@@ -142,8 +142,8 @@ func (c *courierClient) UpdateCourierStatus(userID uuid.UUID, status model.Couri
 	return true, nil
 }
 
-func (c *courierClient) GetCourierProduct(id uuid.UUID) (*model.Product, error) {
-	product, err := c.store.GetCourierProductByID(context.Background(), id)
+func (c *courierClient) GetCourierProduct(productID uuid.UUID) (*model.Product, error) {
+	product, err := c.store.GetCourierProductByID(context.Background(), productID)
 	if err != nil {
 		uziErr := fmt.Errorf("%s:%v", "get courier product", err.Error())
 		c.logger.Errorf(uziErr.Error())
