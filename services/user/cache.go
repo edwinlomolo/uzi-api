@@ -53,7 +53,7 @@ func (usc *userCache) Set(key string, value interface{}) error {
 	}
 
 	// TODO proper cache shell life to 24hr once ready/tested
-	if err := usc.redis.Set(context.Background(), key, data, time.Minute*1).Err(); err != nil {
+	if err := usc.redis.Set(context.Background(), key, data, time.Hour*24).Err(); err != nil {
 		cacheErr := fmt.Errorf("%s:%v", "set user cache", err)
 		usc.logger.Errorf(cacheErr.Error())
 		return cacheErr

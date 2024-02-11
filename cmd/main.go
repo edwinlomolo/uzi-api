@@ -77,7 +77,7 @@ func main() {
 	r.Get("/", playground.Handler("GraphQL playground", "/api"))
 	r.Handle("/api", middleware.Auth(srv))
 	r.Post("/signin", handler.Signin())
-	r.Post("/courier/onboard", handler.CourierOnboarding())
+	r.Post("/user/onboard", handler.UserOnboarding())
 	r.Post("/courier/upload/document", handler.UploadDocument())
 
 	// Server

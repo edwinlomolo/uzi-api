@@ -9,6 +9,7 @@ import (
 	"github.com/edwinlomolo/uzi-api/gql/model"
 	"github.com/edwinlomolo/uzi-api/internal/cache"
 	"github.com/edwinlomolo/uzi-api/internal/logger"
+	"github.com/edwinlomolo/uzi-api/internal/util"
 	"github.com/edwinlomolo/uzi-api/store"
 	sqlStore "github.com/edwinlomolo/uzi-api/store/sqlc"
 	"github.com/google/uuid"
@@ -95,7 +96,8 @@ func (u *userClient) createUser(user SigninInput) (*model.User, error) {
 }
 
 func (u *userClient) getUser(phone string) (*model.User, error) {
-	cacheUser, cacheErr := u.cache.Get(phone)
+	cacheKey := util.Base64Key(phone)
+	cacheUser, cacheErr := u.cache.Get(cacheKey)
 	if cacheErr == nil && cacheUser == nil {
 		var user model.User
 		foundUser, getErr := u.store.FindByPhone(context.Background(), phone)
@@ -112,9 +114,7 @@ func (u *userClient) getUser(phone string) (*model.User, error) {
 		user.LastName = foundUser.LastName
 		user.Phone = foundUser.Phone
 
-		if err := u.cache.Set(user.Phone, &user); err != nil {
-			return nil, err
-		}
+		go u.cache.Set(cacheKey, &user)
 
 		return &user, nil
 	} else if cacheErr != nil {
@@ -129,7 +129,8 @@ func (u *userClient) GetUser(phone string) (*model.User, error) {
 }
 
 func (u *userClient) findUserByID(id uuid.UUID) (*model.User, error) {
-	cacheUser, cacheErr := u.cache.Get(id.String())
+	cacheKey := util.Base64Key(id.String())
+	cacheUser, cacheErr := u.cache.Get(cacheKey)
 	if cacheUser == nil && cacheErr == nil {
 		var user *model.User
 		foundUser, getErr := u.store.FindUserByID(context.Background(), id)
@@ -148,9 +149,7 @@ func (u *userClient) findUserByID(id uuid.UUID) (*model.User, error) {
 		user.LastName = foundUser.LastName
 		user.Phone = foundUser.Phone
 
-		if err := u.cache.Set(user.ID.String(), user); err != nil {
-			return nil, err
-		}
+		go u.cache.Set(cacheKey, user)
 
 		return user, nil
 	} else if cacheErr != nil {
@@ -166,6 +165,7 @@ func (u *userClient) FindUserByID(id uuid.UUID) (*model.User, error) {
 
 func (u *userClient) OnboardUser(user SigninInput) (*model.User, error) {
 	var updatedUser model.User
+	cacheKey := util.Base64Key(user.Phone)
 
 	if len(user.FirstName) == 0 || len(user.LastName) == 0 {
 		inputErr := fmt.Errorf("%s:%v", "invalid inputs", noEmptyName)
@@ -198,9 +198,7 @@ func (u *userClient) OnboardUser(user SigninInput) (*model.User, error) {
 	updatedUser.LastName = newUser.LastName
 	updatedUser.Phone = newUser.Phone
 
-	if err := u.cache.Set(user.Phone, &updatedUser); err != nil {
-		return nil, err
-	}
+	go u.cache.Set(cacheKey, &updatedUser)
 
 	return &updatedUser, nil
 }

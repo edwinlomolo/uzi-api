@@ -12,7 +12,7 @@ import (
 	"github.com/edwinlomolo/uzi-api/services/user"
 )
 
-func CourierOnboarding() http.HandlerFunc {
+func UserOnboarding() http.HandlerFunc {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		var bodyReq user.SigninInput
 		logger := logger.Logger

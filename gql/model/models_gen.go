@@ -88,6 +88,8 @@ type Route struct {
 
 type Session struct {
 	ID            uuid.UUID      `json:"id"`
+	FirstName     *string        `json:"first_name,omitempty"`
+	LastName      *string        `json:"last_name,omitempty"`
 	IP            string         `json:"ip"`
 	UserAgent     string         `json:"userAgent"`
 	Token         string         `json:"token"`

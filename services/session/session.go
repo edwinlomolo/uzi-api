@@ -10,6 +10,7 @@ import (
 	"github.com/edwinlomolo/uzi-api/internal/jwt"
 	"github.com/edwinlomolo/uzi-api/internal/logger"
 	"github.com/edwinlomolo/uzi-api/services/courier"
+	userService "github.com/edwinlomolo/uzi-api/services/user"
 	"github.com/edwinlomolo/uzi-api/store"
 	sqlStore "github.com/edwinlomolo/uzi-api/store/sqlc"
 	"github.com/google/uuid"
@@ -90,9 +91,16 @@ func (sc *sessionClient) createNewSession(userID uuid.UUID, ip, phone, userAgent
 		return nil, courierErr
 	}
 
+	user, userErr := userService.User.GetUser(phone)
+	if userErr != nil {
+		return nil, userErr
+	}
+
 	return &model.Session{
 		ID:            newSession.ID,
 		IP:            newSession.Ip,
+		FirstName:     &user.FirstName,
+		LastName:      &user.LastName,
 		Phone:         newSession.Phone,
 		UserAgent:     newSession.UserAgent,
 		Token:         sessionJwt,
@@ -134,9 +142,16 @@ func (sc *sessionClient) getSession(sessionID uuid.UUID) (*model.Session, error)
 		return nil, courierErr
 	}
 
+	user, userErr := userService.User.GetUser(foundSess.Phone)
+	if userErr != nil {
+		return nil, userErr
+	}
+
 	return &model.Session{
 		ID:            foundSess.ID,
 		IP:            foundSess.Ip,
+		FirstName:     &user.FirstName,
+		LastName:      &user.LastName,
 		Phone:         foundSess.Phone,
 		UserAgent:     foundSess.UserAgent,
 		Token:         sessionJwt,
