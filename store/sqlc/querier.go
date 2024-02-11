@@ -29,6 +29,7 @@ type Querier interface {
 	FindByPhone(ctx context.Context, phone string) (User, error)
 	FindUserByID(ctx context.Context, id uuid.UUID) (User, error)
 	GetCourierAssignedTrip(ctx context.Context, courierID uuid.NullUUID) (Trip, error)
+	GetCourierAvatar(ctx context.Context, courierID uuid.NullUUID) (GetCourierAvatarRow, error)
 	GetCourierByID(ctx context.Context, id uuid.UUID) (Courier, error)
 	GetCourierByUserID(ctx context.Context, userID uuid.NullUUID) (Courier, error)
 	GetCourierNearPickupPoint(ctx context.Context, arg GetCourierNearPickupPointParams) ([]GetCourierNearPickupPointRow, error)

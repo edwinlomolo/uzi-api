@@ -80,6 +80,23 @@ func (q *Queries) CreateUserUpload(ctx context.Context, arg CreateUserUploadPara
 	return i, err
 }
 
+const getCourierAvatar = `-- name: GetCourierAvatar :one
+SELECT id, uri FROM uploads
+WHERE courier_id = $1 AND type = 'DP'
+`
+
+type GetCourierAvatarRow struct {
+	ID  uuid.UUID `json:"id"`
+	Uri string    `json:"uri"`
+}
+
+func (q *Queries) GetCourierAvatar(ctx context.Context, courierID uuid.NullUUID) (GetCourierAvatarRow, error) {
+	row := q.db.QueryRowContext(ctx, getCourierAvatar, courierID)
+	var i GetCourierAvatarRow
+	err := row.Scan(&i.ID, &i.Uri)
+	return i, err
+}
+
 const getCourierUpload = `-- name: GetCourierUpload :one
 SELECT id, type, uri, verification, courier_id, user_id, created_at, updated_at FROM
 uploads

@@ -102,8 +102,21 @@ func (c *courierClient) getCourier(userID uuid.UUID) (*model.Courier, error) {
 
 	courier.ID = foundCourier.ID
 	courier.UserID = foundCourier.UserID.UUID
+	courier.Avatar = c.getAvatar(foundCourier.ID)
 
 	return &courier, nil
+}
+
+func (c *courierClient) getAvatar(courierID uuid.UUID) *model.Uploads {
+	ID := uuid.NullUUID{UUID: courierID, Valid: true}
+	avatar, err := c.store.GetCourierAvatar(context.Background(), ID)
+	if err != nil {
+		uziErr := fmt.Errorf("%s:%v", "get courier avatar", err)
+		c.logger.Errorf(uziErr.Error())
+		return nil
+	}
+
+	return &model.Uploads{ID: avatar.ID, URI: avatar.Uri}
 }
 
 func (c *courierClient) GetCourierByUserID(userID uuid.UUID) (*model.Courier, error) {

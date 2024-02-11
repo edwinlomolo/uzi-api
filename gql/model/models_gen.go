@@ -15,6 +15,7 @@ type Courier struct {
 	ID             uuid.UUID     `json:"id"`
 	UserID         uuid.UUID     `json:"user_id"`
 	User           *User         `json:"user"`
+	Avatar         *Uploads      `json:"avatar,omitempty"`
 	Verified       bool          `json:"verified"`
 	Status         CourierStatus `json:"status"`
 	Rating         float64       `json:"rating"`

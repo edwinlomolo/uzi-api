@@ -2,6 +2,7 @@ type Courier {
   id: UUID!
   user_id: UUID!
   user: User!
+  avatar: Uploads
   verified: Boolean!
   status: CourierStatus!
   rating: Float!

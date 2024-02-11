@@ -56,6 +56,7 @@ type DirectiveRoot struct {
 
 type ComplexityRoot struct {
 	Courier struct {
+		Avatar         func(childComplexity int) int
 		CompletedTrips func(childComplexity int) int
 		CreatedAt      func(childComplexity int) int
 		ID             func(childComplexity int) int
@@ -258,6 +259,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 	ec := executionContext{nil, e, 0, 0, nil}
 	_ = ec
 	switch typeName + "." + field {
+
+	case "Courier.avatar":
+		if e.complexity.Courier.Avatar == nil {
+			break
+		}
+
+		return e.complexity.Courier.Avatar(childComplexity), true
 
 	case "Courier.completedTrips":
 		if e.complexity.Courier.CompletedTrips == nil {
@@ -1526,6 +1534,65 @@ func (ec *executionContext) fieldContext_Courier_user(ctx context.Context, field
 				return ec.fieldContext_User_updated_at(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type User", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Courier_avatar(ctx context.Context, field graphql.CollectedField, obj *model.Courier) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Courier_avatar(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Avatar, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*model.Uploads)
+	fc.Result = res
+	return ec.marshalOUploads2ᚖgithubᚗcomᚋedwinlomoloᚋuziᚑapiᚋgqlᚋmodelᚐUploads(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Courier_avatar(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Courier",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "ID":
+				return ec.fieldContext_Uploads_ID(ctx, field)
+			case "type":
+				return ec.fieldContext_Uploads_type(ctx, field)
+			case "uri":
+				return ec.fieldContext_Uploads_uri(ctx, field)
+			case "verification":
+				return ec.fieldContext_Uploads_verification(ctx, field)
+			case "courier_id":
+				return ec.fieldContext_Uploads_courier_id(ctx, field)
+			case "user_id":
+				return ec.fieldContext_Uploads_user_id(ctx, field)
+			case "created_at":
+				return ec.fieldContext_Uploads_created_at(ctx, field)
+			case "updated_at":
+				return ec.fieldContext_Uploads_updated_at(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Uploads", field.Name)
 		},
 	}
 	return fc, nil
@@ -3383,6 +3450,8 @@ func (ec *executionContext) fieldContext_Query_getCourierNearPickupPoint(ctx con
 				return ec.fieldContext_Courier_user_id(ctx, field)
 			case "user":
 				return ec.fieldContext_Courier_user(ctx, field)
+			case "avatar":
+				return ec.fieldContext_Courier_avatar(ctx, field)
 			case "verified":
 				return ec.fieldContext_Courier_verified(ctx, field)
 			case "status":
@@ -4900,6 +4969,8 @@ func (ec *executionContext) fieldContext_Trip_courier(ctx context.Context, field
 				return ec.fieldContext_Courier_user_id(ctx, field)
 			case "user":
 				return ec.fieldContext_Courier_user(ctx, field)
+			case "avatar":
+				return ec.fieldContext_Courier_avatar(ctx, field)
 			case "verified":
 				return ec.fieldContext_Courier_verified(ctx, field)
 			case "status":
@@ -6278,6 +6349,8 @@ func (ec *executionContext) fieldContext_User_courier(ctx context.Context, field
 				return ec.fieldContext_Courier_user_id(ctx, field)
 			case "user":
 				return ec.fieldContext_Courier_user(ctx, field)
+			case "avatar":
+				return ec.fieldContext_Courier_avatar(ctx, field)
 			case "verified":
 				return ec.fieldContext_Courier_verified(ctx, field)
 			case "status":
@@ -8470,6 +8543,8 @@ func (ec *executionContext) _Courier(ctx context.Context, sel ast.SelectionSet, 
 			}
 
 			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+		case "avatar":
+			out.Values[i] = ec._Courier_avatar(ctx, field, obj)
 		case "verified":
 			out.Values[i] = ec._Courier_verified(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
@@ -10856,6 +10931,13 @@ func (ec *executionContext) marshalOUUID2ᚖgithubᚗcomᚋgoogleᚋuuidᚐUUID(
 	}
 	res := graphql.MarshalUUID(*v)
 	return res
+}
+
+func (ec *executionContext) marshalOUploads2ᚖgithubᚗcomᚋedwinlomoloᚋuziᚑapiᚋgqlᚋmodelᚐUploads(ctx context.Context, sel ast.SelectionSet, v *model.Uploads) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._Uploads(ctx, sel, v)
 }
 
 func (ec *executionContext) marshalO__EnumValue2ᚕgithubᚗcomᚋ99designsᚋgqlgenᚋgraphqlᚋintrospectionᚐEnumValueᚄ(ctx context.Context, sel ast.SelectionSet, v []introspection.EnumValue) graphql.Marshaler {

@@ -97,6 +97,8 @@ models:
         resolver: true
       user:
         resolver: true
+      avatar:
+        resolver: false
   Trip:
     fields:
       recipient:

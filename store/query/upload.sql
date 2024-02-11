@@ -29,3 +29,7 @@ INSERT INTO uploads (
   $1, $2, $3
 )
 RETURNING *;
+
+-- name: GetCourierAvatar :one
+SELECT id, uri FROM uploads
+WHERE courier_id = $1 AND type = 'DP';
