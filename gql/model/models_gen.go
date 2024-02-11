@@ -14,6 +14,7 @@ import (
 type Courier struct {
 	ID             uuid.UUID     `json:"id"`
 	UserID         uuid.UUID     `json:"user_id"`
+	User           *User         `json:"user"`
 	Verified       bool          `json:"verified"`
 	Status         CourierStatus `json:"status"`
 	Rating         float64       `json:"rating"`

@@ -69,6 +69,7 @@ type ComplexityRoot struct {
 		TripID         func(childComplexity int) int
 		UpdatedAt      func(childComplexity int) int
 		UploadID       func(childComplexity int) int
+		User           func(childComplexity int) int
 		UserID         func(childComplexity int) int
 		Verified       func(childComplexity int) int
 	}
@@ -111,6 +112,7 @@ type ComplexityRoot struct {
 		ComputeTripRoute          func(childComplexity int, input model.TripRouteInput) int
 		GetCourierDocuments       func(childComplexity int) int
 		GetCourierNearPickupPoint func(childComplexity int, point model.GpsInput) int
+		GetTripDetails            func(childComplexity int, tripID uuid.UUID) int
 		Hello                     func(childComplexity int) int
 		ReverseGeocode            func(childComplexity int, place model.GpsInput) int
 		SearchPlace               func(childComplexity int, textQuery string) int
@@ -205,6 +207,8 @@ type ComplexityRoot struct {
 }
 
 type CourierResolver interface {
+	User(ctx context.Context, obj *model.Courier) (*model.User, error)
+
 	Trip(ctx context.Context, obj *model.Courier) (*model.Trip, error)
 
 	Product(ctx context.Context, obj *model.Courier) (*model.Product, error)
@@ -222,6 +226,7 @@ type QueryResolver interface {
 	ReverseGeocode(ctx context.Context, place model.GpsInput) (*location.Geocode, error)
 	ComputeTripRoute(ctx context.Context, input model.TripRouteInput) (*model.TripRoute, error)
 	GetCourierNearPickupPoint(ctx context.Context, point model.GpsInput) ([]*model.Courier, error)
+	GetTripDetails(ctx context.Context, tripID uuid.UUID) (*model.Trip, error)
 }
 type RecipientResolver interface {
 	Trip(ctx context.Context, obj *model.Recipient) (*model.Trip, error)
@@ -344,6 +349,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Courier.UploadID(childComplexity), true
+
+	case "Courier.user":
+		if e.complexity.Courier.User == nil {
+			break
+		}
+
+		return e.complexity.Courier.User(childComplexity), true
 
 	case "Courier.user_id":
 		if e.complexity.Courier.UserID == nil {
@@ -542,6 +554,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Query.GetCourierNearPickupPoint(childComplexity, args["point"].(model.GpsInput)), true
+
+	case "Query.getTripDetails":
+		if e.complexity.Query.GetTripDetails == nil {
+			break
+		}
+
+		args, err := ec.field_Query_getTripDetails_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Query.GetTripDetails(childComplexity, args["tripId"].(uuid.UUID)), true
 
 	case "Query.hello":
 		if e.complexity.Query.Hello == nil {
@@ -1259,6 +1283,21 @@ func (ec *executionContext) field_Query_getCourierNearPickupPoint_args(ctx conte
 	return args, nil
 }
 
+func (ec *executionContext) field_Query_getTripDetails_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 uuid.UUID
+	if tmp, ok := rawArgs["tripId"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("tripId"))
+		arg0, err = ec.unmarshalNUUID2githubᚗcomᚋgoogleᚋuuidᚐUUID(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["tripId"] = arg0
+	return args, nil
+}
+
 func (ec *executionContext) field_Query_reverseGeocode_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
@@ -1425,6 +1464,68 @@ func (ec *executionContext) fieldContext_Courier_user_id(ctx context.Context, fi
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("field of type UUID does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Courier_user(ctx context.Context, field graphql.CollectedField, obj *model.Courier) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Courier_user(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Courier().User(rctx, obj)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*model.User)
+	fc.Result = res
+	return ec.marshalNUser2ᚖgithubᚗcomᚋedwinlomoloᚋuziᚑapiᚋgqlᚋmodelᚐUser(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Courier_user(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Courier",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_User_id(ctx, field)
+			case "first_name":
+				return ec.fieldContext_User_first_name(ctx, field)
+			case "last_name":
+				return ec.fieldContext_User_last_name(ctx, field)
+			case "phone":
+				return ec.fieldContext_User_phone(ctx, field)
+			case "courier_id":
+				return ec.fieldContext_User_courier_id(ctx, field)
+			case "courier":
+				return ec.fieldContext_User_courier(ctx, field)
+			case "created_at":
+				return ec.fieldContext_User_created_at(ctx, field)
+			case "updated_at":
+				return ec.fieldContext_User_updated_at(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type User", field.Name)
 		},
 	}
 	return fc, nil
@@ -3280,6 +3381,8 @@ func (ec *executionContext) fieldContext_Query_getCourierNearPickupPoint(ctx con
 				return ec.fieldContext_Courier_id(ctx, field)
 			case "user_id":
 				return ec.fieldContext_Courier_user_id(ctx, field)
+			case "user":
+				return ec.fieldContext_Courier_user(ctx, field)
 			case "verified":
 				return ec.fieldContext_Courier_verified(ctx, field)
 			case "status":
@@ -3318,6 +3421,89 @@ func (ec *executionContext) fieldContext_Query_getCourierNearPickupPoint(ctx con
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
 	if fc.Args, err = ec.field_Query_getCourierNearPickupPoint_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Query_getTripDetails(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Query_getTripDetails(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Query().GetTripDetails(rctx, fc.Args["tripId"].(uuid.UUID))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*model.Trip)
+	fc.Result = res
+	return ec.marshalNTrip2ᚖgithubᚗcomᚋedwinlomoloᚋuziᚑapiᚋgqlᚋmodelᚐTrip(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Query_getTripDetails(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_Trip_id(ctx, field)
+			case "courier_id":
+				return ec.fieldContext_Trip_courier_id(ctx, field)
+			case "courier":
+				return ec.fieldContext_Trip_courier(ctx, field)
+			case "user_id":
+				return ec.fieldContext_Trip_user_id(ctx, field)
+			case "start_location":
+				return ec.fieldContext_Trip_start_location(ctx, field)
+			case "end_location":
+				return ec.fieldContext_Trip_end_location(ctx, field)
+			case "status":
+				return ec.fieldContext_Trip_status(ctx, field)
+			case "cost":
+				return ec.fieldContext_Trip_cost(ctx, field)
+			case "route_id":
+				return ec.fieldContext_Trip_route_id(ctx, field)
+			case "route":
+				return ec.fieldContext_Trip_route(ctx, field)
+			case "recipient":
+				return ec.fieldContext_Trip_recipient(ctx, field)
+			case "created_at":
+				return ec.fieldContext_Trip_created_at(ctx, field)
+			case "updated_at":
+				return ec.fieldContext_Trip_updated_at(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Trip", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Query_getTripDetails_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return fc, err
 	}
@@ -4712,6 +4898,8 @@ func (ec *executionContext) fieldContext_Trip_courier(ctx context.Context, field
 				return ec.fieldContext_Courier_id(ctx, field)
 			case "user_id":
 				return ec.fieldContext_Courier_user_id(ctx, field)
+			case "user":
+				return ec.fieldContext_Courier_user(ctx, field)
 			case "verified":
 				return ec.fieldContext_Courier_verified(ctx, field)
 			case "status":
@@ -6088,6 +6276,8 @@ func (ec *executionContext) fieldContext_User_courier(ctx context.Context, field
 				return ec.fieldContext_Courier_id(ctx, field)
 			case "user_id":
 				return ec.fieldContext_Courier_user_id(ctx, field)
+			case "user":
+				return ec.fieldContext_Courier_user(ctx, field)
 			case "verified":
 				return ec.fieldContext_Courier_verified(ctx, field)
 			case "status":
@@ -8244,6 +8434,42 @@ func (ec *executionContext) _Courier(ctx context.Context, sel ast.SelectionSet, 
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&out.Invalids, 1)
 			}
+		case "user":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Courier_user(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
 		case "verified":
 			out.Values[i] = ec._Courier_verified(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
@@ -8790,6 +9016,28 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 					}
 				}()
 				res = ec._Query_getCourierNearPickupPoint(ctx, field)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx,
+					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
+		case "getTripDetails":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_getTripDetails(ctx, field)
 				if res == graphql.Null {
 					atomic.AddUint32(&fs.Invalids, 1)
 				}
@@ -10216,6 +10464,20 @@ func (ec *executionContext) marshalNUploads2ᚖgithubᚗcomᚋedwinlomoloᚋuzi�
 		return graphql.Null
 	}
 	return ec._Uploads(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNUser2githubᚗcomᚋedwinlomoloᚋuziᚑapiᚋgqlᚋmodelᚐUser(ctx context.Context, sel ast.SelectionSet, v model.User) graphql.Marshaler {
+	return ec._User(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNUser2ᚖgithubᚗcomᚋedwinlomoloᚋuziᚑapiᚋgqlᚋmodelᚐUser(ctx context.Context, sel ast.SelectionSet, v *model.User) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._User(ctx, sel, v)
 }
 
 func (ec *executionContext) marshalN__Directive2githubᚗcomᚋ99designsᚋgqlgenᚋgraphqlᚋintrospectionᚐDirective(ctx context.Context, sel ast.SelectionSet, v introspection.Directive) graphql.Marshaler {

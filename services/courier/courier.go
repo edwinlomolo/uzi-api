@@ -46,14 +46,14 @@ func (c *courierClient) FindOrCreate(userID uuid.UUID) (*model.Courier, error) {
 	if err == sql.ErrNoRows {
 		newCourier, err := c.store.CreateCourier(context.Background(), uuid.NullUUID{UUID: userID, Valid: true})
 		if err != nil {
-			uziErr := fmt.Errorf("%s:%v", "createcourier", err.Error())
+			uziErr := fmt.Errorf("%s:%v", "create courier", err.Error())
 			c.logger.Errorf(uziErr.Error())
 			return nil, uziErr
 		}
 
 		return &model.Courier{ID: newCourier.ID}, nil
 	} else if err != nil {
-		uziErr := fmt.Errorf("%s:%v", "getcourier", err.Error())
+		uziErr := fmt.Errorf("%s:%v", "get courier", err.Error())
 		c.logger.Errorf(uziErr.Error())
 		return nil, uziErr
 	}
@@ -66,7 +66,7 @@ func (c *courierClient) IsCourier(userID uuid.UUID) (bool, error) {
 	if err == sql.ErrNoRows {
 		return false, nil
 	} else if err != nil {
-		uziErr := fmt.Errorf("%s:%v", "checkusercourierstatus", err.Error())
+		uziErr := fmt.Errorf("%s:%v", "check user courier status", err.Error())
 		c.logger.Errorf(uziErr.Error())
 		return false, uziErr
 	}
@@ -79,7 +79,7 @@ func (c *courierClient) GetCourierStatus(userID uuid.UUID) (model.CourierStatus,
 	if err == sql.ErrNoRows {
 		return model.CourierStatusOnboarding, nil
 	} else if err != nil {
-		uziErr := fmt.Errorf("%s:%v", "getcourierverificationstatus", err.Error())
+		uziErr := fmt.Errorf("%s:%v", "get courier verification status", err.Error())
 		c.logger.Errorf(uziErr.Error())
 		return model.CourierStatusOffline, uziErr
 	}
@@ -91,11 +91,11 @@ func (c *courierClient) getCourier(userID uuid.UUID) (*model.Courier, error) {
 	var courier model.Courier
 	foundCourier, err := c.store.GetCourierByUserID(context.Background(), uuid.NullUUID{UUID: userID, Valid: true})
 	if err == sql.ErrNoRows {
-		uziErr := fmt.Errorf("%s:%v", "nocourierfound", ErrNoCourierErr.Error())
+		uziErr := fmt.Errorf("%s:%v", "no courier found", ErrNoCourierErr.Error())
 		c.logger.Errorf(uziErr.Error())
 		return nil, uziErr
 	} else if err != nil {
-		uziErr := fmt.Errorf("%s:%v", "getcourier", err.Error())
+		uziErr := fmt.Errorf("%s:%v", "get courier", err.Error())
 		c.logger.Errorf(uziErr.Error())
 		return nil, uziErr
 	}
@@ -120,7 +120,7 @@ func (c *courierClient) TrackCourierLocation(userID uuid.UUID, input model.GpsIn
 		Location: fmt.Sprintf("SRID=4326;POINT(%.8f %.8f)", input.Lng, input.Lat),
 	}
 	if _, updateErr := c.store.TrackCourierLocation(context.Background(), args); updateErr != nil {
-		uziErr := fmt.Errorf("%s:%v", "trackcourierlocation", updateErr)
+		uziErr := fmt.Errorf("%s:%v", "track courier location", updateErr)
 		c.logger.Errorf(uziErr.Error())
 		return uziErr
 	}
@@ -134,7 +134,7 @@ func (c *courierClient) UpdateCourierStatus(userID uuid.UUID, status model.Couri
 		UserID: uuid.NullUUID{UUID: userID, Valid: true},
 	}
 	if _, setErr := c.store.SetCourierStatus(context.Background(), args); setErr != nil {
-		uziErr := fmt.Errorf("%s:%v", "setcourierstatus", setErr.Error())
+		uziErr := fmt.Errorf("%s:%v", "set courier status", setErr.Error())
 		c.logger.Errorf(uziErr.Error())
 		return false, uziErr
 	}

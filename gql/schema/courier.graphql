@@ -1,6 +1,7 @@
 type Courier {
   id: UUID!
   user_id: UUID!
+  user: User!
   verified: Boolean!
   status: CourierStatus!
   rating: Float!

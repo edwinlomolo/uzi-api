@@ -74,6 +74,7 @@ type Query {
   reverseGeocode(place: GpsInput!): Geocode
   computeTripRoute(input: TripRouteInput!): TripRoute!
   getCourierNearPickupPoint(point: GpsInput!): [Courier!]!
+  getTripDetails(tripId: UUID!): Trip!
 }
 
 type Mutation {

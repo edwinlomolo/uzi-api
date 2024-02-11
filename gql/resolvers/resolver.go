@@ -8,6 +8,7 @@ import (
 	"github.com/edwinlomolo/uzi-api/services/location"
 	"github.com/edwinlomolo/uzi-api/services/trip"
 	"github.com/edwinlomolo/uzi-api/services/upload"
+	"github.com/edwinlomolo/uzi-api/services/user"
 	"github.com/redis/go-redis/v9"
 )
 
@@ -24,6 +25,7 @@ type Resolver struct {
 	routeService route.Route
 	tripService  trip.TripService
 	redisClient  *redis.Client
+	userService  user.UserService
 }
 
 func New() gql.Config {
@@ -34,6 +36,7 @@ func New() gql.Config {
 		route.Routing,
 		trip.Trip,
 		cache.Redis,
+		user.User,
 	}}
 
 	return c

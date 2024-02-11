@@ -95,6 +95,8 @@ models:
         resolver: true
       trip:
         resolver: true
+      user:
+        resolver: true
   Trip:
     fields:
       recipient:

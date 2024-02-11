@@ -100,6 +100,11 @@ func (r *queryResolver) GetCourierNearPickupPoint(ctx context.Context, point mod
 	return r.tripService.GetCourierNearPickupPoint(point)
 }
 
+// GetTripDetails is the resolver for the getTripDetails field.
+func (r *queryResolver) GetTripDetails(ctx context.Context, tripID uuid.UUID) (*model.Trip, error) {
+	panic(fmt.Errorf("not implemented: GetTripDetails - getTripDetails"))
+}
+
 // TripUpdates is the resolver for the tripUpdates field.
 func (r *subscriptionResolver) TripUpdates(ctx context.Context, tripID uuid.UUID) (<-chan *model.TripUpdate, error) {
 	pubsub := r.redisClient.Subscribe(ctx, t.TRIP_UPDATES)

@@ -11,6 +11,11 @@ import (
 	"github.com/edwinlomolo/uzi-api/gql/model"
 )
 
+// User is the resolver for the user field.
+func (r *courierResolver) User(ctx context.Context, obj *model.Courier) (*model.User, error) {
+	return r.userService.FindUserByID(obj.UserID)
+}
+
 // Trip is the resolver for the trip field.
 func (r *courierResolver) Trip(ctx context.Context, obj *model.Courier) (*model.Trip, error) {
 	return r.tripService.GetCourierAssignedTrip(obj.ID)
