@@ -19,8 +19,9 @@ type Courier struct {
 	Rating         float64       `json:"rating"`
 	Location       *Gps          `json:"location"`
 	TripID         *uuid.UUID    `json:"trip_id,omitempty"`
+	Trip           *Trip         `json:"trip,omitempty"`
 	ProductID      uuid.UUID     `json:"product_id"`
-	Product        *Product      `json:"product,omitempty"`
+	Product        *Product      `json:"product"`
 	CompletedTrips int           `json:"completedTrips"`
 	Points         int           `json:"points"`
 	UploadID       *uuid.UUID    `json:"upload_id,omitempty"`
@@ -102,6 +103,7 @@ type Session struct {
 type Trip struct {
 	ID            uuid.UUID  `json:"id"`
 	CourierID     *uuid.UUID `json:"courier_id,omitempty"`
+	Courier       *Courier   `json:"courier,omitempty"`
 	UserID        uuid.UUID  `json:"user_id"`
 	StartLocation *Gps       `json:"start_location,omitempty"`
 	EndLocation   *Gps       `json:"end_location,omitempty"`

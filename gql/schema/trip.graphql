@@ -1,6 +1,7 @@
 type Trip {
   id: UUID!
   courier_id: UUID
+  courier: Courier
   user_id: UUID!
   start_location: Gps
   end_location: Gps

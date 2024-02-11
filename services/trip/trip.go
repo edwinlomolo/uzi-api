@@ -42,6 +42,7 @@ type TripService interface {
 	CreateTripRecipient(tripID uuid.UUID, input model.TripRecipientInput) error
 	GetTripRecipient(tripID uuid.UUID) (*model.Recipient, error)
 	GetTrip(tripID uuid.UUID) (*model.Trip, error)
+	GetCourierAssignedTrip(courierID uuid.UUID) (*model.Trip, error)
 }
 
 type point struct {
@@ -295,6 +296,11 @@ func (t *tripClient) getCourierAssignedTrip(courierID uuid.UUID) (*model.Trip, e
 
 	return &model.Trip{ID: trip.ID, Status: model.TripStatus(trip.Status)}, nil
 }
+
+func (t *tripClient) GetCourierAssignedTrip(courierID uuid.UUID) (*model.Trip, error) {
+	return t.getCourierAssignedTrip(courierID)
+}
+
 func (t *tripClient) MatchCourier(tripID uuid.UUID, pickup model.GpsInput) {
 	tripUpdate := model.TripUpdate{ID: tripID}
 

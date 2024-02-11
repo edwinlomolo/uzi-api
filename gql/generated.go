@@ -65,6 +65,7 @@ type ComplexityRoot struct {
 		ProductID      func(childComplexity int) int
 		Rating         func(childComplexity int) int
 		Status         func(childComplexity int) int
+		Trip           func(childComplexity int) int
 		TripID         func(childComplexity int) int
 		UpdatedAt      func(childComplexity int) int
 		UploadID       func(childComplexity int) int
@@ -154,6 +155,7 @@ type ComplexityRoot struct {
 
 	Trip struct {
 		Cost          func(childComplexity int) int
+		Courier       func(childComplexity int) int
 		CourierID     func(childComplexity int) int
 		CreatedAt     func(childComplexity int) int
 		EndLocation   func(childComplexity int) int
@@ -203,6 +205,8 @@ type ComplexityRoot struct {
 }
 
 type CourierResolver interface {
+	Trip(ctx context.Context, obj *model.Courier) (*model.Trip, error)
+
 	Product(ctx context.Context, obj *model.Courier) (*model.Product, error)
 }
 type MutationResolver interface {
@@ -226,6 +230,8 @@ type SubscriptionResolver interface {
 	TripUpdates(ctx context.Context, tripID uuid.UUID) (<-chan *model.TripUpdate, error)
 }
 type TripResolver interface {
+	Courier(ctx context.Context, obj *model.Trip) (*model.Courier, error)
+
 	Recipient(ctx context.Context, obj *model.Trip) (*model.Recipient, error)
 }
 
@@ -310,6 +316,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Courier.Status(childComplexity), true
+
+	case "Courier.trip":
+		if e.complexity.Courier.Trip == nil {
+			break
+		}
+
+		return e.complexity.Courier.Trip(childComplexity), true
 
 	case "Courier.trip_id":
 		if e.complexity.Courier.TripID == nil {
@@ -747,6 +760,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Trip.Cost(childComplexity), true
+
+	case "Trip.courier":
+		if e.complexity.Trip.Courier == nil {
+			break
+		}
+
+		return e.complexity.Trip.Courier(childComplexity), true
 
 	case "Trip.courier_id":
 		if e.complexity.Trip.CourierID == nil {
@@ -1633,6 +1653,75 @@ func (ec *executionContext) fieldContext_Courier_trip_id(ctx context.Context, fi
 	return fc, nil
 }
 
+func (ec *executionContext) _Courier_trip(ctx context.Context, field graphql.CollectedField, obj *model.Courier) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Courier_trip(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Courier().Trip(rctx, obj)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*model.Trip)
+	fc.Result = res
+	return ec.marshalOTrip2ᚖgithubᚗcomᚋedwinlomoloᚋuziᚑapiᚋgqlᚋmodelᚐTrip(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Courier_trip(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Courier",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_Trip_id(ctx, field)
+			case "courier_id":
+				return ec.fieldContext_Trip_courier_id(ctx, field)
+			case "courier":
+				return ec.fieldContext_Trip_courier(ctx, field)
+			case "user_id":
+				return ec.fieldContext_Trip_user_id(ctx, field)
+			case "start_location":
+				return ec.fieldContext_Trip_start_location(ctx, field)
+			case "end_location":
+				return ec.fieldContext_Trip_end_location(ctx, field)
+			case "status":
+				return ec.fieldContext_Trip_status(ctx, field)
+			case "cost":
+				return ec.fieldContext_Trip_cost(ctx, field)
+			case "route_id":
+				return ec.fieldContext_Trip_route_id(ctx, field)
+			case "route":
+				return ec.fieldContext_Trip_route(ctx, field)
+			case "recipient":
+				return ec.fieldContext_Trip_recipient(ctx, field)
+			case "created_at":
+				return ec.fieldContext_Trip_created_at(ctx, field)
+			case "updated_at":
+				return ec.fieldContext_Trip_updated_at(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Trip", field.Name)
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _Courier_product_id(ctx context.Context, field graphql.CollectedField, obj *model.Courier) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Courier_product_id(ctx, field)
 	if err != nil {
@@ -1698,11 +1787,14 @@ func (ec *executionContext) _Courier_product(ctx context.Context, field graphql.
 		return graphql.Null
 	}
 	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
 		return graphql.Null
 	}
 	res := resTmp.(*model.Product)
 	fc.Result = res
-	return ec.marshalOProduct2ᚖgithubᚗcomᚋedwinlomoloᚋuziᚑapiᚋgqlᚋmodelᚐProduct(ctx, field.Selections, res)
+	return ec.marshalNProduct2ᚖgithubᚗcomᚋedwinlomoloᚋuziᚑapiᚋgqlᚋmodelᚐProduct(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Courier_product(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -2379,6 +2471,8 @@ func (ec *executionContext) fieldContext_Mutation_createTrip(ctx context.Context
 				return ec.fieldContext_Trip_id(ctx, field)
 			case "courier_id":
 				return ec.fieldContext_Trip_courier_id(ctx, field)
+			case "courier":
+				return ec.fieldContext_Trip_courier(ctx, field)
 			case "user_id":
 				return ec.fieldContext_Trip_user_id(ctx, field)
 			case "start_location":
@@ -3196,6 +3290,8 @@ func (ec *executionContext) fieldContext_Query_getCourierNearPickupPoint(ctx con
 				return ec.fieldContext_Courier_location(ctx, field)
 			case "trip_id":
 				return ec.fieldContext_Courier_trip_id(ctx, field)
+			case "trip":
+				return ec.fieldContext_Courier_trip(ctx, field)
 			case "product_id":
 				return ec.fieldContext_Courier_product_id(ctx, field)
 			case "product":
@@ -3658,6 +3754,8 @@ func (ec *executionContext) fieldContext_Recipient_trip(ctx context.Context, fie
 				return ec.fieldContext_Trip_id(ctx, field)
 			case "courier_id":
 				return ec.fieldContext_Trip_courier_id(ctx, field)
+			case "courier":
+				return ec.fieldContext_Trip_courier(ctx, field)
 			case "user_id":
 				return ec.fieldContext_Trip_user_id(ctx, field)
 			case "start_location":
@@ -4569,6 +4667,79 @@ func (ec *executionContext) fieldContext_Trip_courier_id(ctx context.Context, fi
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("field of type UUID does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Trip_courier(ctx context.Context, field graphql.CollectedField, obj *model.Trip) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Trip_courier(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Trip().Courier(rctx, obj)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*model.Courier)
+	fc.Result = res
+	return ec.marshalOCourier2ᚖgithubᚗcomᚋedwinlomoloᚋuziᚑapiᚋgqlᚋmodelᚐCourier(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Trip_courier(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Trip",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_Courier_id(ctx, field)
+			case "user_id":
+				return ec.fieldContext_Courier_user_id(ctx, field)
+			case "verified":
+				return ec.fieldContext_Courier_verified(ctx, field)
+			case "status":
+				return ec.fieldContext_Courier_status(ctx, field)
+			case "rating":
+				return ec.fieldContext_Courier_rating(ctx, field)
+			case "location":
+				return ec.fieldContext_Courier_location(ctx, field)
+			case "trip_id":
+				return ec.fieldContext_Courier_trip_id(ctx, field)
+			case "trip":
+				return ec.fieldContext_Courier_trip(ctx, field)
+			case "product_id":
+				return ec.fieldContext_Courier_product_id(ctx, field)
+			case "product":
+				return ec.fieldContext_Courier_product(ctx, field)
+			case "completedTrips":
+				return ec.fieldContext_Courier_completedTrips(ctx, field)
+			case "points":
+				return ec.fieldContext_Courier_points(ctx, field)
+			case "upload_id":
+				return ec.fieldContext_Courier_upload_id(ctx, field)
+			case "created_at":
+				return ec.fieldContext_Courier_created_at(ctx, field)
+			case "updated_at":
+				return ec.fieldContext_Courier_updated_at(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Courier", field.Name)
 		},
 	}
 	return fc, nil
@@ -5927,6 +6098,8 @@ func (ec *executionContext) fieldContext_User_courier(ctx context.Context, field
 				return ec.fieldContext_Courier_location(ctx, field)
 			case "trip_id":
 				return ec.fieldContext_Courier_trip_id(ctx, field)
+			case "trip":
+				return ec.fieldContext_Courier_trip(ctx, field)
 			case "product_id":
 				return ec.fieldContext_Courier_product_id(ctx, field)
 			case "product":
@@ -8093,6 +8266,39 @@ func (ec *executionContext) _Courier(ctx context.Context, sel ast.SelectionSet, 
 			}
 		case "trip_id":
 			out.Values[i] = ec._Courier_trip_id(ctx, field, obj)
+		case "trip":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Courier_trip(ctx, field, obj)
+				return res
+			}
+
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
 		case "product_id":
 			out.Values[i] = ec._Courier_product_id(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
@@ -8108,6 +8314,9 @@ func (ec *executionContext) _Courier(ctx context.Context, sel ast.SelectionSet, 
 					}
 				}()
 				res = ec._Courier_product(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
 				return res
 			}
 
@@ -8888,6 +9097,39 @@ func (ec *executionContext) _Trip(ctx context.Context, sel ast.SelectionSet, obj
 			}
 		case "courier_id":
 			out.Values[i] = ec._Trip_courier_id(ctx, field, obj)
+		case "courier":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Trip_courier(ctx, field, obj)
+				return res
+			}
+
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
 		case "user_id":
 			out.Values[i] = ec._Trip_user_id(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
@@ -9713,6 +9955,10 @@ func (ec *executionContext) marshalNPlace2ᚖgithubᚗcomᚋedwinlomoloᚋuziᚑ
 	return ec._Place(ctx, sel, v)
 }
 
+func (ec *executionContext) marshalNProduct2githubᚗcomᚋedwinlomoloᚋuziᚑapiᚋgqlᚋmodelᚐProduct(ctx context.Context, sel ast.SelectionSet, v model.Product) graphql.Marshaler {
+	return ec._Product(ctx, sel, &v)
+}
+
 func (ec *executionContext) marshalNProduct2ᚕᚖgithubᚗcomᚋedwinlomoloᚋuziᚑapiᚋgqlᚋmodelᚐProductᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.Product) graphql.Marshaler {
 	ret := make(graphql.Array, len(v))
 	var wg sync.WaitGroup
@@ -10288,13 +10534,6 @@ func (ec *executionContext) marshalOGps2ᚖgithubᚗcomᚋedwinlomoloᚋuziᚑap
 	return ec._Gps(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalOProduct2ᚖgithubᚗcomᚋedwinlomoloᚋuziᚑapiᚋgqlᚋmodelᚐProduct(ctx context.Context, sel ast.SelectionSet, v *model.Product) graphql.Marshaler {
-	if v == nil {
-		return graphql.Null
-	}
-	return ec._Product(ctx, sel, v)
-}
-
 func (ec *executionContext) marshalORoute2ᚖgithubᚗcomᚋedwinlomoloᚋuziᚑapiᚋgqlᚋmodelᚐRoute(ctx context.Context, sel ast.SelectionSet, v *model.Route) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
@@ -10332,6 +10571,13 @@ func (ec *executionContext) marshalOTime2ᚖtimeᚐTime(ctx context.Context, sel
 	}
 	res := graphql.MarshalTime(*v)
 	return res
+}
+
+func (ec *executionContext) marshalOTrip2ᚖgithubᚗcomᚋedwinlomoloᚋuziᚑapiᚋgqlᚋmodelᚐTrip(ctx context.Context, sel ast.SelectionSet, v *model.Trip) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._Trip(ctx, sel, v)
 }
 
 func (ec *executionContext) unmarshalOUUID2ᚖgithubᚗcomᚋgoogleᚋuuidᚐUUID(ctx context.Context, v interface{}) (*uuid.UUID, error) {

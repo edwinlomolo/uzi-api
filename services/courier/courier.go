@@ -24,7 +24,7 @@ type CourierService interface {
 	IsCourier(userID uuid.UUID) (bool, error)
 	GetCourierStatus(userID uuid.UUID) (model.CourierStatus, error)
 	GetCourierByUserID(userID uuid.UUID) (*model.Courier, error)
-	GetCourierByID(userID uuid.UUID) (*model.Courier, error)
+	GetCourierByID(courierID uuid.UUID) (*model.Courier, error)
 	TrackCourierLocation(userID uuid.UUID, input model.GpsInput) error
 	UpdateCourierStatus(userID uuid.UUID, status model.CourierStatus) (bool, error)
 	GetCourierProduct(product_id uuid.UUID) (*model.Product, error)

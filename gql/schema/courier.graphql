@@ -6,8 +6,9 @@ type Courier {
   rating: Float!
   location: Gps!
   trip_id: UUID
+  trip: Trip
   product_id: UUID!
-  product: Product
+  product: Product!
   completedTrips: Int!
   points: Int!
   upload_id: UUID

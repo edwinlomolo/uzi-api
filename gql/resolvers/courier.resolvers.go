@@ -8,11 +8,16 @@ import (
 	"context"
 
 	"github.com/edwinlomolo/uzi-api/gql"
-	model1 "github.com/edwinlomolo/uzi-api/gql/model"
+	"github.com/edwinlomolo/uzi-api/gql/model"
 )
 
+// Trip is the resolver for the trip field.
+func (r *courierResolver) Trip(ctx context.Context, obj *model.Courier) (*model.Trip, error) {
+	return r.tripService.GetCourierAssignedTrip(obj.ID)
+}
+
 // Product is the resolver for the product field.
-func (r *courierResolver) Product(ctx context.Context, obj *model1.Courier) (*model1.Product, error) {
+func (r *courierResolver) Product(ctx context.Context, obj *model.Courier) (*model.Product, error) {
 	return r.GetCourierProduct(obj.ProductID)
 }
 

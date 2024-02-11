@@ -16,6 +16,11 @@ func (r *recipientResolver) Trip(ctx context.Context, obj *model.Recipient) (*mo
 	return r.tripService.GetTrip(obj.TripID)
 }
 
+// Courier is the resolver for the courier field.
+func (r *tripResolver) Courier(ctx context.Context, obj *model.Trip) (*model.Courier, error) {
+	return r.GetCourierByID(*obj.CourierID)
+}
+
 // Recipient is the resolver for the recipient field.
 func (r *tripResolver) Recipient(ctx context.Context, obj *model.Trip) (*model.Recipient, error) {
 	return r.tripService.GetTripRecipient(obj.ID)
