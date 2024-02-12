@@ -110,7 +110,9 @@ func (c *courierClient) getCourier(userID uuid.UUID) (*model.Courier, error) {
 func (c *courierClient) getAvatar(courierID uuid.UUID) *model.Uploads {
 	ID := uuid.NullUUID{UUID: courierID, Valid: true}
 	avatar, err := c.store.GetCourierAvatar(context.Background(), ID)
-	if err != nil {
+	if err != nil && err == sql.ErrNoRows {
+		return nil
+	} else if err != nil {
 		uziErr := fmt.Errorf("%s:%v", "get courier avatar", err)
 		c.logger.Errorf(uziErr.Error())
 		return nil
