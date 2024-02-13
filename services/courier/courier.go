@@ -40,20 +40,19 @@ func NewCourierService() {
 	logger.Logger.Infoln("Courier sevice...OK")
 }
 
-// TODO something ain't adding up here!
 func (c *courierClient) FindOrCreate(userID uuid.UUID) (*model.Courier, error) {
-	courier, err := c.store.GetCourierByUserID(context.Background(), uuid.NullUUID{UUID: userID, Valid: true})
-	if err == sql.ErrNoRows {
-		newCourier, err := c.store.CreateCourier(context.Background(), uuid.NullUUID{UUID: userID, Valid: true})
-		if err != nil {
-			uziErr := fmt.Errorf("%s:%v", "create courier", err.Error())
+	courier, err := c.getCourier(userID)
+	if err != nil && errors.Is(err, ErrNoCourierErr) {
+		newCourier, newErr := c.store.CreateCourier(context.Background(), uuid.NullUUID{UUID: userID, Valid: true})
+		if newErr != nil {
+			uziErr := fmt.Errorf("%s:%v", "create courier", newErr)
 			c.logger.Errorf(uziErr.Error())
 			return nil, uziErr
 		}
 
 		return &model.Courier{ID: newCourier.ID}, nil
 	} else if err != nil {
-		uziErr := fmt.Errorf("%s:%v", "get courier", err.Error())
+		uziErr := fmt.Errorf("%s:%v", "get courier", err)
 		c.logger.Errorf(uziErr.Error())
 		return nil, uziErr
 	}
@@ -91,7 +90,7 @@ func (c *courierClient) getCourier(userID uuid.UUID) (*model.Courier, error) {
 	var courier model.Courier
 	foundCourier, err := c.store.GetCourierByUserID(context.Background(), uuid.NullUUID{UUID: userID, Valid: true})
 	if err == sql.ErrNoRows {
-		uziErr := fmt.Errorf("%s:%v", "no courier found", ErrNoCourierErr.Error())
+		uziErr := fmt.Errorf("%s:%v", ErrNoCourierErr.Error(), ErrNoCourierErr)
 		c.logger.Errorf(uziErr.Error())
 		return nil, uziErr
 	} else if err != nil {
