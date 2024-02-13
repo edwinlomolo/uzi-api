@@ -79,6 +79,7 @@ func main() {
 	r.Post("/signin", handler.Signin())
 	r.Post("/user/onboard", handler.UserOnboarding())
 	r.Post("/courier/upload/document", handler.UploadDocument())
+	r.Handle("/subscription", srv)
 
 	// Server
 	s := &http.Server{

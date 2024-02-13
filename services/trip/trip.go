@@ -288,7 +288,7 @@ func (t *tripClient) GetCourierAssignedTrip(courierID uuid.UUID) (*model.Trip, e
 func (t *tripClient) MatchCourier(tripID uuid.UUID, pickup model.GpsInput) {
 	tripUpdate := model.TripUpdate{ID: tripID}
 
-	timeoutCtx, cancel := context.WithTimeout(context.Background(), time.Second*30)
+	timeoutCtx, cancel := context.WithTimeout(context.Background(), time.Second*10)
 	go func() {
 		defer cancel()
 
