@@ -35,13 +35,12 @@ func UserOnboarding() http.HandlerFunc {
 			return
 		}
 
-		updatedUser, onboardErr := userService.OnboardUser(bodyReq)
-		if onboardErr != nil {
+		if _, onboardErr := userService.OnboardUser(bodyReq); onboardErr != nil {
 			http.Error(w, onboardErr.Error(), http.StatusInternalServerError)
 			return
 		}
 
-		session, sessionErr := sessionService.SignIn(*updatedUser, ip, r.UserAgent())
+		session, sessionErr := sessionService.SignIn(bodyReq, ip, r.UserAgent())
 		if sessionErr != nil {
 			http.Error(w, sessionErr.Error(), http.StatusInternalServerError)
 			return

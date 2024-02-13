@@ -8,7 +8,6 @@ import (
 
 	"github.com/edwinlomolo/uzi-api/internal/logger"
 	"github.com/edwinlomolo/uzi-api/internal/util"
-	"github.com/edwinlomolo/uzi-api/services/courier"
 	"github.com/edwinlomolo/uzi-api/services/session"
 	"github.com/edwinlomolo/uzi-api/services/user"
 )
@@ -17,9 +16,7 @@ func Signin() http.HandlerFunc {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		var loginInput user.SigninInput
 		logger := logger.Logger
-		userService := user.User
 		sessionService := session.Session
-		courierService := courier.Courier
 		userIp := util.GetIp(r)
 
 		body, bodyErr := io.ReadAll(r.Body)
@@ -31,27 +28,13 @@ func Signin() http.HandlerFunc {
 		}
 
 		if marshalErr := json.Unmarshal(body, &loginInput); marshalErr != nil {
-			uziErr := fmt.Errorf("%s:%v", "unmarshal body", marshalErr)
+			uziErr := fmt.Errorf("%s:%v", "unmarshal login req body", marshalErr)
 			logger.Errorf(uziErr.Error())
 			http.Error(w, marshalErr.Error(), http.StatusInternalServerError)
 			return
 		}
 
-		findUser, findUserErr := userService.FindOrCreate(loginInput)
-		if findUserErr != nil {
-			http.Error(w, findUserErr.Error(), http.StatusInternalServerError)
-			return
-		}
-
-		if loginInput.Courier {
-			_, courierErr := courierService.FindOrCreate(findUser.ID)
-			if courierErr != nil {
-				http.Error(w, courierErr.Error(), http.StatusInternalServerError)
-				return
-			}
-		}
-
-		findSession, findSessionErr := sessionService.SignIn(*findUser, userIp, r.UserAgent())
+		findSession, findSessionErr := sessionService.SignIn(loginInput, userIp, r.UserAgent())
 		if findSessionErr != nil {
 			http.Error(w, findSessionErr.Error(), http.StatusInternalServerError)
 			return
@@ -59,7 +42,7 @@ func Signin() http.HandlerFunc {
 
 		jsonRes, jsonErr := json.Marshal(findSession)
 		if jsonErr != nil {
-			uziErr := fmt.Errorf("%s:%v", "marshal session", jsonErr)
+			uziErr := fmt.Errorf("%s:%v", "marshal session res", jsonErr)
 			logger.Errorf(uziErr.Error())
 			http.Error(w, uziErr.Error(), http.StatusInternalServerError)
 			return

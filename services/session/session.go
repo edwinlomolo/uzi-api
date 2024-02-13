@@ -10,6 +10,7 @@ import (
 	"github.com/edwinlomolo/uzi-api/internal/jwt"
 	"github.com/edwinlomolo/uzi-api/internal/logger"
 	"github.com/edwinlomolo/uzi-api/services/courier"
+	"github.com/edwinlomolo/uzi-api/services/user"
 	userService "github.com/edwinlomolo/uzi-api/services/user"
 	"github.com/edwinlomolo/uzi-api/store"
 	sqlStore "github.com/edwinlomolo/uzi-api/store/sqlc"
@@ -20,7 +21,7 @@ import (
 var Session SessionService
 
 type SessionService interface {
-	SignIn(user model.User, ip, userAgent string) (*model.Session, error)
+	SignIn(signin user.SigninInput, ip, userAgent string) (*model.Session, error)
 }
 
 type sessionClient struct {
@@ -35,11 +36,16 @@ func NewSessionService() {
 	logger.Logger.Infoln("Session service...OK")
 }
 
-func (sc *sessionClient) SignIn(user model.User, ip, userAgent string) (*model.Session, error) {
-	return sc.findOrCreate(user, ip, userAgent)
+func (sc *sessionClient) SignIn(signin user.SigninInput, ip, userAgent string) (*model.Session, error) {
+	return sc.findOrCreate(signin, ip, userAgent)
 }
 
-func (sc *sessionClient) findOrCreate(user model.User, ip, userAgent string) (*model.Session, error) {
+func (sc *sessionClient) findOrCreate(signin user.SigninInput, ip, userAgent string) (*model.Session, error) {
+	user, userErr := user.User.FindOrCreate(signin)
+	if userErr != nil {
+		return nil, userErr
+	}
+
 	sess, sessErr := sc.getSession(user.ID)
 	if sess == nil && sessErr == nil {
 		newSess, newSessErr := sc.createNewSession(user.ID, ip, user.Phone, userAgent)
@@ -86,7 +92,7 @@ func (sc *sessionClient) createNewSession(userID uuid.UUID, ip, phone, userAgent
 		return nil, courierErr
 	}
 
-	user, userErr := userService.User.GetUser(phone)
+	user, userErr := userService.User.GetUserByPhone(phone)
 	if userErr != nil {
 		return nil, userErr
 	}
@@ -132,7 +138,7 @@ func (sc *sessionClient) getSession(sessionID uuid.UUID) (*model.Session, error)
 		return nil, courierErr
 	}
 
-	user, userErr := userService.User.GetUser(foundSess.Phone)
+	user, userErr := userService.User.GetUserByPhone(foundSess.Phone)
 	if userErr != nil {
 		return nil, userErr
 	}

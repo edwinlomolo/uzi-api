@@ -10,6 +10,7 @@ import (
 	"github.com/edwinlomolo/uzi-api/internal/cache"
 	"github.com/edwinlomolo/uzi-api/internal/logger"
 	"github.com/edwinlomolo/uzi-api/internal/util"
+	"github.com/edwinlomolo/uzi-api/services/courier"
 	"github.com/edwinlomolo/uzi-api/store"
 	sqlStore "github.com/edwinlomolo/uzi-api/store/sqlc"
 	"github.com/google/uuid"
@@ -19,7 +20,7 @@ import (
 type UserService interface {
 	FindOrCreate(user SigninInput) (*model.User, error)
 	OnboardUser(user SigninInput) (*model.User, error)
-	GetUser(phone string) (*model.User, error)
+	GetUserByPhone(phone string) (*model.User, error)
 	FindUserByID(id uuid.UUID) (*model.User, error)
 }
 
@@ -62,44 +63,37 @@ func (u *userClient) FindOrCreate(user SigninInput) (*model.User, error) {
 func (u *userClient) createUser(user SigninInput) (*model.User, error) {
 	var res model.User
 
-	foundUser, getUserErr := u.store.FindByPhone(context.Background(), user.Phone)
-	if getUserErr == sql.ErrNoRows {
-		newUser, newUserErr := u.store.CreateUser(context.Background(), sqlStore.CreateUserParams{
-			FirstName: user.FirstName,
-			LastName:  user.LastName,
-			Phone:     user.Phone,
-		})
-		if newUserErr != nil {
-			err := fmt.Errorf("%s:%v", "create user", newUserErr)
-			u.logger.Errorf(err.Error())
-			return nil, err
-		}
-
-		res.ID = newUser.ID
-		res.FirstName = newUser.FirstName
-		res.LastName = newUser.LastName
-		res.Phone = newUser.Phone
-
-		return &res, nil
-	} else if getUserErr != nil {
-		err := fmt.Errorf("%s:%v", "get user", getUserErr)
+	newUser, newUserErr := u.store.CreateUser(context.Background(), sqlStore.CreateUserParams{
+		FirstName: user.FirstName,
+		LastName:  user.LastName,
+		Phone:     user.Phone,
+	})
+	if newUserErr != nil {
+		err := fmt.Errorf("%s:%v", "create user", newUserErr)
 		u.logger.Errorf(err.Error())
 		return nil, err
 	}
 
-	res.ID = foundUser.ID
-	res.FirstName = foundUser.FirstName
-	res.LastName = foundUser.LastName
-	res.Phone = foundUser.Phone
+	if user.Courier {
+		if _, courierErr := courier.Courier.FindOrCreate(newUser.ID); courierErr != nil {
+			return nil, courierErr
+		}
+	}
+
+	res.ID = newUser.ID
+	res.FirstName = newUser.FirstName
+	res.LastName = newUser.LastName
+	res.Phone = newUser.Phone
 
 	return &res, nil
 }
 
 func (u *userClient) getUser(phone string) (*model.User, error) {
+	var user model.User
 	cacheKey := util.Base64Key(phone)
+
 	cacheUser, cacheErr := u.cache.Get(cacheKey)
 	if cacheErr == nil && cacheUser == nil {
-		var user model.User
 		foundUser, getErr := u.store.FindByPhone(context.Background(), phone)
 		if getErr == sql.ErrNoRows {
 			return nil, nil
@@ -124,7 +118,7 @@ func (u *userClient) getUser(phone string) (*model.User, error) {
 	return (cacheUser).(*model.User), nil
 }
 
-func (u *userClient) GetUser(phone string) (*model.User, error) {
+func (u *userClient) GetUserByPhone(phone string) (*model.User, error) {
 	return u.getUser(phone)
 }
 
