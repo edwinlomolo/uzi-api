@@ -79,12 +79,7 @@ func (sc *sessionClient) createNewSession(userID uuid.UUID, ip, phone, userAgent
 		return nil, signJwtErr
 	}
 
-	isUserOnboarding, isUserOnboardingErr := sc.store.IsUserOnboarding(context.Background(), userID)
-	if isUserOnboardingErr != nil {
-		onboardErr := fmt.Errorf("%s:%v", "get user onboarding", isUserOnboardingErr)
-		sc.logger.Errorf(onboardErr.Error())
-		return nil, onboardErr
-	}
+	isUserOnboarding, _ := sc.store.IsUserOnboarding(context.Background(), userID)
 
 	isCourier, courierStatus, courierErr := sc.getRelevantCourierData(userID)
 	if courierErr != nil {
@@ -130,12 +125,7 @@ func (sc *sessionClient) getSession(sessionID uuid.UUID) (*model.Session, error)
 		return nil, signJwtErr
 	}
 
-	isUserOnboarding, isUserOnboardingErr := sc.store.IsUserOnboarding(context.Background(), foundSess.ID)
-	if isUserOnboardingErr != nil {
-		onboardErr := fmt.Errorf("%s:%v", "get user onboarding", isUserOnboardingErr)
-		sc.logger.Errorf(onboardErr.Error())
-		return nil, onboardErr
-	}
+	isUserOnboarding, _ := sc.store.IsUserOnboarding(context.Background(), foundSess.ID)
 
 	isCourier, courierStatus, courierErr := sc.getRelevantCourierData(foundSess.ID)
 	if courierErr != nil {

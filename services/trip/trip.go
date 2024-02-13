@@ -138,22 +138,6 @@ func (t *tripClient) AssignCourierToTrip(tripID, courierID uuid.UUID) error {
 		return uziErr
 	}
 
-	go func() {
-		tripUpdate := model.TripUpdate{ID: tripID}
-		tripUpdate.Status = model.TripStatusCourierFound
-		u, marshalErr := json.Marshal(tripUpdate)
-		if marshalErr != nil {
-			logger.Logger.Errorf(marshalErr.Error())
-			return
-		}
-
-		arrivingErr := t.redis.Publish(context.Background(), TRIP_UPDATES, u).Err()
-		if arrivingErr != nil {
-			logger.Logger.Errorf(arrivingErr.Error())
-			return
-		}
-	}()
-
 	return nil
 }
 
@@ -304,7 +288,7 @@ func (t *tripClient) GetCourierAssignedTrip(courierID uuid.UUID) (*model.Trip, e
 func (t *tripClient) MatchCourier(tripID uuid.UUID, pickup model.GpsInput) {
 	tripUpdate := model.TripUpdate{ID: tripID}
 
-	timeoutCtx, cancel := context.WithTimeout(context.Background(), time.Minute*5)
+	timeoutCtx, cancel := context.WithTimeout(context.Background(), time.Second*30)
 	go func() {
 		defer cancel()
 
@@ -326,6 +310,8 @@ func (t *tripClient) MatchCourier(tripID uuid.UUID, pickup model.GpsInput) {
 
 				return
 			default:
+				time.Sleep(250 * time.Millisecond)
+
 				courier, err := t.FindAvailableCourier(pickup)
 				if err != nil {
 					logger.Logger.Errorf(err.Error())
@@ -333,6 +319,22 @@ func (t *tripClient) MatchCourier(tripID uuid.UUID, pickup model.GpsInput) {
 				}
 
 				if courier != nil {
+					go func() {
+						tripUpdate := model.TripUpdate{ID: tripID}
+						tripUpdate.Status = model.TripStatusCourierFound
+						u, marshalErr := json.Marshal(tripUpdate)
+						if marshalErr != nil {
+							logger.Logger.Errorf(marshalErr.Error())
+							return
+						}
+
+						arrivingErr := t.redis.Publish(context.Background(), TRIP_UPDATES, u).Err()
+						if arrivingErr != nil {
+							logger.Logger.Errorf(arrivingErr.Error())
+							return
+						}
+					}()
+
 					assignErr := t.AssignCourierToTrip(tripID, courier.ID)
 					if assignErr == nil {
 						return
