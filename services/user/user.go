@@ -90,32 +90,21 @@ func (u *userClient) createUser(user SigninInput) (*model.User, error) {
 
 func (u *userClient) getUser(phone string) (*model.User, error) {
 	var user model.User
-	cacheKey := util.Base64Key(phone)
-
-	cacheUser, cacheErr := u.cache.Get(cacheKey)
-	if cacheErr == nil && cacheUser == nil {
-		foundUser, getErr := u.store.FindByPhone(context.Background(), phone)
-		if getErr == sql.ErrNoRows {
-			return nil, nil
-		} else if getErr != nil {
-			err := fmt.Errorf("%s:%v", "get user by phone", getErr)
-			u.logger.Errorf(err.Error())
-			return nil, err
-		}
-
-		user.ID = foundUser.ID
-		user.FirstName = foundUser.FirstName
-		user.LastName = foundUser.LastName
-		user.Phone = foundUser.Phone
-
-		go u.cache.Set(cacheKey, &user)
-
-		return &user, nil
-	} else if cacheErr != nil {
-		return nil, cacheErr
+	foundUser, getErr := u.store.FindByPhone(context.Background(), phone)
+	if getErr == sql.ErrNoRows {
+		return nil, nil
+	} else if getErr != nil {
+		err := fmt.Errorf("%s:%v", "get user by phone", getErr)
+		u.logger.Errorf(err.Error())
+		return nil, err
 	}
 
-	return (cacheUser).(*model.User), nil
+	user.ID = foundUser.ID
+	user.FirstName = foundUser.FirstName
+	user.LastName = foundUser.LastName
+	user.Phone = foundUser.Phone
+
+	return &user, nil
 }
 
 func (u *userClient) GetUserByPhone(phone string) (*model.User, error) {

@@ -42,7 +42,7 @@ func NewCourierService() {
 
 func (c *courierClient) FindOrCreate(userID uuid.UUID) (*model.Courier, error) {
 	courier, err := c.getCourier(userID)
-	if err != nil && errors.Is(err, ErrNoCourierErr) {
+	if err == nil && courier == nil {
 		newCourier, newErr := c.store.CreateCourier(context.Background(), uuid.NullUUID{UUID: userID, Valid: true})
 		if newErr != nil {
 			uziErr := fmt.Errorf("%s:%v", "create courier", newErr)
@@ -90,11 +90,9 @@ func (c *courierClient) getCourier(userID uuid.UUID) (*model.Courier, error) {
 	var courier model.Courier
 	foundCourier, err := c.store.GetCourierByUserID(context.Background(), uuid.NullUUID{UUID: userID, Valid: true})
 	if err == sql.ErrNoRows {
-		uziErr := fmt.Errorf("%s:%v", ErrNoCourierErr.Error(), ErrNoCourierErr)
-		c.logger.Errorf(uziErr.Error())
-		return nil, uziErr
+		return nil, nil
 	} else if err != nil {
-		uziErr := fmt.Errorf("%s:%v", "get courier", err.Error())
+		uziErr := fmt.Errorf("%s:%v", "get courier", err)
 		c.logger.Errorf(uziErr.Error())
 		return nil, uziErr
 	}
