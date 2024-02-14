@@ -3,14 +3,19 @@ package courier
 import (
 	"context"
 	"database/sql"
+	"encoding/json"
 	"errors"
 	"fmt"
 
 	"github.com/edwinlomolo/uzi-api/gql/model"
+	"github.com/edwinlomolo/uzi-api/internal/cache"
 	"github.com/edwinlomolo/uzi-api/internal/logger"
+	"github.com/edwinlomolo/uzi-api/internal/util"
+	"github.com/edwinlomolo/uzi-api/services/trip"
 	"github.com/edwinlomolo/uzi-api/store"
 	sqlStore "github.com/edwinlomolo/uzi-api/store/sqlc"
 	"github.com/google/uuid"
+	"github.com/redis/go-redis/v9"
 	"github.com/sirupsen/logrus"
 )
 
@@ -33,10 +38,11 @@ type CourierService interface {
 type courierClient struct {
 	logger *logrus.Logger
 	store  *sqlStore.Queries
+	redis  *redis.Client
 }
 
 func NewCourierService() {
-	Courier = &courierClient{logger.Logger, store.DB}
+	Courier = &courierClient{logger.Logger, store.DB, cache.Redis}
 	logger.Logger.Infoln("Courier sevice...OK")
 }
 
@@ -123,7 +129,8 @@ func (c *courierClient) GetCourierByUserID(userID uuid.UUID) (*model.Courier, er
 }
 
 func (c *courierClient) TrackCourierLocation(userID uuid.UUID, input model.GpsInput) error {
-	if _, err := c.getCourier(userID); err != nil {
+	courier, err := c.getCourier(userID)
+	if err != nil {
 		return err
 	}
 
@@ -136,6 +143,33 @@ func (c *courierClient) TrackCourierLocation(userID uuid.UUID, input model.GpsIn
 		c.logger.Errorf(uziErr.Error())
 		return uziErr
 	}
+
+	go func() {
+		t, err := trip.Trip.GetCourierAssignedTrip(courier.ID)
+		if err != nil {
+			return
+		}
+
+		if t != nil && (t.Status == model.TripStatusEnRoute || t.Status == model.TripStatusArriving) {
+			tripUpdate := model.TripUpdate{
+				ID:       t.ID,
+				Status:   model.TripStatus(t.Status),
+				Location: &model.Gps{Lat: input.Lat, Lng: input.Lng},
+			}
+			u, marshalErr := json.Marshal(tripUpdate)
+			if marshalErr != nil {
+				uziErr := fmt.Errorf("%s:%v", "marshal trip update", marshalErr)
+				c.logger.Errorf(uziErr.Error())
+				return
+			}
+			tripUpdateErr := c.redis.Publish(context.Background(), trip.TRIP_UPDATES, u).Err()
+			if tripUpdateErr != nil {
+				uziErr := fmt.Errorf("%s:%v", "publish trip update", tripUpdateErr)
+				c.logger.Errorf(uziErr.Error())
+				return
+			}
+		}
+	}()
 
 	return nil
 }
@@ -177,5 +211,10 @@ func (c *courierClient) GetCourierByID(courierID uuid.UUID) (*model.Courier, err
 		return nil, uziErr
 	}
 
-	return &model.Courier{ID: courier.ID, TripID: &courier.TripID.UUID}, nil
+	return &model.Courier{
+		ID:       courier.ID,
+		TripID:   &courier.TripID.UUID,
+		UserID:   courier.UserID.UUID,
+		Location: util.ParsePostgisLocation(courier.Location),
+	}, nil
 }

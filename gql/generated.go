@@ -87,6 +87,8 @@ type ComplexityRoot struct {
 	}
 
 	Mutation struct {
+		CourierArriving       func(childComplexity int, tripID uuid.UUID) int
+		CourierEnroute        func(childComplexity int, tripID uuid.UUID) int
 		CreateCourierDocument func(childComplexity int, input model.CourierUploadInput) int
 		CreateTrip            func(childComplexity int, input model.CreateTripInput) int
 		SetCourierStatus      func(childComplexity int, status string) int
@@ -153,6 +155,7 @@ type ComplexityRoot struct {
 	}
 
 	Subscription struct {
+		AssignTrip  func(childComplexity int, userID uuid.UUID) int
 		TripUpdates func(childComplexity int, tripID uuid.UUID) int
 	}
 
@@ -179,9 +182,10 @@ type ComplexityRoot struct {
 	}
 
 	TripUpdate struct {
-		ID       func(childComplexity int) int
-		Location func(childComplexity int) int
-		Status   func(childComplexity int) int
+		CourierID func(childComplexity int) int
+		ID        func(childComplexity int) int
+		Location  func(childComplexity int) int
+		Status    func(childComplexity int) int
 	}
 
 	Uploads struct {
@@ -219,6 +223,8 @@ type MutationResolver interface {
 	TrackCourierGps(ctx context.Context, input model.GpsInput) (bool, error)
 	SetCourierStatus(ctx context.Context, status string) (bool, error)
 	CreateTrip(ctx context.Context, input model.CreateTripInput) (*model.Trip, error)
+	CourierArriving(ctx context.Context, tripID uuid.UUID) (bool, error)
+	CourierEnroute(ctx context.Context, tripID uuid.UUID) (bool, error)
 }
 type QueryResolver interface {
 	Hello(ctx context.Context) (string, error)
@@ -234,6 +240,7 @@ type RecipientResolver interface {
 }
 type SubscriptionResolver interface {
 	TripUpdates(ctx context.Context, tripID uuid.UUID) (<-chan *model.TripUpdate, error)
+	AssignTrip(ctx context.Context, userID uuid.UUID) (<-chan *model.TripUpdate, error)
 }
 type TripResolver interface {
 	Courier(ctx context.Context, obj *model.Trip) (*model.Courier, error)
@@ -413,6 +420,30 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Gps.Lng(childComplexity), true
+
+	case "Mutation.courierArriving":
+		if e.complexity.Mutation.CourierArriving == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_courierArriving_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.CourierArriving(childComplexity, args["tripId"].(uuid.UUID)), true
+
+	case "Mutation.courierEnroute":
+		if e.complexity.Mutation.CourierEnroute == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_courierEnroute_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.CourierEnroute(childComplexity, args["tripId"].(uuid.UUID)), true
 
 	case "Mutation.createCourierDocument":
 		if e.complexity.Mutation.CreateCourierDocument == nil {
@@ -774,6 +805,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Session.UserAgent(childComplexity), true
 
+	case "Subscription.assignTrip":
+		if e.complexity.Subscription.AssignTrip == nil {
+			break
+		}
+
+		args, err := ec.field_Subscription_assignTrip_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Subscription.AssignTrip(childComplexity, args["userId"].(uuid.UUID)), true
+
 	case "Subscription.tripUpdates":
 		if e.complexity.Subscription.TripUpdates == nil {
 			break
@@ -897,6 +940,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.TripRoute.Polyline(childComplexity), true
+
+	case "TripUpdate.courierId":
+		if e.complexity.TripUpdate.CourierID == nil {
+			break
+		}
+
+		return e.complexity.TripUpdate.CourierID(childComplexity), true
 
 	case "TripUpdate.id":
 		if e.complexity.TripUpdate.ID == nil {
@@ -1186,6 +1236,36 @@ var parsedSchema = gqlparser.MustLoadSchema(sources...)
 
 // region    ***************************** args.gotpl *****************************
 
+func (ec *executionContext) field_Mutation_courierArriving_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 uuid.UUID
+	if tmp, ok := rawArgs["tripId"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("tripId"))
+		arg0, err = ec.unmarshalNUUID2githubᚗcomᚋgoogleᚋuuidᚐUUID(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["tripId"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_courierEnroute_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 uuid.UUID
+	if tmp, ok := rawArgs["tripId"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("tripId"))
+		arg0, err = ec.unmarshalNUUID2githubᚗcomᚋgoogleᚋuuidᚐUUID(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["tripId"] = arg0
+	return args, nil
+}
+
 func (ec *executionContext) field_Mutation_createCourierDocument_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
@@ -1333,6 +1413,21 @@ func (ec *executionContext) field_Query_searchPlace_args(ctx context.Context, ra
 		}
 	}
 	args["textQuery"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Subscription_assignTrip_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 uuid.UUID
+	if tmp, ok := rawArgs["userId"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("userId"))
+		arg0, err = ec.unmarshalNUUID2githubᚗcomᚋgoogleᚋuuidᚐUUID(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["userId"] = arg0
 	return args, nil
 }
 
@@ -2673,6 +2768,116 @@ func (ec *executionContext) fieldContext_Mutation_createTrip(ctx context.Context
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
 	if fc.Args, err = ec.field_Mutation_createTrip_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_courierArriving(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Mutation_courierArriving(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Mutation().CourierArriving(rctx, fc.Args["tripId"].(uuid.UUID))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(bool)
+	fc.Result = res
+	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Mutation_courierArriving(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Boolean does not have child fields")
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_courierArriving_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_courierEnroute(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Mutation_courierEnroute(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Mutation().CourierEnroute(rctx, fc.Args["tripId"].(uuid.UUID))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(bool)
+	fc.Result = res
+	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Mutation_courierEnroute(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Boolean does not have child fields")
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_courierEnroute_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return fc, err
 	}
@@ -4822,6 +5027,8 @@ func (ec *executionContext) fieldContext_Subscription_tripUpdates(ctx context.Co
 				return ec.fieldContext_TripUpdate_id(ctx, field)
 			case "status":
 				return ec.fieldContext_TripUpdate_status(ctx, field)
+			case "courierId":
+				return ec.fieldContext_TripUpdate_courierId(ctx, field)
 			case "location":
 				return ec.fieldContext_TripUpdate_location(ctx, field)
 			}
@@ -4836,6 +5043,85 @@ func (ec *executionContext) fieldContext_Subscription_tripUpdates(ctx context.Co
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
 	if fc.Args, err = ec.field_Subscription_tripUpdates_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Subscription_assignTrip(ctx context.Context, field graphql.CollectedField) (ret func(ctx context.Context) graphql.Marshaler) {
+	fc, err := ec.fieldContext_Subscription_assignTrip(ctx, field)
+	if err != nil {
+		return nil
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = nil
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Subscription().AssignTrip(rctx, fc.Args["userId"].(uuid.UUID))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return nil
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return nil
+	}
+	return func(ctx context.Context) graphql.Marshaler {
+		select {
+		case res, ok := <-resTmp.(<-chan *model.TripUpdate):
+			if !ok {
+				return nil
+			}
+			return graphql.WriterFunc(func(w io.Writer) {
+				w.Write([]byte{'{'})
+				graphql.MarshalString(field.Alias).MarshalGQL(w)
+				w.Write([]byte{':'})
+				ec.marshalNTripUpdate2ᚖgithubᚗcomᚋedwinlomoloᚋuziᚑapiᚋgqlᚋmodelᚐTripUpdate(ctx, field.Selections, res).MarshalGQL(w)
+				w.Write([]byte{'}'})
+			})
+		case <-ctx.Done():
+			return nil
+		}
+	}
+}
+
+func (ec *executionContext) fieldContext_Subscription_assignTrip(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Subscription",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_TripUpdate_id(ctx, field)
+			case "status":
+				return ec.fieldContext_TripUpdate_status(ctx, field)
+			case "courierId":
+				return ec.fieldContext_TripUpdate_courierId(ctx, field)
+			case "location":
+				return ec.fieldContext_TripUpdate_location(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type TripUpdate", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Subscription_assignTrip_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return fc, err
 	}
@@ -5698,6 +5984,47 @@ func (ec *executionContext) fieldContext_TripUpdate_status(ctx context.Context, 
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("field of type TripStatus does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _TripUpdate_courierId(ctx context.Context, field graphql.CollectedField, obj *model.TripUpdate) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_TripUpdate_courierId(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.CourierID, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*uuid.UUID)
+	fc.Result = res
+	return ec.marshalOUUID2ᚖgithubᚗcomᚋgoogleᚋuuidᚐUUID(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_TripUpdate_courierId(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "TripUpdate",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type UUID does not have child fields")
 		},
 	}
 	return fc, nil
@@ -8820,6 +9147,20 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
+		case "courierArriving":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_courierArriving(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "courierEnroute":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_courierEnroute(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -9397,6 +9738,8 @@ func (ec *executionContext) _Subscription(ctx context.Context, sel ast.Selection
 	switch fields[0].Name {
 	case "tripUpdates":
 		return ec._Subscription_tripUpdates(ctx, fields[0])
+	case "assignTrip":
+		return ec._Subscription_assignTrip(ctx, fields[0])
 	default:
 		panic("unknown field " + strconv.Quote(fields[0].Name))
 	}
@@ -9606,6 +9949,8 @@ func (ec *executionContext) _TripUpdate(ctx context.Context, sel ast.SelectionSe
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
+		case "courierId":
+			out.Values[i] = ec._TripUpdate_courierId(ctx, field, obj)
 		case "location":
 			out.Values[i] = ec._TripUpdate_location(ctx, field, obj)
 		default:

@@ -17,6 +17,7 @@ type Trip {
 type TripUpdate {
   id: UUID!
   status: TripStatus!
+  courierId: UUID
   location: Gps
 }
 

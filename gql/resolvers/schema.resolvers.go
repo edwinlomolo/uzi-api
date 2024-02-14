@@ -11,6 +11,7 @@ import (
 
 	"github.com/edwinlomolo/uzi-api/gql"
 	"github.com/edwinlomolo/uzi-api/gql/model"
+	"github.com/edwinlomolo/uzi-api/internal/logger"
 	"github.com/edwinlomolo/uzi-api/services/location"
 	t "github.com/edwinlomolo/uzi-api/services/trip"
 	"github.com/edwinlomolo/uzi-api/store/sqlc"
@@ -63,6 +64,26 @@ func (r *mutationResolver) CreateTrip(ctx context.Context, input model.CreateTri
 	return trip, err
 }
 
+// CourierArriving is the resolver for the courierArriving field.
+func (r *mutationResolver) CourierArriving(ctx context.Context, tripID uuid.UUID) (bool, error) {
+	err := r.tripService.PublishTripUpdate(tripID, model.TripStatusArriving, t.TRIP_UPDATES)
+	if err != nil {
+		return false, err
+	}
+
+	return true, nil
+}
+
+// CourierEnroute is the resolver for the courierEnroute field.
+func (r *mutationResolver) CourierEnroute(ctx context.Context, tripID uuid.UUID) (bool, error) {
+	err := r.tripService.PublishTripUpdate(tripID, model.TripStatusEnRoute, t.TRIP_UPDATES)
+	if err != nil {
+		return false, err
+	}
+
+	return true, nil
+}
+
 // Hello is the resolver for the hello field.
 func (r *queryResolver) Hello(ctx context.Context) (string, error) {
 	return "Hello, world!", nil
@@ -102,7 +123,7 @@ func (r *queryResolver) GetCourierNearPickupPoint(ctx context.Context, point mod
 
 // GetTripDetails is the resolver for the getTripDetails field.
 func (r *queryResolver) GetTripDetails(ctx context.Context, tripID uuid.UUID) (*model.Trip, error) {
-	panic(fmt.Errorf("not implemented: GetTripDetails - getTripDetails"))
+	return r.tripService.GetTrip(tripID)
 }
 
 // TripUpdates is the resolver for the tripUpdates field.
@@ -115,14 +136,50 @@ func (r *subscriptionResolver) TripUpdates(ctx context.Context, tripID uuid.UUID
 		for {
 			msg, err := pubsub.ReceiveMessage(ctx)
 			if err != nil {
+				uziErr := fmt.Errorf("%s:%v", "receive trip update msg pub", err)
+				logger.Logger.Errorf(uziErr.Error())
 				close(ch)
 				return
 			}
+
 			var update *model.TripUpdate
 			if err := json.Unmarshal([]byte(msg.Payload), &update); err != nil {
+				uziErr := fmt.Errorf("%s:%v", "unmarshal trip update msg payload", err)
+				logger.Logger.Errorf(uziErr.Error())
 				return
 			}
 			if update.ID == tripID {
+				ch <- update
+			}
+		}
+	}()
+
+	return ch, nil
+}
+
+// AssignTrip is the resolver for the assignTrip field.
+func (r *subscriptionResolver) AssignTrip(ctx context.Context, userID uuid.UUID) (<-chan *model.TripUpdate, error) {
+	pubsub := r.redisClient.Subscribe(ctx, t.ASSIGN_TRIP)
+
+	ch := make(chan *model.TripUpdate)
+
+	go func() {
+		for {
+			msg, err := pubsub.ReceiveMessage(ctx)
+			if err != nil {
+				uziErr := fmt.Errorf("%s:%v", "receive assign trip msg pub", err)
+				logger.Logger.Errorf(uziErr.Error())
+				close(ch)
+				return
+			}
+
+			var update *model.TripUpdate
+			if err := json.Unmarshal([]byte(msg.Payload), &update); err != nil {
+				uziErr := fmt.Errorf("%s:%v", "unmarshal assign trip msg payload", err)
+				logger.Logger.Errorf(uziErr.Error())
+				return
+			}
+			if update.CourierID == &userID {
 				ch <- update
 			}
 		}

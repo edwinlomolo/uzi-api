@@ -217,7 +217,7 @@ func (q *Queries) CreateTripCost(ctx context.Context, arg CreateTripCostParams) 
 }
 
 const findAvailableCourier = `-- name: FindAvailableCourier :one
-SELECT id, product_id, ST_AsGeoJSON(location) AS location FROM
+SELECT id, user_id, product_id, ST_AsGeoJSON(location) AS location FROM
 couriers
 WHERE ST_DWithin(location, $1::geography, $2) AND status = 'ONLINE' AND verified = 'true' AND trip_id IS null
 LIMIT 1
@@ -230,6 +230,7 @@ type FindAvailableCourierParams struct {
 
 type FindAvailableCourierRow struct {
 	ID        uuid.UUID     `json:"id"`
+	UserID    uuid.NullUUID `json:"user_id"`
 	ProductID uuid.NullUUID `json:"product_id"`
 	Location  interface{}   `json:"location"`
 }
@@ -237,7 +238,12 @@ type FindAvailableCourierRow struct {
 func (q *Queries) FindAvailableCourier(ctx context.Context, arg FindAvailableCourierParams) (FindAvailableCourierRow, error) {
 	row := q.db.QueryRowContext(ctx, findAvailableCourier, arg.Point, arg.Radius)
 	var i FindAvailableCourierRow
-	err := row.Scan(&i.ID, &i.ProductID, &i.Location)
+	err := row.Scan(
+		&i.ID,
+		&i.UserID,
+		&i.ProductID,
+		&i.Location,
+	)
 	return i, err
 }
 

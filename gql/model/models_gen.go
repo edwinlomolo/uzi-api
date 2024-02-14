@@ -143,9 +143,10 @@ type TripRouteInput struct {
 }
 
 type TripUpdate struct {
-	ID       uuid.UUID  `json:"id"`
-	Status   TripStatus `json:"status"`
-	Location *Gps       `json:"location,omitempty"`
+	ID        uuid.UUID  `json:"id"`
+	Status    TripStatus `json:"status"`
+	CourierID *uuid.UUID `json:"courierId,omitempty"`
+	Location  *Gps       `json:"location,omitempty"`
 }
 
 type Uploads struct {
@@ -219,6 +220,7 @@ const (
 	TripStatusArriving        TripStatus = "ARRIVING"
 	TripStatusEnRoute         TripStatus = "EN_ROUTE"
 	TripStatusComplete        TripStatus = "COMPLETE"
+	TripStatusAssigned        TripStatus = "ASSIGNED"
 	TripStatusCourierArriving TripStatus = "COURIER_ARRIVING"
 	TripStatusCourierFound    TripStatus = "COURIER_FOUND"
 	TripStatusCourierNotFound TripStatus = "COURIER_NOT_FOUND"
@@ -228,6 +230,7 @@ var AllTripStatus = []TripStatus{
 	TripStatusArriving,
 	TripStatusEnRoute,
 	TripStatusComplete,
+	TripStatusAssigned,
 	TripStatusCourierArriving,
 	TripStatusCourierFound,
 	TripStatusCourierNotFound,
@@ -235,7 +238,7 @@ var AllTripStatus = []TripStatus{
 
 func (e TripStatus) IsValid() bool {
 	switch e {
-	case TripStatusArriving, TripStatusEnRoute, TripStatusComplete, TripStatusCourierArriving, TripStatusCourierFound, TripStatusCourierNotFound:
+	case TripStatusArriving, TripStatusEnRoute, TripStatusComplete, TripStatusAssigned, TripStatusCourierArriving, TripStatusCourierFound, TripStatusCourierNotFound:
 		return true
 	}
 	return false

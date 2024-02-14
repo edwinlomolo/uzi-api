@@ -14,7 +14,7 @@ WHERE c.product_id = p.id AND c.status = 'OFFLINE' AND c.verified = 'true'
 ORDER BY p.relevance ASC;
 
 -- name: FindAvailableCourier :one
-SELECT id, product_id, ST_AsGeoJSON(location) AS location FROM
+SELECT id, user_id, product_id, ST_AsGeoJSON(location) AS location FROM
 couriers
 WHERE ST_DWithin(location, sqlc.arg(point)::geography, sqlc.arg(radius)) AND status = 'ONLINE' AND verified = 'true' AND trip_id IS null
 LIMIT 1;
@@ -82,3 +82,5 @@ RETURNING *;
 SELECT * FROM recipients
 WHERE trip_id = $1
 LIMIT 1;
+
+

@@ -27,6 +27,7 @@ enum TripStatus {
   ARRIVING
   EN_ROUTE
   COMPLETE
+  ASSIGNED
   COURIER_ARRIVING
   COURIER_FOUND
   COURIER_NOT_FOUND
@@ -82,8 +83,11 @@ type Mutation {
   trackCourierGps(input: GpsInput!): Boolean!
   setCourierStatus(status: String!): Boolean!
   createTrip(input: CreateTripInput!): Trip!
+  courierArriving(tripId: UUID!): Boolean!
+  courierEnroute(tripId: UUID!): Boolean!
 }
 
 type Subscription {
   tripUpdates(tripId: UUID!): TripUpdate!
+  assignTrip(userId: UUID!): TripUpdate!
 }
