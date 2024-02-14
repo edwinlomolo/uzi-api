@@ -106,6 +106,7 @@ func (c *courierClient) getCourier(userID uuid.UUID) (*model.Courier, error) {
 	courier.ID = foundCourier.ID
 	courier.UserID = foundCourier.UserID.UUID
 	courier.Avatar = c.getAvatar(foundCourier.ID)
+	courier.Location = util.ParsePostgisLocation(foundCourier.Location)
 
 	return &courier, nil
 }
@@ -145,7 +146,7 @@ func (c *courierClient) TrackCourierLocation(userID uuid.UUID, input model.GpsIn
 	}
 
 	go func() {
-		t, err := trip.Trip.GetCourierAssignedTrip(courier.ID)
+		t, err := trip.Trip.GetCourierTrip(courier.ID)
 		if err != nil {
 			return
 		}

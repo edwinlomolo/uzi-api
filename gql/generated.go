@@ -155,7 +155,7 @@ type ComplexityRoot struct {
 	}
 
 	Subscription struct {
-		AssignTrip  func(childComplexity int, userID uuid.UUID) int
+		AssignTrip  func(childComplexity int) int
 		TripUpdates func(childComplexity int, tripID uuid.UUID) int
 	}
 
@@ -240,7 +240,7 @@ type RecipientResolver interface {
 }
 type SubscriptionResolver interface {
 	TripUpdates(ctx context.Context, tripID uuid.UUID) (<-chan *model.TripUpdate, error)
-	AssignTrip(ctx context.Context, userID uuid.UUID) (<-chan *model.TripUpdate, error)
+	AssignTrip(ctx context.Context) (<-chan *model.TripUpdate, error)
 }
 type TripResolver interface {
 	Courier(ctx context.Context, obj *model.Trip) (*model.Courier, error)
@@ -810,12 +810,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			break
 		}
 
-		args, err := ec.field_Subscription_assignTrip_args(context.TODO(), rawArgs)
-		if err != nil {
-			return 0, false
-		}
-
-		return e.complexity.Subscription.AssignTrip(childComplexity, args["userId"].(uuid.UUID)), true
+		return e.complexity.Subscription.AssignTrip(childComplexity), true
 
 	case "Subscription.tripUpdates":
 		if e.complexity.Subscription.TripUpdates == nil {
@@ -1413,21 +1408,6 @@ func (ec *executionContext) field_Query_searchPlace_args(ctx context.Context, ra
 		}
 	}
 	args["textQuery"] = arg0
-	return args, nil
-}
-
-func (ec *executionContext) field_Subscription_assignTrip_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
-	var err error
-	args := map[string]interface{}{}
-	var arg0 uuid.UUID
-	if tmp, ok := rawArgs["userId"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("userId"))
-		arg0, err = ec.unmarshalNUUID2githubᚗcomᚋgoogleᚋuuidᚐUUID(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["userId"] = arg0
 	return args, nil
 }
 
@@ -5063,7 +5043,7 @@ func (ec *executionContext) _Subscription_assignTrip(ctx context.Context, field 
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Subscription().AssignTrip(rctx, fc.Args["userId"].(uuid.UUID))
+		return ec.resolvers.Subscription().AssignTrip(rctx)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -5113,17 +5093,6 @@ func (ec *executionContext) fieldContext_Subscription_assignTrip(ctx context.Con
 			}
 			return nil, fmt.Errorf("no field named %q was found under type TripUpdate", field.Name)
 		},
-	}
-	defer func() {
-		if r := recover(); r != nil {
-			err = ec.Recover(ctx, r)
-			ec.Error(ctx, err)
-		}
-	}()
-	ctx = graphql.WithFieldContext(ctx, fc)
-	if fc.Args, err = ec.field_Subscription_assignTrip_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
-		ec.Error(ctx, err)
-		return fc, err
 	}
 	return fc, nil
 }

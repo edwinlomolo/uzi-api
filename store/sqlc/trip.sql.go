@@ -248,24 +248,24 @@ func (q *Queries) FindAvailableCourier(ctx context.Context, arg FindAvailableCou
 }
 
 const getCourierAssignedTrip = `-- name: GetCourierAssignedTrip :one
-SELECT id, start_location, end_location, courier_id, user_id, route_id, product_id, cost, status, created_at, updated_at FROM trips
-WHERE courier_id = $1
+SELECT id, verified, status, location, ratings, points, user_id, product_id, trip_id, created_at, updated_at FROM couriers
+WHERE id = $1 AND trip_id = null
 LIMIT 1
 `
 
-func (q *Queries) GetCourierAssignedTrip(ctx context.Context, courierID uuid.NullUUID) (Trip, error) {
-	row := q.db.QueryRowContext(ctx, getCourierAssignedTrip, courierID)
-	var i Trip
+func (q *Queries) GetCourierAssignedTrip(ctx context.Context, id uuid.UUID) (Courier, error) {
+	row := q.db.QueryRowContext(ctx, getCourierAssignedTrip, id)
+	var i Courier
 	err := row.Scan(
 		&i.ID,
-		&i.StartLocation,
-		&i.EndLocation,
-		&i.CourierID,
-		&i.UserID,
-		&i.RouteID,
-		&i.ProductID,
-		&i.Cost,
+		&i.Verified,
 		&i.Status,
+		&i.Location,
+		&i.Ratings,
+		&i.Points,
+		&i.UserID,
+		&i.ProductID,
+		&i.TripID,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 	)
@@ -310,6 +310,31 @@ func (q *Queries) GetCourierNearPickupPoint(ctx context.Context, arg GetCourierN
 		return nil, err
 	}
 	return items, nil
+}
+
+const getCourierTrip = `-- name: GetCourierTrip :one
+SELECT id, start_location, end_location, courier_id, user_id, route_id, product_id, cost, status, created_at, updated_at FROM trips
+WHERE courier_id = $1
+LIMIT 1
+`
+
+func (q *Queries) GetCourierTrip(ctx context.Context, courierID uuid.NullUUID) (Trip, error) {
+	row := q.db.QueryRowContext(ctx, getCourierTrip, courierID)
+	var i Trip
+	err := row.Scan(
+		&i.ID,
+		&i.StartLocation,
+		&i.EndLocation,
+		&i.CourierID,
+		&i.UserID,
+		&i.RouteID,
+		&i.ProductID,
+		&i.Cost,
+		&i.Status,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
 }
 
 const getNearbyAvailableCourierProducts = `-- name: GetNearbyAvailableCourierProducts :many

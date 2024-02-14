@@ -66,8 +66,8 @@ WHERE id = $2
 RETURNING *;
 
 -- name: GetCourierAssignedTrip :one
-SELECT * FROM trips
-WHERE courier_id = $1
+SELECT * FROM couriers
+WHERE id = $1 AND trip_id = null
 LIMIT 1;
 
 -- name: CreateRecipient :one
@@ -83,4 +83,7 @@ SELECT * FROM recipients
 WHERE trip_id = $1
 LIMIT 1;
 
-
+-- name: GetCourierTrip :one
+SELECT * FROM trips
+WHERE courier_id = $1
+LIMIT 1;

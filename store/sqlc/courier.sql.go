@@ -41,54 +41,48 @@ func (q *Queries) CreateCourier(ctx context.Context, userID uuid.NullUUID) (Cour
 }
 
 const getCourierByID = `-- name: GetCourierByID :one
-SELECT id, verified, status, location, ratings, points, user_id, product_id, trip_id, created_at, updated_at FROM
+SELECT id, trip_id, user_id, ST_AsGeoJSON(location) AS location FROM
 couriers
 WHERE id = $1
 LIMIT 1
 `
 
-func (q *Queries) GetCourierByID(ctx context.Context, id uuid.UUID) (Courier, error) {
+type GetCourierByIDRow struct {
+	ID       uuid.UUID     `json:"id"`
+	TripID   uuid.NullUUID `json:"trip_id"`
+	UserID   uuid.NullUUID `json:"user_id"`
+	Location interface{}   `json:"location"`
+}
+
+func (q *Queries) GetCourierByID(ctx context.Context, id uuid.UUID) (GetCourierByIDRow, error) {
 	row := q.db.QueryRowContext(ctx, getCourierByID, id)
-	var i Courier
+	var i GetCourierByIDRow
 	err := row.Scan(
 		&i.ID,
-		&i.Verified,
-		&i.Status,
-		&i.Location,
-		&i.Ratings,
-		&i.Points,
-		&i.UserID,
-		&i.ProductID,
 		&i.TripID,
-		&i.CreatedAt,
-		&i.UpdatedAt,
+		&i.UserID,
+		&i.Location,
 	)
 	return i, err
 }
 
 const getCourierByUserID = `-- name: GetCourierByUserID :one
-SELECT id, verified, status, location, ratings, points, user_id, product_id, trip_id, created_at, updated_at FROM
+SELECT id, user_id, ST_AsGeoJSON(location) AS location FROM
 couriers
 WHERE user_id = $1
 LIMIT 1
 `
 
-func (q *Queries) GetCourierByUserID(ctx context.Context, userID uuid.NullUUID) (Courier, error) {
+type GetCourierByUserIDRow struct {
+	ID       uuid.UUID     `json:"id"`
+	UserID   uuid.NullUUID `json:"user_id"`
+	Location interface{}   `json:"location"`
+}
+
+func (q *Queries) GetCourierByUserID(ctx context.Context, userID uuid.NullUUID) (GetCourierByUserIDRow, error) {
 	row := q.db.QueryRowContext(ctx, getCourierByUserID, userID)
-	var i Courier
-	err := row.Scan(
-		&i.ID,
-		&i.Verified,
-		&i.Status,
-		&i.Location,
-		&i.Ratings,
-		&i.Points,
-		&i.UserID,
-		&i.ProductID,
-		&i.TripID,
-		&i.CreatedAt,
-		&i.UpdatedAt,
-	)
+	var i GetCourierByUserIDRow
+	err := row.Scan(&i.ID, &i.UserID, &i.Location)
 	return i, err
 }
 
