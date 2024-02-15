@@ -51,13 +51,30 @@ func (r *mutationResolver) CreateTrip(ctx context.Context, input model.CreateTri
 	userID := stringToUUID(ctx.Value("userID").(string))
 
 	params := sqlc.CreateTripParams{
-		UserID:        userID,
-		ProductID:     stringToUUID(input.TripProductID),
-		StartLocation: fmt.Sprintf("SRID=4326;POINT(%.8f %.8f)", input.TripInput.Pickup.Location.Lat, input.TripInput.Pickup.Location.Lng),
-		EndLocation:   fmt.Sprintf("SRID=4326;POINT(%.8f %.8f)", input.TripInput.Dropoff.Location.Lat, input.TripInput.Dropoff.Location.Lng),
+		UserID:    userID,
+		ProductID: stringToUUID(input.TripProductID),
+		StartLocation: fmt.Sprintf(
+			"SRID=4326;POINT(%.8f %.8f)",
+			input.TripInput.Pickup.Location.Lat,
+			input.TripInput.Pickup.Location.Lng,
+		),
+		EndLocation: fmt.Sprintf(
+			"SRID=4326;POINT(%.8f %.8f)",
+			input.TripInput.Dropoff.Location.Lat,
+			input.TripInput.Dropoff.Location.Lng,
+		),
 	}
 	trip, err := r.tripService.CreateTrip(params)
-	go r.tripService.CreateTripRecipient(trip.ID, *input.Recipient)
+
+	done := make(chan struct{})
+	go func() {
+		defer close(done)
+		err := r.tripService.CreateTripRecipient(trip.ID, *input.Recipient)
+		if err != nil {
+			return
+		}
+	}()
+	<-done
 
 	r.tripService.MatchCourier(trip.ID, *input.TripInput.Pickup.Location)
 
@@ -136,7 +153,7 @@ func (r *subscriptionResolver) TripUpdates(ctx context.Context, tripID uuid.UUID
 		for {
 			msg, err := pubsub.ReceiveMessage(ctx)
 			if err != nil {
-				uziErr := fmt.Errorf("%s:%v", "receive trip update msg pub", err)
+				uziErr := fmt.Errorf("%s:%v", "receive update", err)
 				logger.Logger.Errorf(uziErr.Error())
 				close(ch)
 				return
@@ -144,7 +161,7 @@ func (r *subscriptionResolver) TripUpdates(ctx context.Context, tripID uuid.UUID
 
 			var update *model.TripUpdate
 			if err := json.Unmarshal([]byte(msg.Payload), &update); err != nil {
-				uziErr := fmt.Errorf("%s:%v", "unmarshal trip update msg payload", err)
+				uziErr := fmt.Errorf("%s:%v", "unmarshal update", err)
 				logger.Logger.Errorf(uziErr.Error())
 				return
 			}
@@ -169,7 +186,7 @@ func (r *subscriptionResolver) AssignTrip(ctx context.Context) (<-chan *model.Tr
 		for {
 			msg, err := pubsub.ReceiveMessage(ctx)
 			if err != nil {
-				uziErr := fmt.Errorf("%s:%v", "receive assign trip msg pub", err)
+				uziErr := fmt.Errorf("%s:%v", "assign update", err)
 				logger.Logger.Errorf(uziErr.Error())
 				close(ch)
 				return
@@ -177,7 +194,7 @@ func (r *subscriptionResolver) AssignTrip(ctx context.Context) (<-chan *model.Tr
 
 			var update *model.TripUpdate
 			if err := json.Unmarshal([]byte(msg.Payload), &update); err != nil {
-				uziErr := fmt.Errorf("%s:%v", "unmarshal assign trip msg payload", err)
+				uziErr := fmt.Errorf("%s:%v", "assign update", err)
 				logger.Logger.Errorf(uziErr.Error())
 				return
 			}
