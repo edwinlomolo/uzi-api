@@ -3,6 +3,7 @@ package route
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"time"
 
@@ -11,6 +12,11 @@ import (
 	"github.com/edwinlomolo/uzi-api/internal/logger"
 	"github.com/redis/go-redis/v9"
 	"github.com/sirupsen/logrus"
+)
+
+var (
+	ErrSetCacheRoute = errors.New("cache route")
+	ErrGetRouteCache = errors.New("get route cache")
 )
 
 type routeCache struct {
@@ -27,12 +33,16 @@ func (r routeCache) cacheRoute(key string, value interface{}) error {
 	data, err := json.Marshal(routeinfo)
 	if err != nil {
 		r.logger.Errorf(err.Error())
-		return fmt.Errorf("%s:%v", "setrouteinfocachemarshal", err.Error())
+		return fmt.Errorf("%s:%v", ErrSetCacheRoute.Error(), err.Error())
 	}
 
-	if err := r.cache.Set(context.Background(), key, data, time.Hour*24).Err(); err != nil {
+	if err := r.cache.Set(
+		context.Background(),
+		key,
+		data,
+		time.Hour*24).Err(); err != nil {
 		r.logger.Errorf(err.Error())
-		return fmt.Errorf("%s:%v", "setrouteinfocache", err.Error())
+		return fmt.Errorf("%s:%v", ErrSetCacheRoute.Error(), err.Error())
 	}
 
 	return nil
@@ -46,12 +56,12 @@ func (r routeCache) getRouteCache(key string) (interface{}, error) {
 		return nil, nil
 	} else if err != nil {
 		r.logger.Errorf(err.Error())
-		return nil, fmt.Errorf("%s:%v", "getrouteinfocache", err.Error())
+		return nil, fmt.Errorf("%s:%v", ErrGetRouteCache.Error(), err.Error())
 	}
 
 	if err := json.Unmarshal([]byte(keyValue), &res); err != nil {
 		r.logger.Errorf(err.Error())
-		return nil, fmt.Errorf("%s:%v", "getrouteinfocachemarshal", err.Error())
+		return nil, fmt.Errorf("%s:%v", ErrGetRouteCache.Error(), err.Error())
 	}
 
 	return res, nil

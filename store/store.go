@@ -45,9 +45,12 @@ func InitializeStorage() error {
 	DB = sqlStore.New(db)
 
 	// Setup database schema
-	if err := runDatabaseMigration(db, log, isDevelopment, rdbmsConfig.MigrationUrl, forceMigrate); err != nil {
-		log.Errorf("%s:%v", "ApplyingMigrationErr", err.Error())
-	} else if err == nil {
+	if err := runDatabaseMigration(
+		db,
+		log,
+		isDevelopment,
+		rdbmsConfig.MigrationUrl,
+		forceMigrate); err == nil {
 		log.Infoln("Database migration...OK")
 	}
 
@@ -55,7 +58,13 @@ func InitializeStorage() error {
 }
 
 // runDbMigration - setup database tables
-func runDatabaseMigration(db *sql.DB, logger *logrus.Logger, isDevelopment bool, migrationUrl string, forceMigrate bool) error {
+func runDatabaseMigration(
+	db *sql.DB,
+	logger *logrus.Logger,
+	isDevelopment bool,
+	migrationUrl string,
+	forceMigrate bool,
+) error {
 	migrationErr := "DatabaseMigrationErr"
 
 	driver, err := postgres.WithInstance(db, &postgres.Config{})

@@ -25,7 +25,10 @@ func NewPricer() {
 	Pricer = &pricerClient{logger.Logger}
 }
 
-func (p *pricerClient) CalculateTripCost(weightClass, distance int, earnWithFuel bool) int {
+func (p *pricerClient) CalculateTripCost(
+	weightClass, distance int,
+	earnWithFuel bool,
+) int {
 	hourlyWage := config.Config.Pricer.HourlyWage
 	work := p.workToBeDone(weightClass, distance)
 	tripCost := p.nominalTripCost(work, hourlyWage) + p.earnWithRatingPoints(work, hourlyWage)
@@ -48,10 +51,19 @@ func (p *pricerClient) nominalTripCost(work, hourlyWage int) int {
 	return work * hourlyWage
 }
 
-func (p *pricerClient) earnWithRatingPoints(hourlyWage, points int) int { return hourlyWage * points }
+func (p *pricerClient) earnWithRatingPoints(
+	hourlyWage,
+	points int,
+) int {
+	return hourlyWage * points
+}
 
 // 16% of the total trip cost
-func (p *pricerClient) CalculateTripRevenue(tripCost int) int { return (16 / 100) * tripCost }
+func (p *pricerClient) CalculateTripRevenue(
+	tripCost int,
+) int {
+	return (16 / 100) * tripCost
+}
 
 func (p *pricerClient) byminuteWage() int {
 	return config.Config.Pricer.HourlyWage / 60

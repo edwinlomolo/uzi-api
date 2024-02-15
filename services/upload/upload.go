@@ -31,7 +31,11 @@ type uploadClient struct {
 }
 
 func NewUploadService() {
-	Upload = &uploadClient{aws.S3, logger.Logger, store.DB}
+	Upload = &uploadClient{
+		aws.S3,
+		logger.Logger,
+		store.DB,
+	}
 	logger.Logger.Infoln("Upload service...OK")
 }
 
@@ -45,29 +49,35 @@ func (u *uploadClient) CreateUserUpload(reason, uri string, id uuid.UUID) error 
 
 func (u *uploadClient) createCourierUpload(reason, uri string, id uuid.UUID) error {
 	courierArgs := sqlStore.GetCourierUploadParams{
-		Type:      reason,
-		CourierID: uuid.NullUUID{UUID: id, Valid: true},
+		Type: reason,
+		CourierID: uuid.NullUUID{
+			UUID:  id,
+			Valid: true,
+		},
 	}
 
 	courierUpload, getErr := u.store.GetCourierUpload(context.Background(), courierArgs)
 	if getErr == sql.ErrNoRows {
 		createArgs := sqlStore.CreateCourierUploadParams{
-			Type:         reason,
-			Uri:          uri,
-			CourierID:    uuid.NullUUID{UUID: id, Valid: true},
+			Type: reason,
+			Uri:  uri,
+			CourierID: uuid.NullUUID{
+				UUID:  id,
+				Valid: true,
+			},
 			Verification: model.UploadVerificationStatusVerifying.String(),
 		}
 
 		_, createErr := u.store.CreateCourierUpload(context.Background(), createArgs)
 		if createErr != nil {
-			uziErr := fmt.Errorf("%s:%v", "create courier upload", createErr)
+			uziErr := fmt.Errorf("%s:%v", "courier upload", createErr)
 			u.logger.Errorf(uziErr.Error())
 			return uziErr
 		}
 
 		return nil
 	} else if getErr != nil {
-		uziErr := fmt.Errorf("%s:%v", "get courier upload", getErr)
+		uziErr := fmt.Errorf("%s:%v", "courier upload", getErr)
 		u.logger.Errorf(uziErr.Error())
 		return uziErr
 	}
@@ -77,13 +87,21 @@ func (u *uploadClient) createCourierUpload(reason, uri string, id uuid.UUID) err
 
 func (u *uploadClient) updateUploadUri(uri string, ID uuid.UUID) error {
 	updateParams := sqlStore.UpdateUploadParams{
-		ID:           ID,
-		Uri:          sql.NullString{String: uri, Valid: true},
-		Verification: sql.NullString{String: model.UploadVerificationStatusVerifying.String(), Valid: true},
+		ID: ID,
+		Uri: sql.NullString{
+			String: uri,
+			Valid:  true,
+		},
+		Verification: sql.NullString{
+			String: model.UploadVerificationStatusVerifying.String(),
+			Valid:  true,
+		},
 	}
 
-	if _, updateErr := u.store.UpdateUpload(context.Background(), updateParams); updateErr != nil {
-		uziErr := fmt.Errorf("%s:%v", "update courier upload", updateErr)
+	if _, updateErr := u.store.UpdateUpload(
+		context.Background(),
+		updateParams); updateErr != nil {
+		uziErr := fmt.Errorf("%s:%v", "update upload", updateErr)
 		u.logger.Errorf(uziErr.Error())
 		return uziErr
 	}
@@ -91,13 +109,21 @@ func (u *uploadClient) updateUploadUri(uri string, ID uuid.UUID) error {
 	return nil
 }
 
-func (u *uploadClient) updateUploadVerificationStatus(id uuid.UUID, status model.UploadVerificationStatus) error {
+func (u *uploadClient) updateUploadVerificationStatus(
+	id uuid.UUID,
+	status model.UploadVerificationStatus,
+) error {
 	args := sqlStore.UpdateUploadParams{
-		ID:           id,
-		Verification: sql.NullString{String: status.String(), Valid: true},
+		ID: id,
+		Verification: sql.NullString{
+			String: status.String(),
+			Valid:  true,
+		},
 	}
-	if _, updateErr := u.store.UpdateUpload(context.Background(), args); updateErr != nil {
-		err := fmt.Errorf("%s:%v", "set upload verification", updateErr)
+	if _, updateErr := u.store.UpdateUpload(
+		context.Background(),
+		args); updateErr != nil {
+		err := fmt.Errorf("%s:%v", "upload verification", updateErr)
 		u.logger.Errorf(err.Error())
 		return err
 	}
@@ -107,21 +133,24 @@ func (u *uploadClient) updateUploadVerificationStatus(id uuid.UUID, status model
 
 func (u *uploadClient) createUserUpload(reason, uri string, ID uuid.UUID) error {
 	createParams := sqlStore.CreateUserUploadParams{
-		Type:   reason,
-		Uri:    uri,
-		UserID: uuid.NullUUID{UUID: ID, Valid: true},
+		Type: reason,
+		Uri:  uri,
+		UserID: uuid.NullUUID{
+			UUID:  ID,
+			Valid: true,
+		},
 	}
 
 	foundUpload, foundErr := u.store.CreateUserUpload(context.Background(), createParams)
 	if foundErr == sql.ErrNoRows {
 		_, createErr := u.store.CreateUserUpload(context.Background(), createParams)
 		if createErr != nil {
-			uziErr := fmt.Errorf("%s:%v", "create user upload", createErr)
+			uziErr := fmt.Errorf("%s:%v", "user upload", createErr)
 			u.logger.Errorf(uziErr.Error())
 			return uziErr
 		}
 	} else if foundErr != nil {
-		uziErr := fmt.Errorf("%s:%v", "get user upload", foundErr)
+		uziErr := fmt.Errorf("%s:%v", "user upload", foundErr)
 		u.logger.Errorf(uziErr.Error())
 		return uziErr
 	}
@@ -129,13 +158,15 @@ func (u *uploadClient) createUserUpload(reason, uri string, ID uuid.UUID) error 
 	return u.updateUploadUri(foundUpload.Uri, foundUpload.ID)
 }
 
-func (u *uploadClient) GetCourierUploads(courierID uuid.UUID) ([]*model.Uploads, error) {
+func (u *uploadClient) GetCourierUploads(
+	courierID uuid.UUID,
+) ([]*model.Uploads, error) {
 	var uploads []*model.Uploads
 
 	args := uuid.NullUUID{UUID: courierID, Valid: true}
 	uplds, uploadsErr := u.store.GetCourierUploads(context.Background(), args)
 	if uploadsErr != nil {
-		uziErr := fmt.Errorf("%s:%v", "get courier uploads", uploadsErr)
+		uziErr := fmt.Errorf("%s:%v", "courier uploads", uploadsErr)
 		u.logger.Errorf(uziErr.Error())
 		return nil, uziErr
 	}

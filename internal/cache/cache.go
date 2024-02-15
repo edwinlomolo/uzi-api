@@ -18,7 +18,9 @@ type Cache interface {
 func NewCache(config config.Redis, logger *logrus.Logger) {
 	opts, err := redis.ParseURL(config.Url)
 	if err != nil {
-		logger.Errorf("%s-%v", "ParseRedisUrlErr", err.Error())
+		logger.Errorf("%s-%v", "new cache", err.Error())
+	} else {
+		logger.Infoln("Redis cache...OK")
 	}
 
 	Redis = redis.NewClient(opts)

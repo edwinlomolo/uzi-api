@@ -45,7 +45,12 @@ type userClient struct {
 }
 
 func NewUserService() {
-	User = &userClient{store.DB, logger.Logger, context.TODO(), newCache()}
+	User = &userClient{
+		store.DB,
+		logger.Logger,
+		context.TODO(),
+		newCache(),
+	}
 	logger.Logger.Infoln("User service...OK")
 }
 
@@ -63,11 +68,13 @@ func (u *userClient) FindOrCreate(user SigninInput) (*model.User, error) {
 func (u *userClient) createUser(user SigninInput) (*model.User, error) {
 	var res model.User
 
-	newUser, newUserErr := u.store.CreateUser(context.Background(), sqlStore.CreateUserParams{
-		FirstName: user.FirstName,
-		LastName:  user.LastName,
-		Phone:     user.Phone,
-	})
+	newUser, newUserErr := u.store.CreateUser(
+		context.Background(),
+		sqlStore.CreateUserParams{
+			FirstName: user.FirstName,
+			LastName:  user.LastName,
+			Phone:     user.Phone,
+		})
 	if newUserErr != nil {
 		err := fmt.Errorf("%s:%v", "create user", newUserErr)
 		u.logger.Errorf(err.Error())
@@ -94,7 +101,7 @@ func (u *userClient) getUser(phone string) (*model.User, error) {
 	if getErr == sql.ErrNoRows {
 		return nil, nil
 	} else if getErr != nil {
-		err := fmt.Errorf("%s:%v", "get user by phone", getErr)
+		err := fmt.Errorf("%s:%v", "get user", getErr)
 		u.logger.Errorf(err.Error())
 		return nil, err
 	}
@@ -122,7 +129,7 @@ func (u *userClient) findUserByID(id uuid.UUID) (*model.User, error) {
 			u.logger.Errorf(err.Error())
 			return nil, err
 		} else if getErr != nil {
-			err := fmt.Errorf("%s:%v", "find user by id", getErr)
+			err := fmt.Errorf("%s:%v", "get user", getErr)
 			u.logger.Errorf(err.Error())
 			return nil, err
 		}
@@ -156,22 +163,26 @@ func (u *userClient) OnboardUser(user SigninInput) (*model.User, error) {
 		return nil, inputErr
 	}
 
-	newUser, onboardErr := u.store.UpdateUserName(context.Background(), sqlStore.UpdateUserNameParams{
-		FirstName: user.FirstName,
-		LastName:  user.LastName,
-		Phone:     user.Phone,
-	})
+	newUser, onboardErr := u.store.UpdateUserName(
+		context.Background(),
+		sqlStore.UpdateUserNameParams{
+			FirstName: user.FirstName,
+			LastName:  user.LastName,
+			Phone:     user.Phone,
+		})
 	if onboardErr != nil {
-		err := fmt.Errorf("%s:%v", "update user name", onboardErr)
+		err := fmt.Errorf("%s:%v", "update user", onboardErr)
 		u.logger.Errorf(err.Error())
 		return nil, err
 	}
 
-	if _, err := u.store.SetOnboardingStatus(context.Background(), sqlStore.SetOnboardingStatusParams{
-		Phone:      user.Phone,
-		Onboarding: false,
-	}); err != nil {
-		onboardingErr := fmt.Errorf("%s:%v", "set user onboarding", err)
+	if _, err := u.store.SetOnboardingStatus(
+		context.Background(),
+		sqlStore.SetOnboardingStatusParams{
+			Phone:      user.Phone,
+			Onboarding: false,
+		}); err != nil {
+		onboardingErr := fmt.Errorf("%s:%v", "user onboarding", err)
 		u.logger.Errorf(onboardingErr.Error())
 		return nil, onboardingErr
 	}

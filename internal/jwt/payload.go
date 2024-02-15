@@ -12,7 +12,10 @@ type Payload struct {
 	jwt.RegisteredClaims
 }
 
-func NewPayload(id, ip, phone string, duration time.Duration) (*Payload, error) {
+func NewPayload(
+	id, ip, phone string,
+	duration time.Duration,
+) (*Payload, error) {
 	p := &Payload{
 		phone,
 		ip,

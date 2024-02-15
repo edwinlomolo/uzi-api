@@ -3,6 +3,7 @@ package route
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 
@@ -24,7 +25,8 @@ const (
 )
 
 var (
-	Routing Route
+	Routing         Route
+	ErrComputeRoute = errors.New("compute route")
 )
 
 type Route interface {
@@ -40,10 +42,18 @@ type routeClient struct {
 }
 
 func NewRouteService() {
-	Routing = &routeClient{cache.Redis, logger.Logger, store.DB, config.Config.GoogleMaps, newCache()}
+	Routing = &routeClient{
+		cache.Redis,
+		logger.Logger,
+		store.DB,
+		config.Config.GoogleMaps,
+		newCache(),
+	}
 }
 
-func (r *routeClient) ComputeTripRoute(input model.TripRouteInput) (*model.TripRoute, error) {
+func (r *routeClient) ComputeTripRoute(
+	input model.TripRouteInput,
+) (*model.TripRoute, error) {
 	pickup, pickupErr := r.parsePickupDropoff(*input.Pickup)
 	if pickupErr != nil {
 		return nil, pickupErr
@@ -57,7 +67,9 @@ func (r *routeClient) ComputeTripRoute(input model.TripRouteInput) (*model.TripR
 	return r.computeRoute(*pickup, *dropoff)
 }
 
-func (r *routeClient) parsePickupDropoff(input model.TripInput) (*location.Geocode, error) {
+func (r *routeClient) parsePickupDropoff(
+	input model.TripInput,
+) (*location.Geocode, error) {
 	// Google place autocomplete select won't have cord in the request
 	if input.Location.Lat == 0.0 && input.Location.Lng == 0.0 {
 		placedetails, err := location.Location.GetPlaceDetails(input.PlaceID)
@@ -68,18 +80,27 @@ func (r *routeClient) parsePickupDropoff(input model.TripInput) (*location.Geoco
 		return &location.Geocode{
 			PlaceID:          placedetails.PlaceID,
 			FormattedAddress: placedetails.FormattedAddress,
-			Location:         model.Gps{Lat: placedetails.Location.Lat, Lng: placedetails.Location.Lng},
+			Location: model.Gps{
+				Lat: placedetails.Location.Lat,
+				Lng: placedetails.Location.Lng,
+			},
 		}, nil
 	}
 
 	return &location.Geocode{
 		PlaceID:          input.PlaceID,
 		FormattedAddress: input.FormattedAddress,
-		Location:         model.Gps{Lat: input.Location.Lat, Lng: input.Location.Lng},
+		Location: model.Gps{
+			Lat: input.Location.Lat,
+			Lng: input.Location.Lng,
+		},
 	}, nil
 }
 
-func (r *routeClient) computeRoute(pickup, dropoff location.Geocode) (*model.TripRoute, error) {
+func (r *routeClient) computeRoute(
+	pickup,
+	dropoff location.Geocode,
+) (*model.TripRoute, error) {
 	routeResponse := &routeresponse{}
 
 	tripRoute := &model.TripRoute{}
@@ -119,10 +140,17 @@ func (r *routeClient) computeRoute(pickup, dropoff location.Geocode) (*model.Tri
 	}
 
 	nearbyParams := sqlStore.GetNearbyAvailableCourierProductsParams{
-		Point:  fmt.Sprintf("SRID=4326;POINT(%.8f %.8f)", pickup.Location.Lng, pickup.Location.Lat),
+		Point: fmt.Sprintf(
+			"SRID=4326;POINT(%.8f %.8f)",
+			pickup.Location.Lng,
+			pickup.Location.Lat,
+		),
 		Radius: 2000,
 	}
-	nearbyProducts, nearbyErr := trip.Trip.GetNearbyAvailableProducts(nearbyParams, tripRoute.Distance)
+	nearbyProducts, nearbyErr := trip.Trip.GetNearbyAvailableProducts(
+		nearbyParams,
+		tripRoute.Distance,
+	)
 	if nearbyErr != nil {
 		return nil, nearbyErr
 	}
@@ -131,40 +159,50 @@ func (r *routeClient) computeRoute(pickup, dropoff location.Geocode) (*model.Tri
 	return tripRoute, nil
 }
 
-func (r *routeClient) requestGoogleRoute(routeParams routerequest, routeResponse *routeresponse) (*routeresponse, error) {
+func (r *routeClient) requestGoogleRoute(
+	routeParams routerequest,
+	routeResponse *routeresponse,
+) (*routeresponse, error) {
 	reqPayload, payloadErr := json.Marshal(routeParams)
 	if payloadErr != nil {
-		err := fmt.Errorf("%s:%v", "computeroutepayloadmarshal", payloadErr.Error())
+		err := fmt.Errorf("%s:%v", "marshal", payloadErr.Error())
 		r.logger.Errorf(err.Error())
 		return nil, err
 	}
 
 	req, reqErr := http.NewRequest("POST", routeV2, bytes.NewBuffer(reqPayload))
 	if reqErr != nil {
-		err := fmt.Errorf("%s:%v", "computerouterequest", reqErr.Error())
+		err := fmt.Errorf("%s:%v", "new request", reqErr.Error())
 		r.logger.Errorf(err.Error())
 		return nil, err
 	}
 	req.Header.Add("Content-Type", "application/json")
 	req.Header.Add("X-Goog-Api-Key", r.config.GoogleRoutesApiKey)
-	req.Header.Add("X-Goog-FieldMask", "routes.duration,routes.distanceMeters,routes.polyline.encodedPolyline,routes.staticDuration")
+	req.Header.Add(
+		"X-Goog-FieldMask",
+		"routes.duration,routes.distanceMeters,routes.polyline.encodedPolyline,routes.staticDuration",
+	)
 
 	c := &http.Client{}
 	res, resErr := c.Do(req)
 	if resErr != nil {
-		err := fmt.Errorf("%s:%v", "computerouteresponse", resErr.Error())
+		err := fmt.Errorf("%s:%v", ErrComputeRoute.Error(), resErr.Error())
 		r.logger.Errorf(err.Error())
 		return nil, err
 	}
 
 	if err := json.NewDecoder(res.Body).Decode(&routeResponse); err != nil {
-		jsonErr := fmt.Errorf("%s:%v", "computerouteresunmarshal", err.Error())
+		jsonErr := fmt.Errorf("%s:%v", ErrComputeRoute.Error(), err.Error())
 		r.logger.Errorf(jsonErr.Error())
 		return nil, jsonErr
 	}
 
 	if routeResponse.Error.Code > 0 {
-		resErr := fmt.Errorf("%s:%v", routeResponse.Error.Status, routeResponse.Error.Message)
+		resErr := fmt.Errorf(
+			"%s:%v",
+			routeResponse.Error.Status,
+			routeResponse.Error.Message,
+		)
 		r.logger.Errorf(resErr.Error())
 		return nil, resErr
 	}

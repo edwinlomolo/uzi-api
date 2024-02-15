@@ -19,23 +19,28 @@ type locationCache struct {
 }
 
 func newCache() locationCache {
-	return locationCache{cache.Redis, logger.Logger}
+	return locationCache{
+		cache.Redis,
+		logger.Logger,
+	}
 }
 
 func (lc *locationCache) Get(key string) (interface{}, error) {
 	var res Geocode
 
-	keyValue, err := lc.redis.Get(context.Background(), key).Result()
+	keyValue, err := lc.redis.Get(
+		context.Background(),
+		key).Result()
 	if err == redis.Nil {
 		return nil, nil
 	} else if err != nil {
-		cacheErr := fmt.Errorf("%s:%v", "get location cache", err)
+		cacheErr := fmt.Errorf("%s:%v", "location cache", err)
 		lc.logger.Errorf(cacheErr.Error())
 		return nil, cacheErr
 	}
 
 	if err := json.Unmarshal([]byte(keyValue), &res); err != nil {
-		jsonErr := fmt.Errorf("%s:%v", "unmarshal location cache", err)
+		jsonErr := fmt.Errorf("%s:%v", "location cache", err)
 		lc.logger.Errorf(jsonErr.Error())
 		return nil, jsonErr
 	}
@@ -43,20 +48,22 @@ func (lc *locationCache) Get(key string) (interface{}, error) {
 	return &res, nil
 }
 
-func (lc *locationCache) placesGetCache(key string) (interface{}, error) {
+func (lc *locationCache) placesGetCache(
+	key string,
+) (interface{}, error) {
 	var res []*model.Place
 
 	keyValue, err := lc.redis.Get(context.Background(), key).Result()
 	if err == redis.Nil {
 		return nil, nil
 	} else if err != nil {
-		cacheErr := fmt.Errorf("%s:%v", "get places cache", err)
+		cacheErr := fmt.Errorf("%s:%v", "places cache", err)
 		lc.logger.Errorf(cacheErr.Error())
 		return nil, cacheErr
 	}
 
 	if err := json.Unmarshal([]byte(keyValue), &res); err != nil {
-		jsonErr := fmt.Errorf("%s:%v", "unmarshal places cache", err)
+		jsonErr := fmt.Errorf("%s:%v", "places cache", err)
 		lc.logger.Errorf(jsonErr.Error())
 		return nil, jsonErr
 	}
@@ -64,17 +71,24 @@ func (lc *locationCache) placesGetCache(key string) (interface{}, error) {
 	return res, nil
 }
 
-func (lc *locationCache) placesSetCache(key string, value interface{}) error {
+func (lc *locationCache) placesSetCache(
+	key string,
+	value interface{},
+) error {
 	locationinfo := value.([]*model.Place)
 	data, err := json.Marshal(locationinfo)
 	if err != nil {
-		cacheErr := fmt.Errorf("%s:%v", "marshal places cache", err)
+		cacheErr := fmt.Errorf("%s:%v", "places cache", err)
 		lc.logger.Errorf(cacheErr.Error())
 		return cacheErr
 	}
 
-	if err := lc.redis.Set(context.Background(), key, data, time.Hour*24).Err(); err != nil {
-		cacheErr := fmt.Errorf("%s:%v", "set place cache", err)
+	if err := lc.redis.Set(
+		context.Background(),
+		key,
+		data,
+		time.Hour*24).Err(); err != nil {
+		cacheErr := fmt.Errorf("%s:%v", "places cache", err)
 		lc.logger.Errorf(cacheErr.Error())
 		return cacheErr
 	}
@@ -82,17 +96,24 @@ func (lc *locationCache) placesSetCache(key string, value interface{}) error {
 	return nil
 }
 
-func (lc *locationCache) Set(key string, value interface{}) error {
+func (lc *locationCache) Set(
+	key string,
+	value interface{},
+) error {
 	locationinfo := value.(*Geocode)
 	data, err := json.Marshal(locationinfo)
 	if err != nil {
-		cacheErr := fmt.Errorf("%s:%v", "marshal location cache", err)
+		cacheErr := fmt.Errorf("%s:%v", "location cache", err)
 		lc.logger.Errorf(cacheErr.Error())
 		return cacheErr
 	}
 
-	if err := lc.redis.Set(context.Background(), key, data, time.Hour*24).Err(); err != nil {
-		cacheErr := fmt.Errorf("%s:%v", "set location cache", err)
+	if err := lc.redis.Set(
+		context.Background(),
+		key,
+		data,
+		time.Hour*24).Err(); err != nil {
+		cacheErr := fmt.Errorf("%s:%v", "location cache", err)
 		lc.logger.Errorf(cacheErr.Error())
 		return cacheErr
 	}

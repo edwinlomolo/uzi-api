@@ -42,27 +42,37 @@ type nominatimClient struct {
 }
 
 func newNominatimService(cache locationCache) nominatim {
-	return &nominatimClient{logger.Logger, cache}
+	return &nominatimClient{
+		logger.Logger,
+		cache,
+	}
 }
 
-func (n nominatimClient) ReverseGeocode(input model.GpsInput) (*Geocode, error) {
+func (n nominatimClient) ReverseGeocode(
+	input model.GpsInput,
+) (*Geocode, error) {
 	cacheKey := util.FloatToString(input.Lat) + util.FloatToString(input.Lng)
 
 	var nominatimRes nominatimresponse
 	geo := &Geocode{}
 
-	url := fmt.Sprintf("%s/reverse?format=jsonv2&lat=%f&lon=%f", nominatimApi, input.Lat, input.Lng)
+	url := fmt.Sprintf(
+		"%s/reverse?format=jsonv2&lat=%f&lon=%f",
+		nominatimApi,
+		input.Lat,
+		input.Lng,
+	)
 
 	res, err := http.Get(url)
 	if err != nil {
-		uziErr := fmt.Errorf("%s:%v", "http.Get geocode", err)
+		uziErr := fmt.Errorf("%s:%v", "reverse geocode", err)
 		n.logger.Errorf(uziErr.Error())
 		return nil, uziErr
 	}
 	defer res.Body.Close()
 
 	if err := json.NewDecoder(res.Body).Decode(&nominatimRes); err != nil {
-		uziErr := fmt.Errorf("%s:%v", "unmarshal geocode res", err)
+		uziErr := fmt.Errorf("%s:%v", "unmarshal", err)
 		n.logger.Errorf(uziErr.Error())
 		return nil, uziErr
 	}
@@ -92,9 +102,14 @@ func (n nominatimClient) ReverseGeocode(input model.GpsInput) (*Geocode, error) 
 		Lng: lng,
 	}
 
-	if err := n.cache.Set(cacheKey, geo); err != nil {
-		return nil, err
-	}
+	done := make(chan struct{})
+	go func() {
+		defer close(done)
+		if err := n.cache.Set(cacheKey, geo); err != nil {
+			return
+		}
+	}()
+	<-done
 
 	return geo, nil
 }

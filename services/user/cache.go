@@ -29,13 +29,13 @@ func (usc *userCache) Get(key string) (interface{}, error) {
 	if err == redis.Nil {
 		return nil, nil
 	} else if err != nil {
-		cacheErr := fmt.Errorf("%s:%v", "get user cache", err)
+		cacheErr := fmt.Errorf("%s:%v", "user cache", err)
 		usc.logger.Errorf(cacheErr.Error())
 		return nil, cacheErr
 	}
 
 	if err := json.Unmarshal([]byte(keyValue), &res); err != nil {
-		jsonErr := fmt.Errorf("%s:%v", "unmarshal user cache", err)
+		jsonErr := fmt.Errorf("%s:%v", "user cache", err)
 		usc.logger.Errorf(jsonErr.Error())
 		return nil, jsonErr
 	}
@@ -47,7 +47,7 @@ func (usc *userCache) Set(key string, value interface{}) error {
 	userinfo := value.(*model.User)
 	data, err := json.Marshal(userinfo)
 	if err != nil {
-		cacheErr := fmt.Errorf("%s:%v", "marshal user cache value", err)
+		cacheErr := fmt.Errorf("%s:%v", "set user cache", err)
 		usc.logger.Errorf(cacheErr.Error())
 		return cacheErr
 	}

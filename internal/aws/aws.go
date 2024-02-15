@@ -33,10 +33,17 @@ type awsClient struct {
 func NewAwsS3Service() {
 	log := logger.Logger
 	cfg := config.Config.Aws
-	awsConfig, err := awsConfig.LoadDefaultConfig(context.TODO(), awsConfig.WithRegion("eu-west-2"), awsConfig.WithCredentialsProvider(credentials.NewStaticCredentialsProvider(cfg.AccessKey, cfg.SecretAccessKey, "")))
+	awsConfig, err := awsConfig.LoadDefaultConfig(
+		context.TODO(),
+		awsConfig.WithRegion("eu-west-2"),
+		awsConfig.WithCredentialsProvider(
+			credentials.NewStaticCredentialsProvider(cfg.AccessKey, cfg.SecretAccessKey, ""),
+		),
+	)
 	if err != nil {
-		panic(err)
-	} else if err == nil {
+		uziErr := fmt.Errorf("%s:%v", "new s3", err)
+		log.Fatal(uziErr.Error())
+	} else {
 		log.Infoln("Aws S3 credential...OK")
 	}
 
@@ -44,7 +51,10 @@ func NewAwsS3Service() {
 	S3 = &awsClient{s3Client, cfg, log}
 }
 
-func (a awsClient) UploadImage(file multipart.File, fileHeader *multipart.FileHeader) (string, error) {
+func (a awsClient) UploadImage(
+	file multipart.File,
+	fileHeader *multipart.FileHeader,
+) (string, error) {
 	buffer := make([]byte, fileHeader.Size)
 	file.Read(buffer)
 

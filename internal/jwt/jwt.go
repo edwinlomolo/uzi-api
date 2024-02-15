@@ -11,8 +11,8 @@ import (
 )
 
 var (
-	Jwt                  JwtService
-	invalidSignAlgorithm = errors.New("invalid signing algorithm")
+	Jwt                 JwtService
+	ErrInvalidAlgorithm = errors.New("invalid signing algorithm")
 )
 
 type JwtService interface {
@@ -29,10 +29,16 @@ func NewJwtService() {
 	Jwt = &jwtClient{logger.Logger, config.Config.Jwt.Secret}
 }
 
-func (jwtc *jwtClient) Sign(secret []byte, claims jsonwebtoken.Claims) (string, error) {
-	token, signJwtErr := jsonwebtoken.NewWithClaims(jsonwebtoken.SigningMethodHS256, claims).SignedString(secret)
+func (jwtc *jwtClient) Sign(
+	secret []byte,
+	claims jsonwebtoken.Claims,
+) (string, error) {
+	token, signJwtErr := jsonwebtoken.NewWithClaims(
+		jsonwebtoken.SigningMethodHS256,
+		claims,
+	).SignedString(secret)
 	if signJwtErr != nil {
-		uziErr := fmt.Errorf("%s:%v", "signjwt", signJwtErr.Error())
+		uziErr := fmt.Errorf("%s:%v", "sign jwt", signJwtErr.Error())
 		jwtc.logger.Errorf(uziErr.Error())
 		return "", uziErr
 	}
@@ -40,11 +46,13 @@ func (jwtc *jwtClient) Sign(secret []byte, claims jsonwebtoken.Claims) (string, 
 	return token, nil
 }
 
-func (jwtc *jwtClient) Validate(jwt string) (*jsonwebtoken.Token, error) {
+func (jwtc *jwtClient) Validate(
+	jwt string,
+) (*jsonwebtoken.Token, error) {
 	keyFunc := func(tkn *jsonwebtoken.Token) (interface{}, error) {
 		if _, ok := tkn.Method.(*jsonwebtoken.SigningMethodHMAC); !ok {
-			jwtc.logger.Errorf(invalidSignAlgorithm.Error())
-			return nil, invalidSignAlgorithm
+			jwtc.logger.Errorf(ErrInvalidAlgorithm.Error())
+			return nil, ErrInvalidAlgorithm
 		}
 
 		return []byte(jwtc.secret), nil
@@ -52,7 +60,7 @@ func (jwtc *jwtClient) Validate(jwt string) (*jsonwebtoken.Token, error) {
 
 	token, tokenErr := jsonwebtoken.ParseWithClaims(jwt, &Payload{}, keyFunc)
 	if tokenErr != nil {
-		uziErr := fmt.Errorf("%s:%v", "invalidtoken", tokenErr.Error())
+		uziErr := fmt.Errorf("%s:%v", "parse claims", tokenErr.Error())
 		jwtc.logger.Errorf(uziErr.Error())
 		return nil, uziErr
 	}

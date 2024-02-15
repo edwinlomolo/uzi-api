@@ -32,15 +32,28 @@ type sessionClient struct {
 }
 
 func NewSessionService() {
-	Session = &sessionClient{jwt.Jwt, store.DB, logger.Logger, config.Config.Jwt}
+	Session = &sessionClient{
+		jwt.Jwt,
+		store.DB,
+		logger.Logger,
+		config.Config.Jwt,
+	}
 	logger.Logger.Infoln("Session service...OK")
 }
 
-func (sc *sessionClient) SignIn(signin user.SigninInput, ip, userAgent string) (*model.Session, error) {
+func (sc *sessionClient) SignIn(
+	signin user.SigninInput,
+	ip,
+	userAgent string,
+) (*model.Session, error) {
 	return sc.findOrCreate(signin, ip, userAgent)
 }
 
-func (sc *sessionClient) findOrCreate(signin user.SigninInput, ip, userAgent string) (*model.Session, error) {
+func (sc *sessionClient) findOrCreate(
+	signin user.SigninInput,
+	ip,
+	userAgent string,
+) (*model.Session, error) {
 	user, userErr := user.User.FindOrCreate(signin)
 	if userErr != nil {
 		return nil, userErr
@@ -48,7 +61,12 @@ func (sc *sessionClient) findOrCreate(signin user.SigninInput, ip, userAgent str
 
 	sess, sessErr := sc.getSession(user.ID)
 	if sess == nil && sessErr == nil {
-		newSess, newSessErr := sc.createNewSession(user.ID, ip, user.Phone, userAgent)
+		newSess, newSessErr := sc.createNewSession(
+			user.ID,
+			ip,
+			user.Phone,
+			userAgent,
+		)
 		if newSessErr != nil {
 			return nil, newSessErr
 		}
@@ -61,14 +79,22 @@ func (sc *sessionClient) findOrCreate(signin user.SigninInput, ip, userAgent str
 	return sess, nil
 }
 
-func (sc *sessionClient) createNewSession(userID uuid.UUID, ip, phone, userAgent string) (*model.Session, error) {
+func (sc *sessionClient) createNewSession(
+	userID uuid.UUID,
+	ip,
+	phone,
+	userAgent string,
+) (*model.Session, error) {
 	sessParams := sqlStore.CreateSessionParams{
 		ID:        userID,
 		Ip:        ip,
 		UserAgent: userAgent,
 		Phone:     phone,
 	}
-	newSession, newSessErr := sc.store.CreateSession(context.Background(), sessParams)
+	newSession, newSessErr := sc.store.CreateSession(
+		context.Background(),
+		sessParams,
+	)
 	if newSessErr != nil {
 		err := fmt.Errorf("%s:%v", "create session", newSessErr)
 		sc.logger.Errorf(err.Error())
@@ -121,7 +147,12 @@ func (sc *sessionClient) getSession(sessionID uuid.UUID) (*model.Session, error)
 		return nil, err
 	}
 
-	claims, err := jwt.NewPayload(foundSess.ID.String(), foundSess.Ip, foundSess.Phone, sc.config.Expires)
+	claims, err := jwt.NewPayload(
+		foundSess.ID.String(),
+		foundSess.Ip,
+		foundSess.Phone,
+		sc.config.Expires,
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -158,7 +189,9 @@ func (sc *sessionClient) getSession(sessionID uuid.UUID) (*model.Session, error)
 
 }
 
-func (sc *sessionClient) getRelevantCourierData(userID uuid.UUID) (bool, model.CourierStatus, error) {
+func (sc *sessionClient) getRelevantCourierData(
+	userID uuid.UUID,
+) (bool, model.CourierStatus, error) {
 
 	courierStatus, courierStatusErr := courier.Courier.GetCourierStatus(userID)
 	if courierStatusErr != nil {
