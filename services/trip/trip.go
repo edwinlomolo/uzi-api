@@ -74,6 +74,8 @@ func (t *tripClient) FindAvailableCourier(pickup model.GpsInput) (*model.Courier
 	t.mu.Lock()
 	defer t.mu.Unlock()
 
+	time.Sleep(250 * time.Millisecond)
+
 	args := sqlStore.FindAvailableCourierParams{
 		Point:  fmt.Sprintf("SRID=4326;POINT(%.8f %.8f)", pickup.Lng, pickup.Lat),
 		Radius: 2000,
@@ -107,15 +109,18 @@ func (t *tripClient) AssignCourierToTrip(tripID, courierID uuid.UUID) error {
 	}
 
 	args := sqlStore.AssignCourierToTripParams{
-		ID:     courierID,
-		TripID: uuid.NullUUID{UUID: tripID, Valid: true},
+		ID: courierID,
+		TripID: uuid.NullUUID{
+			UUID:  tripID,
+			Valid: true,
+		},
 	}
 	_, assignCourierErr := t.store.AssignCourierToTrip(
 		context.Background(),
 		args,
 	)
 	if assignCourierErr != nil {
-		uziErr := fmt.Errorf("%s:%v", "assign trip", assignCourierErr)
+		uziErr := fmt.Errorf("%s:%v", "assign courier", assignCourierErr)
 		t.logger.Errorf(uziErr.Error())
 		return uziErr
 	}
@@ -331,7 +336,7 @@ func (t *tripClient) MatchCourier(tripID uuid.UUID, pickup model.GpsInput) {
 			select {
 			case <-timeoutCtx.Done():
 				if !courierFound {
-					go t.PublishTripUpdate(tripID, model.TripStatusCourierNotFound, TRIP_UPDATES)
+					t.PublishTripUpdate(tripID, model.TripStatusCourierNotFound, TRIP_UPDATES)
 
 					done := make(chan struct{})
 					go func() {
@@ -345,8 +350,6 @@ func (t *tripClient) MatchCourier(tripID uuid.UUID, pickup model.GpsInput) {
 
 				return
 			default:
-				time.Sleep(250 * time.Millisecond)
-
 				courier, err := t.FindAvailableCourier(pickup)
 				if err != nil {
 					return
@@ -354,7 +357,7 @@ func (t *tripClient) MatchCourier(tripID uuid.UUID, pickup model.GpsInput) {
 
 				if courier != nil && !courierFound {
 					courierFound = true
-					go t.PublishTripUpdate(tripID, model.TripStatusCourierFound, TRIP_UPDATES)
+					t.PublishTripUpdate(tripID, model.TripStatusCourierFound, TRIP_UPDATES)
 
 					done := make(chan struct{})
 					go func() {
@@ -367,7 +370,7 @@ func (t *tripClient) MatchCourier(tripID uuid.UUID, pickup model.GpsInput) {
 
 					assignErr := t.AssignCourierToTrip(tripID, courier.ID)
 					if assignErr == nil {
-						go t.PublishTripUpdate(tripID, model.TripStatusAssigned, ASSIGN_TRIP)
+						t.PublishTripUpdate(tripID, model.TripStatusAssigned, ASSIGN_TRIP)
 						return
 					} else if assignErr != nil {
 						t.logger.Errorf(assignErr.Error())
@@ -454,7 +457,6 @@ func (t *tripClient) PublishTripUpdate(
 	status model.TripStatus,
 	channel string,
 ) error {
-
 	done := make(chan struct{})
 	go func() {
 		defer close(done)
@@ -481,14 +483,14 @@ func (t *tripClient) PublishTripUpdate(
 
 		u, marshalErr := json.Marshal(update)
 		if marshalErr != nil {
-			uziErr := fmt.Errorf("%s:%v", "marshal trip update", marshalErr)
+			uziErr := fmt.Errorf("%s:%v", "trip update", marshalErr)
 			logger.Logger.Errorf(uziErr.Error())
 			return
 		}
 
 		pubTripErr := t.redis.Publish(context.Background(), channel, u).Err()
 		if pubTripErr != nil {
-			uziErr := fmt.Errorf("%s:%v", "publish trip update", pubTripErr)
+			uziErr := fmt.Errorf("%s:%v", "publish update", pubTripErr)
 			logger.Logger.Errorf(uziErr.Error())
 			return
 		}

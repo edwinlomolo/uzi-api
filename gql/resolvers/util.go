@@ -3,6 +3,7 @@ package resolvers
 import (
 	"context"
 
+	"github.com/edwinlomolo/uzi-api/internal/logger"
 	"github.com/edwinlomolo/uzi-api/services/courier"
 	"github.com/google/uuid"
 )
@@ -12,7 +13,7 @@ func getCourierIDFromResolverContext(ctx context.Context, courier courier.Courie
 
 	uid, err := uuid.Parse(userID)
 	if err != nil {
-		panic(err)
+		logger.Logger.Fatal(err)
 	}
 
 	c, _ := courier.GetCourierByUserID(uid)
@@ -22,7 +23,7 @@ func getCourierIDFromResolverContext(ctx context.Context, courier courier.Courie
 func stringToUUID(id string) uuid.UUID {
 	uid, err := uuid.Parse(id)
 	if err != nil {
-		panic(err)
+		logger.Logger.Fatal(err)
 	}
 
 	return uid

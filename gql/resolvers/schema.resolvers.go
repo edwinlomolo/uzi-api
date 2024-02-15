@@ -145,13 +145,13 @@ func (r *queryResolver) GetTripDetails(ctx context.Context, tripID uuid.UUID) (*
 
 // TripUpdates is the resolver for the tripUpdates field.
 func (r *subscriptionResolver) TripUpdates(ctx context.Context, tripID uuid.UUID) (<-chan *model.TripUpdate, error) {
-	pubsub := r.redisClient.Subscribe(ctx, t.TRIP_UPDATES)
+	pubsub := r.redisClient.Subscribe(context.Background(), t.TRIP_UPDATES)
 
 	ch := make(chan *model.TripUpdate)
 
 	go func() {
 		for {
-			msg, err := pubsub.ReceiveMessage(ctx)
+			msg, err := pubsub.ReceiveMessage(context.Background())
 			if err != nil {
 				uziErr := fmt.Errorf("%s:%v", "receive update", err)
 				logger.Logger.Errorf(uziErr.Error())
@@ -178,13 +178,13 @@ func (r *subscriptionResolver) TripUpdates(ctx context.Context, tripID uuid.UUID
 func (r *subscriptionResolver) AssignTrip(ctx context.Context) (<-chan *model.TripUpdate, error) {
 	cid := getCourierIDFromResolverContext(ctx, r)
 
-	pubsub := r.redisClient.Subscribe(ctx, t.ASSIGN_TRIP)
+	pubsub := r.redisClient.Subscribe(context.Background(), t.ASSIGN_TRIP)
 
 	ch := make(chan *model.TripUpdate)
 
 	go func() {
 		for {
-			msg, err := pubsub.ReceiveMessage(ctx)
+			msg, err := pubsub.ReceiveMessage(context.Background())
 			if err != nil {
 				uziErr := fmt.Errorf("%s:%v", "assign update", err)
 				logger.Logger.Errorf(uziErr.Error())
@@ -194,7 +194,7 @@ func (r *subscriptionResolver) AssignTrip(ctx context.Context) (<-chan *model.Tr
 
 			var update *model.TripUpdate
 			if err := json.Unmarshal([]byte(msg.Payload), &update); err != nil {
-				uziErr := fmt.Errorf("%s:%v", "assign update", err)
+				uziErr := fmt.Errorf("%s:%v", "unmarshal update", err)
 				logger.Logger.Errorf(uziErr.Error())
 				return
 			}

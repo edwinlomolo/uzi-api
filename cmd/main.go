@@ -7,6 +7,7 @@ import (
 
 	gqlHandler "github.com/99designs/gqlgen/graphql/handler"
 	"github.com/99designs/gqlgen/graphql/handler/extension"
+	"github.com/99designs/gqlgen/graphql/handler/lru"
 	"github.com/99designs/gqlgen/graphql/handler/transport"
 	"github.com/99designs/gqlgen/graphql/playground"
 	"github.com/edwinlomolo/uzi-api/config"
@@ -39,7 +40,11 @@ import (
 func main() {
 	// Chi router TODO refactor all these to one setup func
 	r := chi.NewRouter()
-	r.Use(cors.AllowAll().Handler)
+	c := cors.New(cors.Options{
+		AllowedOrigins:   []string{"*"},
+		AllowCredentials: true,
+		Debug:            false,
+	})
 	r.Use(handler.Logger)
 
 	// Services TODO refactor all these to one setup func
@@ -60,7 +65,7 @@ func main() {
 	pricer.NewPricer()
 
 	// Graphql TODO refactor this to one setup func
-	srv := gqlHandler.NewDefaultServer(gql.NewExecutableSchema(resolvers.New()))
+	srv := gqlHandler.New(gql.NewExecutableSchema(resolvers.New()))
 	srv.AddTransport(&transport.POST{})
 	srv.AddTransport(&transport.Websocket{
 		KeepAlivePingInterval: 10 * time.Second,
@@ -70,7 +75,11 @@ func main() {
 			},
 		},
 	})
+	srv.SetQueryCache(lru.New(1000))
 	srv.Use(extension.Introspection{})
+	srv.Use(extension.AutomaticPersistedQuery{
+		Cache: lru.New(1000),
+	})
 
 	// Routes TODO (look at first route setup comment)
 	r.Get("/ipinfo", handler.Ipinfo())
@@ -84,7 +93,7 @@ func main() {
 	// Server
 	s := &http.Server{
 		Addr:    fmt.Sprintf("0.0.0.0:%s", config.Config.Server.Port),
-		Handler: r,
+		Handler: c.Handler(r),
 	}
 
 	// Run server TODO refactor this to one setup func to start server
