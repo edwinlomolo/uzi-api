@@ -64,6 +64,25 @@ func (r *mutationResolver) CreateTrip(ctx context.Context, input model.CreateTri
 			input.TripInput.Dropoff.Location.Lng,
 		),
 	}
+	pickup, pickupErr := r.routeService.ParsePickupDropoff(*input.TripInput.Pickup)
+	if pickupErr != nil {
+		return nil, pickupErr
+	}
+	dropoff, dropErr := r.routeService.ParsePickupDropoff(*input.TripInput.Dropoff)
+	if dropErr != nil {
+		return nil, dropErr
+	}
+	params.StartLocation = fmt.Sprintf(
+		"SRID=4326;POINT(%.8f %.8f)",
+		pickup.Location.Lng,
+		pickup.Location.Lat,
+	)
+	params.EndLocation = fmt.Sprintf(
+		"SRID=4326;POINT(%.8f %.8f)",
+		dropoff.Location.Lng,
+		dropoff.Location.Lat,
+	)
+
 	trip, err := r.tripService.CreateTrip(params)
 
 	done := make(chan struct{})

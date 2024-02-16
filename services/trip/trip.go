@@ -412,9 +412,10 @@ func (t *tripClient) GetTrip(tripID uuid.UUID) (*model.Trip, error) {
 	}
 
 	return &model.Trip{
-		ID:        trip.ID,
-		Status:    model.TripStatus(trip.Status),
-		CourierID: &trip.CourierID.UUID,
+		ID:            trip.ID,
+		Status:        model.TripStatus(trip.Status),
+		CourierID:     &trip.CourierID.UUID,
+		StartLocation: util.ParsePostgisLocation(trip.StartLocation),
 	}, nil
 }
 
@@ -425,7 +426,6 @@ func (t *tripClient) PublishTripUpdate(
 ) error {
 	done := make(chan struct{})
 	go func() {
-		t.logger.Infoln("publishing")
 		defer close(done)
 		update := model.TripUpdate{ID: tripID, Status: status}
 
@@ -461,7 +461,6 @@ func (t *tripClient) PublishTripUpdate(
 			logger.Logger.Errorf(uziErr.Error())
 			return
 		}
-		t.logger.Infoln("published")
 	}()
 	<-done
 

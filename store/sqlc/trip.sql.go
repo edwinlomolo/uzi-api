@@ -398,26 +398,26 @@ func (q *Queries) GetNearbyAvailableCourierProducts(ctx context.Context, arg Get
 }
 
 const getTrip = `-- name: GetTrip :one
-SELECT id, start_location, end_location, courier_id, user_id, route_id, product_id, cost, status, created_at, updated_at FROM trips
+SELECT id, status, courier_id, ST_AsGeoJSON(start_location) AS start_location FROM trips
 WHERE id = $1
 LIMIT 1
 `
 
-func (q *Queries) GetTrip(ctx context.Context, id uuid.UUID) (Trip, error) {
+type GetTripRow struct {
+	ID            uuid.UUID     `json:"id"`
+	Status        string        `json:"status"`
+	CourierID     uuid.NullUUID `json:"courier_id"`
+	StartLocation interface{}   `json:"start_location"`
+}
+
+func (q *Queries) GetTrip(ctx context.Context, id uuid.UUID) (GetTripRow, error) {
 	row := q.db.QueryRowContext(ctx, getTrip, id)
-	var i Trip
+	var i GetTripRow
 	err := row.Scan(
 		&i.ID,
-		&i.StartLocation,
-		&i.EndLocation,
-		&i.CourierID,
-		&i.UserID,
-		&i.RouteID,
-		&i.ProductID,
-		&i.Cost,
 		&i.Status,
-		&i.CreatedAt,
-		&i.UpdatedAt,
+		&i.CourierID,
+		&i.StartLocation,
 	)
 	return i, err
 }

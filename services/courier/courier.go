@@ -282,7 +282,9 @@ func (c *courierClient) GetCourierByID(
 		context.Background(),
 		courierID,
 	)
-	if err != nil {
+	if err == sql.ErrNoRows {
+		return nil, nil
+	} else if err != nil {
 		uziErr := fmt.Errorf("%s:%v", "courier by id", err)
 		c.logger.Errorf(uziErr.Error())
 		return nil, uziErr

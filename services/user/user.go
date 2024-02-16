@@ -122,7 +122,7 @@ func (u *userClient) GetUserByPhone(phone string) (*model.User, error) {
 func (u *userClient) findUserByID(id uuid.UUID) (*model.User, error) {
 	var user *model.User
 	cacheKey := util.Base64Key(id.String())
-	cacheUser, cacheErr := u.cache.Get(context.Background(), cacheKey, user)
+	cacheUser, cacheErr := u.cache.Get(context.Background(), cacheKey, &model.User{})
 	if cacheErr != nil {
 		return nil, cacheErr
 	}
@@ -139,10 +139,12 @@ func (u *userClient) findUserByID(id uuid.UUID) (*model.User, error) {
 			return nil, err
 		}
 
-		user.ID = foundUser.ID
-		user.FirstName = foundUser.FirstName
-		user.LastName = foundUser.LastName
-		user.Phone = foundUser.Phone
+		user = &model.User{
+			ID:        foundUser.ID,
+			FirstName: foundUser.FirstName,
+			LastName:  foundUser.LastName,
+			Phone:     foundUser.Phone,
+		}
 
 		done := make(chan struct{})
 		go func() {
@@ -154,7 +156,8 @@ func (u *userClient) findUserByID(id uuid.UUID) (*model.User, error) {
 		return user, nil
 	}
 
-	return (cacheUser).(*model.User), nil
+	v := (cacheUser).(*model.User)
+	return v, nil
 }
 
 func (u *userClient) FindUserByID(id uuid.UUID) (*model.User, error) {

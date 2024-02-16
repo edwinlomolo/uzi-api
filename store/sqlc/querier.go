@@ -40,7 +40,7 @@ type Querier interface {
 	GetCourierUploads(ctx context.Context, courierID uuid.NullUUID) ([]Upload, error)
 	GetNearbyAvailableCourierProducts(ctx context.Context, arg GetNearbyAvailableCourierProductsParams) ([]GetNearbyAvailableCourierProductsRow, error)
 	GetSession(ctx context.Context, id uuid.UUID) (Session, error)
-	GetTrip(ctx context.Context, id uuid.UUID) (Trip, error)
+	GetTrip(ctx context.Context, id uuid.UUID) (GetTripRow, error)
 	GetTripRecipient(ctx context.Context, tripID uuid.NullUUID) (Recipient, error)
 	IsCourier(ctx context.Context, userID uuid.NullUUID) (sql.NullBool, error)
 	IsUserOnboarding(ctx context.Context, id uuid.UUID) (bool, error)
