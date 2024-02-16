@@ -3,9 +3,11 @@ package location
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"github.com/edwinlomolo/uzi-api/config"
 	"github.com/edwinlomolo/uzi-api/gql/model"
+	"github.com/edwinlomolo/uzi-api/internal/cache"
 	"github.com/edwinlomolo/uzi-api/internal/logger"
 	"github.com/edwinlomolo/uzi-api/internal/util"
 	"github.com/sirupsen/logrus"
@@ -35,7 +37,7 @@ type locationClient struct {
 	places, geocode *maps.Client
 	config          config.GoogleMaps
 	logger          *logrus.Logger
-	cache           locationCache
+	cache           cache.Cache
 }
 
 func NewLocationService() {
@@ -57,15 +59,13 @@ func NewLocationService() {
 		logger.Logger.Infoln("Geocode service...OK")
 	}
 
-	lc := newCache()
-
 	Location = &locationClient{
-		newNominatimService(lc),
+		newNominatimService(cache.Rdb),
 		places,
 		geocode,
 		config.Config.GoogleMaps,
 		logger.Logger,
-		lc,
+		cache.Rdb,
 	}
 }
 
@@ -73,7 +73,7 @@ func (l *locationClient) AutocompletePlace(
 	searchQuery string,
 ) ([]*model.Place, error) {
 	cacheKey := util.Base64Key(searchQuery)
-	placesCache, placesCacheErr := l.cache.placesGetCache(cacheKey)
+	placesCache, placesCacheErr := l.cache.Get(context.Background(), cacheKey, []*model.Place{})
 	if placesCacheErr != nil {
 		return nil, placesCacheErr
 	}
@@ -112,7 +112,7 @@ func (l *locationClient) AutocompletePlace(
 	done := make(chan struct{})
 	go func() {
 		defer close(done)
-		l.cache.placesSetCache(cacheKey, p)
+		l.cache.Set(context.Background(), cacheKey, p, time.Hour*24)
 	}()
 	<-done
 
@@ -124,7 +124,7 @@ func (l *locationClient) GeocodeLatLng(
 ) (*Geocode, error) {
 	cacheKey := util.FloatToString(input.Lat) + util.FloatToString(input.Lng)
 
-	geocodeCache, geocodeCacheErr := l.cache.Get(cacheKey)
+	geocodeCache, geocodeCacheErr := l.cache.Get(context.Background(), cacheKey, &Geocode{})
 	if geocodeCacheErr != nil {
 		return nil, geocodeCacheErr
 	}
@@ -140,7 +140,7 @@ func (l *locationClient) GeocodeLatLng(
 func (l *locationClient) GetPlaceDetails(
 	placeID string,
 ) (*Geocode, error) {
-	placeCache, placeCacheErr := l.cache.Get(placeID)
+	placeCache, placeCacheErr := l.cache.Get(context.Background(), placeID, &Geocode{})
 	if placeCacheErr != nil {
 		return nil, placeCacheErr
 	}
@@ -171,7 +171,7 @@ func (l *locationClient) GetPlaceDetails(
 	done := make(chan struct{})
 	go func() {
 		defer close(done)
-		l.cache.Set(placeDetails.PlaceID, placeDetails)
+		l.cache.Set(context.Background(), placeDetails.PlaceID, placeDetails, time.Hour*24)
 	}()
 	<-done
 

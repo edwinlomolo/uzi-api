@@ -2,10 +2,12 @@ package route
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"net/http"
+	"time"
 
 	"github.com/edwinlomolo/uzi-api/config"
 	"github.com/edwinlomolo/uzi-api/gql/model"
@@ -38,7 +40,7 @@ type routeClient struct {
 	logger *logrus.Logger
 	store  *sqlStore.Queries
 	config config.GoogleMaps
-	cache  routeCache
+	cache  cache.Cache
 }
 
 func NewRouteService() {
@@ -47,7 +49,7 @@ func NewRouteService() {
 		logger.Logger,
 		store.DB,
 		config.Config.GoogleMaps,
-		newCache(),
+		cache.Rdb,
 	}
 }
 
@@ -118,7 +120,7 @@ func (r *routeClient) computeRoute(
 
 	cacheKey := util.Base64Key(routeParams)
 
-	tripInfo, tripInfoErr := r.cache.getRouteCache(cacheKey)
+	tripInfo, tripInfoErr := r.cache.Get(context.Background(), cacheKey, &model.TripRoute{})
 	if tripInfoErr != nil {
 		return nil, tripInfoErr
 	}
@@ -132,7 +134,12 @@ func (r *routeClient) computeRoute(
 		tripRoute.Polyline = routeRes.Routes[0].Polyline.EncodedPolyline
 		tripRoute.Distance = routeRes.Routes[0].Distance
 
-		go r.cache.cacheRoute(cacheKey, tripRoute)
+		done := make(chan struct{})
+		go func() {
+			defer close(done)
+			r.cache.Set(context.Background(), cacheKey, tripRoute, time.Hour*24)
+		}()
+		<-done
 	} else {
 		route := (tripInfo).(*model.TripRoute)
 		tripRoute.Polyline = route.Polyline

@@ -1,12 +1,15 @@
 package location
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"net/http"
 	"strconv"
+	"time"
 
 	"github.com/edwinlomolo/uzi-api/gql/model"
+	"github.com/edwinlomolo/uzi-api/internal/cache"
 	"github.com/edwinlomolo/uzi-api/internal/logger"
 	"github.com/edwinlomolo/uzi-api/internal/util"
 	"github.com/sirupsen/logrus"
@@ -38,10 +41,10 @@ type nominatim interface {
 
 type nominatimClient struct {
 	logger *logrus.Logger
-	cache  locationCache
+	cache  cache.Cache
 }
 
-func newNominatimService(cache locationCache) nominatim {
+func newNominatimService(cache cache.Cache) nominatim {
 	return &nominatimClient{
 		logger.Logger,
 		cache,
@@ -55,6 +58,15 @@ func (n nominatimClient) ReverseGeocode(
 
 	var nominatimRes nominatimresponse
 	geo := &Geocode{}
+
+	cValue, err := n.cache.Get(context.Background(), cacheKey, geo)
+	if err != nil {
+		return nil, err
+	}
+
+	if cValue != nil {
+		return (cValue).(*Geocode), nil
+	}
 
 	url := fmt.Sprintf(
 		"%s/reverse?format=jsonv2&lat=%f&lon=%f",
@@ -105,7 +117,7 @@ func (n nominatimClient) ReverseGeocode(
 	done := make(chan struct{})
 	go func() {
 		defer close(done)
-		if err := n.cache.Set(cacheKey, geo); err != nil {
+		if err := n.cache.Set(context.Background(), cacheKey, geo, time.Hour); err != nil {
 			return
 		}
 	}()

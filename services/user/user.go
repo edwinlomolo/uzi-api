@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"time"
 
 	"github.com/edwinlomolo/uzi-api/gql/model"
 	"github.com/edwinlomolo/uzi-api/internal/cache"
@@ -49,7 +50,7 @@ func NewUserService() {
 		store.DB,
 		logger.Logger,
 		context.TODO(),
-		newCache(),
+		cache.Rdb,
 	}
 	logger.Logger.Infoln("User service...OK")
 }
@@ -120,8 +121,12 @@ func (u *userClient) GetUserByPhone(phone string) (*model.User, error) {
 
 func (u *userClient) findUserByID(id uuid.UUID) (*model.User, error) {
 	cacheKey := util.Base64Key(id.String())
-	cacheUser, cacheErr := u.cache.Get(cacheKey)
-	if cacheUser == nil && cacheErr == nil {
+	cacheUser, cacheErr := u.cache.Get(context.Background(), cacheKey, &model.User{})
+	if cacheErr != nil {
+		return nil, cacheErr
+	}
+
+	if cacheUser == nil {
 		var user *model.User
 		foundUser, getErr := u.store.FindUserByID(context.Background(), id)
 		if getErr == sql.ErrNoRows {
@@ -139,11 +144,14 @@ func (u *userClient) findUserByID(id uuid.UUID) (*model.User, error) {
 		user.LastName = foundUser.LastName
 		user.Phone = foundUser.Phone
 
-		go u.cache.Set(cacheKey, user)
+		done := make(chan struct{})
+		go func() {
+			defer close(done)
+			u.cache.Set(context.Background(), cacheKey, user, time.Hour)
+		}()
+		<-done
 
 		return user, nil
-	} else if cacheErr != nil {
-		return nil, cacheErr
 	}
 
 	return (cacheUser).(*model.User), nil
@@ -192,7 +200,12 @@ func (u *userClient) OnboardUser(user SigninInput) (*model.User, error) {
 	updatedUser.LastName = newUser.LastName
 	updatedUser.Phone = newUser.Phone
 
-	go u.cache.Set(cacheKey, &updatedUser)
+	done := make(chan struct{})
+	go func() {
+		defer close(done)
+		u.cache.Set(context.Background(), cacheKey, &updatedUser, time.Hour)
+	}()
+	<-done
 
 	return &updatedUser, nil
 }
