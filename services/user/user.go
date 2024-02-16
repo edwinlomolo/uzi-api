@@ -120,14 +120,14 @@ func (u *userClient) GetUserByPhone(phone string) (*model.User, error) {
 }
 
 func (u *userClient) findUserByID(id uuid.UUID) (*model.User, error) {
+	var user *model.User
 	cacheKey := util.Base64Key(id.String())
-	cacheUser, cacheErr := u.cache.Get(context.Background(), cacheKey, &model.User{})
+	cacheUser, cacheErr := u.cache.Get(context.Background(), cacheKey, user)
 	if cacheErr != nil {
 		return nil, cacheErr
 	}
 
 	if cacheUser == nil {
-		var user *model.User
 		foundUser, getErr := u.store.FindUserByID(context.Background(), id)
 		if getErr == sql.ErrNoRows {
 			err := fmt.Errorf("%s:%v", "not found", userNotFound)
@@ -203,7 +203,7 @@ func (u *userClient) OnboardUser(user SigninInput) (*model.User, error) {
 	done := make(chan struct{})
 	go func() {
 		defer close(done)
-		u.cache.Set(context.Background(), cacheKey, &updatedUser, time.Hour)
+		u.cache.Set(context.Background(), cacheKey, updatedUser, time.Hour)
 	}()
 	<-done
 

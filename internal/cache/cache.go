@@ -21,8 +21,8 @@ var Rdb *cacheClient
 var _ Cache = (*cacheClient)(nil)
 
 type Cache interface {
-	Get(ctx context.Context, key string, returnValue interface{}) (interface{}, error)
-	Set(ctx context.Context, key string, value interface{}, expiration time.Duration) error
+	Get(ctx context.Context, key string, returnValue any) (any, error)
+	Set(ctx context.Context, key string, value any, expiration time.Duration) error
 }
 
 func NewCache(config config.Redis, logger *logrus.Logger) {
@@ -41,7 +41,7 @@ func NewCache(config config.Redis, logger *logrus.Logger) {
 	}
 }
 
-func (c *cacheClient) Get(ctx context.Context, key string, returnValue interface{}) (interface{}, error) {
+func (c *cacheClient) Get(ctx context.Context, key string, returnValue any) (any, error) {
 	result, err := c.cache.Get(ctx, key).Result()
 	if err == redis.Nil {
 		return nil, nil
@@ -62,7 +62,7 @@ func (c *cacheClient) Get(ctx context.Context, key string, returnValue interface
 	return returnValue, nil
 }
 
-func (c *cacheClient) Set(ctx context.Context, key string, value interface{}, expiration time.Duration) error {
+func (c *cacheClient) Set(ctx context.Context, key string, value any, expiration time.Duration) error {
 	valueMarshal, err := json.Marshal(value)
 	if err != nil {
 		uziErr := fmt.Errorf("%s:%v", "marshal cache value", err)

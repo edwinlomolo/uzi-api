@@ -54,18 +54,19 @@ func newNominatimService(cache cache.Cache) nominatim {
 func (n nominatimClient) ReverseGeocode(
 	input model.GpsInput,
 ) (*Geocode, error) {
-	cacheKey := util.FloatToString(input.Lat) + util.FloatToString(input.Lng)
+	cacheKey := util.Base64Key(input)
 
 	var nominatimRes nominatimresponse
 	geo := &Geocode{}
 
-	cValue, err := n.cache.Get(context.Background(), cacheKey, geo)
+	cValue, err := n.cache.Get(context.Background(), cacheKey, &Geocode{})
 	if err != nil {
 		return nil, err
 	}
 
 	if cValue != nil {
-		return (cValue).(*Geocode), nil
+		n := (cValue).(*Geocode)
+		return n, nil
 	}
 
 	url := fmt.Sprintf(
@@ -117,9 +118,7 @@ func (n nominatimClient) ReverseGeocode(
 	done := make(chan struct{})
 	go func() {
 		defer close(done)
-		if err := n.cache.Set(context.Background(), cacheKey, geo, time.Hour); err != nil {
-			return
-		}
+		n.cache.Set(context.Background(), cacheKey, geo, time.Hour)
 	}()
 	<-done
 

@@ -72,14 +72,16 @@ func NewLocationService() {
 func (l *locationClient) AutocompletePlace(
 	searchQuery string,
 ) ([]*model.Place, error) {
+	var pls []*model.Place
 	cacheKey := util.Base64Key(searchQuery)
-	placesCache, placesCacheErr := l.cache.Get(context.Background(), cacheKey, []*model.Place{})
+	placesCache, placesCacheErr := l.cache.Get(context.Background(), cacheKey, &[]*model.Place{})
 	if placesCacheErr != nil {
 		return nil, placesCacheErr
 	}
 
 	if placesCache != nil {
-		return (placesCache).([]*model.Place), nil
+		v := (placesCache).(*[]*model.Place)
+		return *v, nil
 	}
 
 	componentsFilter := map[maps.Component][]string{
@@ -98,7 +100,6 @@ func (l *locationClient) AutocompletePlace(
 		return nil, placesErr
 	}
 
-	p := make([]*model.Place, 0)
 	for _, item := range places.Predictions {
 		place := model.Place{
 			ID:            item.PlaceID,
@@ -106,32 +107,33 @@ func (l *locationClient) AutocompletePlace(
 			SecondaryText: item.StructuredFormatting.SecondaryText,
 		}
 
-		p = append(p, &place)
+		pls = append(pls, &place)
 	}
 
 	done := make(chan struct{})
 	go func() {
 		defer close(done)
-		l.cache.Set(context.Background(), cacheKey, p, time.Hour*24)
+		l.cache.Set(context.Background(), cacheKey, pls, time.Hour*24)
 	}()
 	<-done
 
-	return p, nil
+	return pls, nil
 }
 
 func (l *locationClient) GeocodeLatLng(
 	input model.GpsInput,
 ) (*Geocode, error) {
+	var geo *Geocode
 	cacheKey := util.FloatToString(input.Lat) + util.FloatToString(input.Lng)
 
-	geocodeCache, geocodeCacheErr := l.cache.Get(context.Background(), cacheKey, &Geocode{})
+	geocodeCache, geocodeCacheErr := l.cache.Get(context.Background(), cacheKey, geo)
 	if geocodeCacheErr != nil {
 		return nil, geocodeCacheErr
 	}
 
 	if geocodeCache != nil {
-		geo := (geocodeCache).(*Geocode)
-		return geo, nil
+		v := (geocodeCache).(**Geocode)
+		return *v, nil
 	}
 
 	return l.nominatim.ReverseGeocode(input)
@@ -140,13 +142,15 @@ func (l *locationClient) GeocodeLatLng(
 func (l *locationClient) GetPlaceDetails(
 	placeID string,
 ) (*Geocode, error) {
+	var placeDetails *Geocode
 	placeCache, placeCacheErr := l.cache.Get(context.Background(), placeID, &Geocode{})
 	if placeCacheErr != nil {
 		return nil, placeCacheErr
 	}
 
 	if placeCache != nil {
-		return (placeCache).(*Geocode), nil
+		p := (placeCache).(*Geocode)
+		return p, nil
 	}
 
 	req := &maps.PlaceDetailsRequest{
@@ -161,7 +165,7 @@ func (l *locationClient) GetPlaceDetails(
 		return nil, uziErr
 	}
 
-	placeDetails := &Geocode{
+	placeDetails = &Geocode{
 		Location: model.Gps{
 			Lat: res.Geometry.Location.Lat,
 			Lng: res.Geometry.Location.Lng,

@@ -3,19 +3,21 @@ package route
 import (
 	"bytes"
 	"context"
+	"database/sql"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"net/http"
+	"sync"
 	"time"
 
 	"github.com/edwinlomolo/uzi-api/config"
 	"github.com/edwinlomolo/uzi-api/gql/model"
 	"github.com/edwinlomolo/uzi-api/internal/cache"
 	"github.com/edwinlomolo/uzi-api/internal/logger"
+	"github.com/edwinlomolo/uzi-api/internal/pricer"
 	"github.com/edwinlomolo/uzi-api/internal/util"
 	"github.com/edwinlomolo/uzi-api/services/location"
-	"github.com/edwinlomolo/uzi-api/services/trip"
 	"github.com/edwinlomolo/uzi-api/store"
 	sqlStore "github.com/edwinlomolo/uzi-api/store/sqlc"
 	"github.com/redis/go-redis/v9"
@@ -33,6 +35,8 @@ var (
 
 type Route interface {
 	ComputeTripRoute(input model.TripRouteInput) (*model.TripRoute, error)
+	ParsePickupDropoff(input model.TripInput) (*location.Geocode, error)
+	GetNearbyAvailableProducts(params sqlStore.GetNearbyAvailableCourierProductsParams, tripDistance int) ([]*model.Product, error)
 }
 
 type routeClient struct {
@@ -41,6 +45,7 @@ type routeClient struct {
 	store  *sqlStore.Queries
 	config config.GoogleMaps
 	cache  cache.Cache
+	mu     sync.Mutex
 }
 
 func NewRouteService() {
@@ -50,18 +55,19 @@ func NewRouteService() {
 		store.DB,
 		config.Config.GoogleMaps,
 		cache.Rdb,
+		sync.Mutex{},
 	}
 }
 
 func (r *routeClient) ComputeTripRoute(
 	input model.TripRouteInput,
 ) (*model.TripRoute, error) {
-	pickup, pickupErr := r.parsePickupDropoff(*input.Pickup)
+	pickup, pickupErr := r.ParsePickupDropoff(*input.Pickup)
 	if pickupErr != nil {
 		return nil, pickupErr
 	}
 
-	dropoff, dropoffErr := r.parsePickupDropoff(*input.Dropoff)
+	dropoff, dropoffErr := r.ParsePickupDropoff(*input.Dropoff)
 	if dropoffErr != nil {
 		return nil, dropoffErr
 	}
@@ -69,7 +75,7 @@ func (r *routeClient) ComputeTripRoute(
 	return r.computeRoute(*pickup, *dropoff)
 }
 
-func (r *routeClient) parsePickupDropoff(
+func (r *routeClient) ParsePickupDropoff(
 	input model.TripInput,
 ) (*location.Geocode, error) {
 	// Google place autocomplete select won't have cord in the request
@@ -120,7 +126,7 @@ func (r *routeClient) computeRoute(
 
 	cacheKey := util.Base64Key(routeParams)
 
-	tripInfo, tripInfoErr := r.cache.Get(context.Background(), cacheKey, &model.TripRoute{})
+	tripInfo, tripInfoErr := r.cache.Get(context.Background(), cacheKey, tripRoute)
 	if tripInfoErr != nil {
 		return nil, tripInfoErr
 	}
@@ -154,7 +160,7 @@ func (r *routeClient) computeRoute(
 		),
 		Radius: 2000,
 	}
-	nearbyProducts, nearbyErr := trip.Trip.GetNearbyAvailableProducts(
+	nearbyProducts, nearbyErr := r.GetNearbyAvailableProducts(
 		nearbyParams,
 		tripRoute.Distance,
 	)
@@ -242,4 +248,45 @@ func createRouteRequest(pickup, dropoff latlng) routerequest {
 		Units:           "IMPERIAL",
 		RegionCode:      "KE",
 	}
+}
+
+func (r *routeClient) GetNearbyAvailableProducts(
+	params sqlStore.GetNearbyAvailableCourierProductsParams,
+	tripDistance int,
+) ([]*model.Product, error) {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+
+	var nearbyProducts []*model.Product
+
+	nearbys, nearbyErr := r.store.GetNearbyAvailableCourierProducts(
+		context.Background(),
+		params,
+	)
+	if nearbyErr == sql.ErrNoRows {
+		return make([]*model.Product, 0), nil
+	} else if nearbyErr != nil {
+		uziErr := fmt.Errorf("%s:%v", "nearby products", nearbyErr.Error())
+		r.logger.Errorf(uziErr.Error())
+		return nil, uziErr
+	}
+
+	for _, item := range nearbys {
+		earnWithFuel := item.Name != "UziX"
+		product := &model.Product{
+			ID: item.ID_2,
+			Price: pricer.Pricer.CalculateTripCost(
+				int(item.WeightClass),
+				tripDistance,
+				earnWithFuel,
+			),
+			Name:        item.Name,
+			Description: item.Description,
+			IconURL:     item.Icon,
+		}
+
+		nearbyProducts = append(nearbyProducts, product)
+	}
+
+	return nearbyProducts, nil
 }

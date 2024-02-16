@@ -76,7 +76,7 @@ func (r *mutationResolver) CreateTrip(ctx context.Context, input model.CreateTri
 	}()
 	<-done
 
-	r.tripService.MatchCourier(trip.ID, *input.TripInput.Pickup.Location)
+	r.tripService.MatchCourier(trip.ID, *input.TripInput.Pickup)
 
 	return trip, err
 }
