@@ -36,7 +36,10 @@ var (
 type Route interface {
 	ComputeTripRoute(input model.TripRouteInput) (*model.TripRoute, error)
 	ParsePickupDropoff(input model.TripInput) (*location.Geocode, error)
-	GetNearbyAvailableProducts(params sqlStore.GetNearbyAvailableCourierProductsParams, tripDistance int) ([]*model.Product, error)
+	GetNearbyAvailableProducts(
+		params sqlStore.GetNearbyAvailableCourierProductsParams,
+		tripDistance int,
+	) ([]*model.Product, error)
 }
 
 type routeClient struct {
