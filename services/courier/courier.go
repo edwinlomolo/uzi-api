@@ -49,7 +49,7 @@ func NewCourierService() {
 func (c *courierClient) FindOrCreate(
 	userID uuid.UUID,
 ) (*model.Courier, error) {
-	courier, err := c.getCourier(userID)
+	courier, err := c.getCourierByUserID(userID)
 	if err == nil && courier == nil {
 		newCourier, newErr := c.store.CreateCourier(
 			context.Background(),
@@ -118,7 +118,7 @@ func (c *courierClient) GetCourierStatus(
 	return model.CourierStatus(status), nil
 }
 
-func (c *courierClient) getCourier(
+func (c *courierClient) getCourierByUserID(
 	userID uuid.UUID,
 ) (*model.Courier, error) {
 	var courier model.Courier
@@ -140,6 +140,7 @@ func (c *courierClient) getCourier(
 	courier.ID = foundCourier.ID
 	courier.UserID = foundCourier.UserID.UUID
 	courier.Avatar = c.getAvatar(foundCourier.ID)
+	courier.ProductID = foundCourier.ProductID.UUID
 	courier.Location = util.ParsePostgisLocation(foundCourier.Location)
 
 	return &courier, nil
@@ -153,7 +154,7 @@ func (c *courierClient) getAvatar(
 		Valid: true,
 	}
 	avatar, err := c.store.GetCourierAvatar(context.Background(), ID)
-	if err != nil && err == sql.ErrNoRows {
+	if err == sql.ErrNoRows {
 		return nil
 	} else if err != nil {
 		uziErr := fmt.Errorf("%s:%v", "get avatar", err)
@@ -170,14 +171,14 @@ func (c *courierClient) getAvatar(
 func (c *courierClient) GetCourierByUserID(
 	userID uuid.UUID,
 ) (*model.Courier, error) {
-	return c.getCourier(userID)
+	return c.getCourierByUserID(userID)
 }
 
 func (c *courierClient) TrackCourierLocation(
 	userID uuid.UUID,
 	input model.GpsInput,
 ) error {
-	courier, err := c.getCourier(userID)
+	courier, err := c.getCourierByUserID(userID)
 	if err != nil {
 		return err
 	}
@@ -262,7 +263,9 @@ func (c *courierClient) GetCourierProduct(
 		context.Background(),
 		productID,
 	)
-	if err != nil {
+	if err == sql.ErrNoRows {
+		return nil, nil
+	} else if err != nil {
 		uziErr := fmt.Errorf("%s:%v", "courier product", err.Error())
 		c.logger.Errorf(uziErr.Error())
 		return nil, uziErr
@@ -291,9 +294,11 @@ func (c *courierClient) GetCourierByID(
 	}
 
 	return &model.Courier{
-		ID:       courier.ID,
-		TripID:   &courier.TripID.UUID,
-		UserID:   courier.UserID.UUID,
-		Location: util.ParsePostgisLocation(courier.Location),
+		ID:        courier.ID,
+		TripID:    &courier.TripID.UUID,
+		UserID:    courier.UserID.UUID,
+		ProductID: courier.ProductID.UUID,
+		Location:  util.ParsePostgisLocation(courier.Location),
+		Avatar:    c.getAvatar(courierID),
 	}, nil
 }

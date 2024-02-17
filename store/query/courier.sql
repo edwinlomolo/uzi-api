@@ -25,13 +25,13 @@ WHERE user_id = $1
 LIMIT 1;
 
 -- name: GetCourierByUserID :one
-SELECT id, user_id, ST_AsGeoJSON(location) AS location FROM
+SELECT id, user_id, product_id, ST_AsGeoJSON(location) AS location FROM
 couriers
 WHERE user_id = $1
 LIMIT 1;
 
 -- name: GetCourierByID :one
-SELECT id, trip_id, user_id, ST_AsGeoJSON(location) AS location FROM
+SELECT id, trip_id, product_id, user_id, ST_AsGeoJSON(location) AS location FROM
 couriers
 WHERE id = $1
 LIMIT 1;

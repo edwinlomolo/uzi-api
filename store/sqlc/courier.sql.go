@@ -41,17 +41,18 @@ func (q *Queries) CreateCourier(ctx context.Context, userID uuid.NullUUID) (Cour
 }
 
 const getCourierByID = `-- name: GetCourierByID :one
-SELECT id, trip_id, user_id, ST_AsGeoJSON(location) AS location FROM
+SELECT id, trip_id, product_id, user_id, ST_AsGeoJSON(location) AS location FROM
 couriers
 WHERE id = $1
 LIMIT 1
 `
 
 type GetCourierByIDRow struct {
-	ID       uuid.UUID     `json:"id"`
-	TripID   uuid.NullUUID `json:"trip_id"`
-	UserID   uuid.NullUUID `json:"user_id"`
-	Location interface{}   `json:"location"`
+	ID        uuid.UUID     `json:"id"`
+	TripID    uuid.NullUUID `json:"trip_id"`
+	ProductID uuid.NullUUID `json:"product_id"`
+	UserID    uuid.NullUUID `json:"user_id"`
+	Location  interface{}   `json:"location"`
 }
 
 func (q *Queries) GetCourierByID(ctx context.Context, id uuid.UUID) (GetCourierByIDRow, error) {
@@ -60,6 +61,7 @@ func (q *Queries) GetCourierByID(ctx context.Context, id uuid.UUID) (GetCourierB
 	err := row.Scan(
 		&i.ID,
 		&i.TripID,
+		&i.ProductID,
 		&i.UserID,
 		&i.Location,
 	)
@@ -67,22 +69,28 @@ func (q *Queries) GetCourierByID(ctx context.Context, id uuid.UUID) (GetCourierB
 }
 
 const getCourierByUserID = `-- name: GetCourierByUserID :one
-SELECT id, user_id, ST_AsGeoJSON(location) AS location FROM
+SELECT id, user_id, product_id, ST_AsGeoJSON(location) AS location FROM
 couriers
 WHERE user_id = $1
 LIMIT 1
 `
 
 type GetCourierByUserIDRow struct {
-	ID       uuid.UUID     `json:"id"`
-	UserID   uuid.NullUUID `json:"user_id"`
-	Location interface{}   `json:"location"`
+	ID        uuid.UUID     `json:"id"`
+	UserID    uuid.NullUUID `json:"user_id"`
+	ProductID uuid.NullUUID `json:"product_id"`
+	Location  interface{}   `json:"location"`
 }
 
 func (q *Queries) GetCourierByUserID(ctx context.Context, userID uuid.NullUUID) (GetCourierByUserIDRow, error) {
 	row := q.db.QueryRowContext(ctx, getCourierByUserID, userID)
 	var i GetCourierByUserIDRow
-	err := row.Scan(&i.ID, &i.UserID, &i.Location)
+	err := row.Scan(
+		&i.ID,
+		&i.UserID,
+		&i.ProductID,
+		&i.Location,
+	)
 	return i, err
 }
 
