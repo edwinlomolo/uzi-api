@@ -102,7 +102,7 @@ func (r *mutationResolver) CreateTrip(ctx context.Context, input model.CreateTri
 
 // CourierArriving is the resolver for the courierArriving field.
 func (r *mutationResolver) CourierArriving(ctx context.Context, tripID uuid.UUID) (bool, error) {
-	err := r.tripService.PublishTripUpdate(tripID, model.TripStatusArriving, t.TRIP_UPDATES)
+	err := r.tripService.PublishTripUpdate(tripID, model.TripStatusCourierArriving, t.TRIP_UPDATES)
 	if err != nil {
 		return false, err
 	}
@@ -112,7 +112,7 @@ func (r *mutationResolver) CourierArriving(ctx context.Context, tripID uuid.UUID
 
 // CourierEnroute is the resolver for the courierEnroute field.
 func (r *mutationResolver) CourierEnroute(ctx context.Context, tripID uuid.UUID) (bool, error) {
-	err := r.tripService.PublishTripUpdate(tripID, model.TripStatusEnRoute, t.TRIP_UPDATES)
+	err := r.tripService.PublishTripUpdate(tripID, model.TripStatusCourierEnRoute, t.TRIP_UPDATES)
 	if err != nil {
 		return false, err
 	}

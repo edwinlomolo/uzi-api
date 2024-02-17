@@ -345,7 +345,7 @@ func (t *tripClient) MatchCourier(tripID uuid.UUID, pickup model.TripInput) {
 
 					assignErr := t.AssignCourierToTrip(tripID, courier.ID)
 					if assignErr == nil {
-						t.PublishTripUpdate(tripID, model.TripStatusAssigned, ASSIGN_TRIP)
+						t.PublishTripUpdate(tripID, model.TripStatusCourierAssigned, ASSIGN_TRIP)
 						return
 					} else if assignErr != nil {
 						t.logger.Errorf(assignErr.Error())
@@ -439,9 +439,9 @@ func (t *tripClient) PublishTripUpdate(
 		update := model.TripUpdate{ID: tripID, Status: status}
 
 		switch status {
-		case model.TripStatusArriving,
-			model.TripStatusEnRoute,
-			model.TripStatusAssigned,
+		case model.TripStatusCourierArriving,
+			model.TripStatusCourierEnRoute,
+			model.TripStatusCourierAssigned,
 			model.TripStatusCancelled:
 			getTrip, err := t.GetTrip(tripID)
 			if err != nil {
@@ -454,9 +454,9 @@ func (t *tripClient) PublishTripUpdate(
 			}
 
 			switch status {
-			case model.TripStatusArriving, model.TripStatusEnRoute:
+			case model.TripStatusCourierArriving, model.TripStatusCourierEnRoute:
 				update.Location = &model.Gps{Lat: tripCourier.Location.Lat, Lng: tripCourier.Location.Lng}
-			case model.TripStatusAssigned:
+			case model.TripStatusCourierAssigned:
 				update.CourierID = getTrip.CourierID
 			}
 		}

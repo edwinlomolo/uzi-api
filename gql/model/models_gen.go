@@ -217,22 +217,20 @@ func (e CourierStatus) MarshalGQL(w io.Writer) {
 type TripStatus string
 
 const (
-	TripStatusArriving        TripStatus = "ARRIVING"
-	TripStatusEnRoute         TripStatus = "EN_ROUTE"
+	TripStatusCourierEnRoute  TripStatus = "COURIER_EN_ROUTE"
 	TripStatusCancelled       TripStatus = "CANCELLED"
 	TripStatusComplete        TripStatus = "COMPLETE"
-	TripStatusAssigned        TripStatus = "ASSIGNED"
+	TripStatusCourierAssigned TripStatus = "COURIER_ASSIGNED"
 	TripStatusCourierArriving TripStatus = "COURIER_ARRIVING"
 	TripStatusCourierFound    TripStatus = "COURIER_FOUND"
 	TripStatusCourierNotFound TripStatus = "COURIER_NOT_FOUND"
 )
 
 var AllTripStatus = []TripStatus{
-	TripStatusArriving,
-	TripStatusEnRoute,
+	TripStatusCourierEnRoute,
 	TripStatusCancelled,
 	TripStatusComplete,
-	TripStatusAssigned,
+	TripStatusCourierAssigned,
 	TripStatusCourierArriving,
 	TripStatusCourierFound,
 	TripStatusCourierNotFound,
@@ -240,7 +238,7 @@ var AllTripStatus = []TripStatus{
 
 func (e TripStatus) IsValid() bool {
 	switch e {
-	case TripStatusArriving, TripStatusEnRoute, TripStatusCancelled, TripStatusComplete, TripStatusAssigned, TripStatusCourierArriving, TripStatusCourierFound, TripStatusCourierNotFound:
+	case TripStatusCourierEnRoute, TripStatusCancelled, TripStatusComplete, TripStatusCourierAssigned, TripStatusCourierArriving, TripStatusCourierFound, TripStatusCourierNotFound:
 		return true
 	}
 	return false

@@ -208,7 +208,7 @@ func (c *courierClient) TrackCourierLocation(
 			return
 		}
 
-		if t != nil && (t.Status == model.TripStatusEnRoute || t.Status == model.TripStatusArriving) {
+		if t != nil && (t.Status == model.TripStatusCourierEnRoute || t.Status == model.TripStatusCourierArriving) {
 			tripUpdate := model.TripUpdate{
 				ID:     t.ID,
 				Status: model.TripStatus(t.Status),
