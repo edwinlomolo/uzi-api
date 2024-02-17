@@ -219,6 +219,7 @@ type TripStatus string
 const (
 	TripStatusArriving        TripStatus = "ARRIVING"
 	TripStatusEnRoute         TripStatus = "EN_ROUTE"
+	TripStatusCancelled       TripStatus = "CANCELLED"
 	TripStatusComplete        TripStatus = "COMPLETE"
 	TripStatusAssigned        TripStatus = "ASSIGNED"
 	TripStatusCourierArriving TripStatus = "COURIER_ARRIVING"
@@ -229,6 +230,7 @@ const (
 var AllTripStatus = []TripStatus{
 	TripStatusArriving,
 	TripStatusEnRoute,
+	TripStatusCancelled,
 	TripStatusComplete,
 	TripStatusAssigned,
 	TripStatusCourierArriving,
@@ -238,7 +240,7 @@ var AllTripStatus = []TripStatus{
 
 func (e TripStatus) IsValid() bool {
 	switch e {
-	case TripStatusArriving, TripStatusEnRoute, TripStatusComplete, TripStatusAssigned, TripStatusCourierArriving, TripStatusCourierFound, TripStatusCourierNotFound:
+	case TripStatusArriving, TripStatusEnRoute, TripStatusCancelled, TripStatusComplete, TripStatusAssigned, TripStatusCourierArriving, TripStatusCourierFound, TripStatusCourierNotFound:
 		return true
 	}
 	return false

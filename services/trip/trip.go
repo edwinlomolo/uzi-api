@@ -48,6 +48,7 @@ type TripService interface {
 	PublishTripUpdate(tripID uuid.UUID, status model.TripStatus, channel string) error
 	GetTripCourier(courierID uuid.UUID) (*model.Courier, error)
 	GetCourierTrip(courierID uuid.UUID) (*model.Trip, error)
+	CancelTrip(trip uuid.UUID) error
 }
 
 type tripClient struct {
@@ -312,6 +313,14 @@ func (t *tripClient) MatchCourier(tripID uuid.UUID, pickup model.TripInput) {
 				return
 			default:
 				time.Sleep(500 * time.Millisecond)
+				trip, err := t.GetTrip(tripID)
+				if err != nil {
+					return
+				}
+
+				if trip.Status == model.TripStatusCancelled {
+					return
+				}
 
 				courier, err := t.FindAvailableCourier(model.GpsInput{
 					Lat: pkp.Location.Lat,
@@ -429,7 +438,11 @@ func (t *tripClient) PublishTripUpdate(
 		defer close(done)
 		update := model.TripUpdate{ID: tripID, Status: status}
 
-		if status == model.TripStatusArriving || status == model.TripStatusEnRoute || status == model.TripStatusAssigned {
+		switch status {
+		case model.TripStatusArriving,
+			model.TripStatusEnRoute,
+			model.TripStatusAssigned,
+			model.TripStatusCancelled:
 			getTrip, err := t.GetTrip(tripID)
 			if err != nil {
 				return
@@ -502,4 +515,27 @@ func (t *tripClient) GetCourierTrip(courierID uuid.UUID) (*model.Trip, error) {
 		ID:     trip.ID,
 		Status: model.TripStatus(trip.Status),
 	}, nil
+}
+
+func (t *tripClient) CancelTrip(tripID uuid.UUID) error {
+	err := t.SetTripStatus(tripID, model.TripStatusCancelled)
+	if err != nil {
+		return err
+	}
+
+	done := make(chan struct{})
+	go func() {
+		defer close(done)
+		trip, err := t.GetTrip(tripID)
+		if err != nil {
+			return
+		}
+		// Trip hasn't been assigned yet
+		if trip.CourierID != nil {
+			t.PublishTripUpdate(tripID, model.TripStatusCancelled, ASSIGN_TRIP)
+		}
+	}()
+	<-done
+
+	return nil
 }

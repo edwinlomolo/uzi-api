@@ -120,6 +120,16 @@ func (r *mutationResolver) CourierEnroute(ctx context.Context, tripID uuid.UUID)
 	return true, nil
 }
 
+// CancelTrip is the resolver for the cancelTrip field.
+func (r *mutationResolver) CancelTrip(ctx context.Context, tripID uuid.UUID) (bool, error) {
+	err := r.tripService.CancelTrip(tripID)
+	if err != nil {
+		return false, err
+	}
+
+	return true, nil
+}
+
 // Hello is the resolver for the hello field.
 func (r *queryResolver) Hello(ctx context.Context) (string, error) {
 	return "Hello, world!", nil

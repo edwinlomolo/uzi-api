@@ -26,6 +26,7 @@ enum CourierStatus {
 enum TripStatus {
   ARRIVING
   EN_ROUTE
+  CANCELLED
   COMPLETE
   ASSIGNED
   COURIER_ARRIVING
@@ -85,6 +86,7 @@ type Mutation {
   createTrip(input: CreateTripInput!): Trip!
   courierArriving(tripId: UUID!): Boolean!
   courierEnroute(tripId: UUID!): Boolean!
+  cancelTrip(tripId: UUID!): Boolean!
 }
 
 type Subscription {
