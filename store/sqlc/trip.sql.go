@@ -75,6 +75,31 @@ func (q *Queries) AssignRouteToTrip(ctx context.Context, arg AssignRouteToTripPa
 	return i, err
 }
 
+const assignTripRoute = `-- name: AssignTripRoute :one
+UPDATE trips
+SET route_id = $1
+RETURNING id, start_location, end_location, courier_id, user_id, route_id, product_id, cost, status, created_at, updated_at
+`
+
+func (q *Queries) AssignTripRoute(ctx context.Context, routeID uuid.NullUUID) (Trip, error) {
+	row := q.db.QueryRowContext(ctx, assignTripRoute, routeID)
+	var i Trip
+	err := row.Scan(
+		&i.ID,
+		&i.StartLocation,
+		&i.EndLocation,
+		&i.CourierID,
+		&i.UserID,
+		&i.RouteID,
+		&i.ProductID,
+		&i.Cost,
+		&i.Status,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
 const assignTripToCourier = `-- name: AssignTripToCourier :one
 UPDATE trips
 SET courier_id = $1

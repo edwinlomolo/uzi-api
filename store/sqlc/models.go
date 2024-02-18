@@ -48,13 +48,14 @@ type Recipient struct {
 }
 
 type Route struct {
-	ID        uuid.UUID   `json:"id"`
-	Distance  string      `json:"distance"`
-	Polyline  interface{} `json:"polyline"`
-	Eta       time.Time   `json:"eta"`
-	State     string      `json:"state"`
-	CreatedAt time.Time   `json:"created_at"`
-	UpdatedAt time.Time   `json:"updated_at"`
+	ID        uuid.UUID     `json:"id"`
+	Distance  string        `json:"distance"`
+	Polyline  interface{}   `json:"polyline"`
+	Eta       time.Time     `json:"eta"`
+	State     string        `json:"state"`
+	TripID    uuid.NullUUID `json:"trip_id"`
+	CreatedAt time.Time     `json:"created_at"`
+	UpdatedAt time.Time     `json:"updated_at"`
 }
 
 type Session struct {
