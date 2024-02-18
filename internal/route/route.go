@@ -20,6 +20,7 @@ import (
 	"github.com/edwinlomolo/uzi-api/services/location"
 	"github.com/edwinlomolo/uzi-api/store"
 	sqlStore "github.com/edwinlomolo/uzi-api/store/sqlc"
+	"github.com/google/uuid"
 	"github.com/redis/go-redis/v9"
 	"github.com/sirupsen/logrus"
 )
@@ -40,6 +41,7 @@ type Route interface {
 		params sqlStore.GetNearbyAvailableCourierProductsParams,
 		tripDistance int,
 	) ([]*model.Product, error)
+	CreateRoute(tripID uuid.UUID, distance string, tripState model.TripStatus) (*model.Route, error)
 }
 
 type routeClient struct {
@@ -292,4 +294,8 @@ func (r *routeClient) GetNearbyAvailableProducts(
 	}
 
 	return nearbyProducts, nil
+}
+
+func (r *routeClient) CreateRoute(tripID uuid.UUID, distance string, tripState model.TripStatus) (*model.Route, error) {
+	return nil, nil
 }

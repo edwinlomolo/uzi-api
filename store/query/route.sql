@@ -1,7 +1,7 @@
 -- name: CreateRoute :one
 INSERT INTO routes (
-  distance, eta, state, polyline
+  distance, trip_id, eta, state, polyline
 ) VALUES (
-  $1, $2, $3, ST_GeographyFromText(sqlc.arg(polyline))
+  $1, $2, $3, $4, ST_GeographyFromText(sqlc.arg(polyline))
 )
 RETURNING *;
