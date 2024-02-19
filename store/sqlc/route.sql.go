@@ -8,31 +8,27 @@ package sqlc
 import (
 	"context"
 	"time"
-
-	"github.com/google/uuid"
 )
 
 const createRoute = `-- name: CreateRoute :one
 INSERT INTO routes (
-  distance, trip_id, eta, state, polyline
+  distance, eta, state, polyline
 ) VALUES (
-  $1, $2, $3, $4, ST_GeographyFromText($5)
+  $1, $2, $3, ST_GeographyFromText($4)
 )
-RETURNING id, distance, polyline, eta, state, trip_id, created_at, updated_at
+RETURNING id, distance, polyline, eta, state, created_at, updated_at
 `
 
 type CreateRouteParams struct {
-	Distance string        `json:"distance"`
-	TripID   uuid.NullUUID `json:"trip_id"`
-	Eta      time.Time     `json:"eta"`
-	State    string        `json:"state"`
-	Polyline interface{}   `json:"polyline"`
+	Distance string      `json:"distance"`
+	Eta      time.Time   `json:"eta"`
+	State    string      `json:"state"`
+	Polyline interface{} `json:"polyline"`
 }
 
 func (q *Queries) CreateRoute(ctx context.Context, arg CreateRouteParams) (Route, error) {
 	row := q.db.QueryRowContext(ctx, createRoute,
 		arg.Distance,
-		arg.TripID,
 		arg.Eta,
 		arg.State,
 		arg.Polyline,
@@ -44,7 +40,6 @@ func (q *Queries) CreateRoute(ctx context.Context, arg CreateRouteParams) (Route
 		&i.Polyline,
 		&i.Eta,
 		&i.State,
-		&i.TripID,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 	)

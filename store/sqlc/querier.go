@@ -14,7 +14,6 @@ import (
 type Querier interface {
 	AssignCourierToTrip(ctx context.Context, arg AssignCourierToTripParams) (Courier, error)
 	AssignRouteToTrip(ctx context.Context, arg AssignRouteToTripParams) (Trip, error)
-	AssignTripRoute(ctx context.Context, routeID uuid.NullUUID) (Trip, error)
 	AssignTripToCourier(ctx context.Context, arg AssignTripToCourierParams) (Trip, error)
 	CreateCourier(ctx context.Context, userID uuid.NullUUID) (Courier, error)
 	CreateCourierUpload(ctx context.Context, arg CreateCourierUploadParams) (Upload, error)

@@ -169,7 +169,6 @@ type ComplexityRoot struct {
 		ID            func(childComplexity int) int
 		Recipient     func(childComplexity int) int
 		Route         func(childComplexity int) int
-		RouteID       func(childComplexity int) int
 		StartLocation func(childComplexity int) int
 		Status        func(childComplexity int) int
 		UpdatedAt     func(childComplexity int) int
@@ -893,13 +892,6 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Trip.Route(childComplexity), true
-
-	case "Trip.route_id":
-		if e.complexity.Trip.RouteID == nil {
-			break
-		}
-
-		return e.complexity.Trip.RouteID(childComplexity), true
 
 	case "Trip.start_location":
 		if e.complexity.Trip.StartLocation == nil {
@@ -1977,8 +1969,6 @@ func (ec *executionContext) fieldContext_Courier_trip(ctx context.Context, field
 				return ec.fieldContext_Trip_status(ctx, field)
 			case "cost":
 				return ec.fieldContext_Trip_cost(ctx, field)
-			case "route_id":
-				return ec.fieldContext_Trip_route_id(ctx, field)
 			case "route":
 				return ec.fieldContext_Trip_route(ctx, field)
 			case "recipient":
@@ -2755,8 +2745,6 @@ func (ec *executionContext) fieldContext_Mutation_createTrip(ctx context.Context
 				return ec.fieldContext_Trip_status(ctx, field)
 			case "cost":
 				return ec.fieldContext_Trip_cost(ctx, field)
-			case "route_id":
-				return ec.fieldContext_Trip_route_id(ctx, field)
 			case "route":
 				return ec.fieldContext_Trip_route(ctx, field)
 			case "recipient":
@@ -3820,8 +3808,6 @@ func (ec *executionContext) fieldContext_Query_getTripDetails(ctx context.Contex
 				return ec.fieldContext_Trip_status(ctx, field)
 			case "cost":
 				return ec.fieldContext_Trip_cost(ctx, field)
-			case "route_id":
-				return ec.fieldContext_Trip_route_id(ctx, field)
 			case "route":
 				return ec.fieldContext_Trip_route(ctx, field)
 			case "recipient":
@@ -4290,8 +4276,6 @@ func (ec *executionContext) fieldContext_Recipient_trip(ctx context.Context, fie
 				return ec.fieldContext_Trip_status(ctx, field)
 			case "cost":
 				return ec.fieldContext_Trip_cost(ctx, field)
-			case "route_id":
-				return ec.fieldContext_Trip_route_id(ctx, field)
 			case "route":
 				return ec.fieldContext_Trip_route(ctx, field)
 			case "recipient":
@@ -5566,47 +5550,6 @@ func (ec *executionContext) fieldContext_Trip_cost(ctx context.Context, field gr
 	return fc, nil
 }
 
-func (ec *executionContext) _Trip_route_id(ctx context.Context, field graphql.CollectedField, obj *model.Trip) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Trip_route_id(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.RouteID, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.(*uuid.UUID)
-	fc.Result = res
-	return ec.marshalOUUID2ᚖgithubᚗcomᚋgoogleᚋuuidᚐUUID(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_Trip_route_id(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Trip",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type UUID does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
 func (ec *executionContext) _Trip_route(ctx context.Context, field graphql.CollectedField, obj *model.Trip) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Trip_route(ctx, field)
 	if err != nil {
@@ -5630,9 +5573,9 @@ func (ec *executionContext) _Trip_route(ctx context.Context, field graphql.Colle
 	if resTmp == nil {
 		return graphql.Null
 	}
-	res := resTmp.(*model.Route)
+	res := resTmp.(*model.TripRoute)
 	fc.Result = res
-	return ec.marshalORoute2ᚖgithubᚗcomᚋedwinlomoloᚋuziᚑapiᚋgqlᚋmodelᚐRoute(ctx, field.Selections, res)
+	return ec.marshalOTripRoute2ᚖgithubᚗcomᚋedwinlomoloᚋuziᚑapiᚋgqlᚋmodelᚐTripRoute(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Trip_route(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -5643,18 +5586,14 @@ func (ec *executionContext) fieldContext_Trip_route(ctx context.Context, field g
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
-			case "id":
-				return ec.fieldContext_Route_id(ctx, field)
+			case "polyline":
+				return ec.fieldContext_TripRoute_polyline(ctx, field)
 			case "distance":
-				return ec.fieldContext_Route_distance(ctx, field)
-			case "eta":
-				return ec.fieldContext_Route_eta(ctx, field)
-			case "created_at":
-				return ec.fieldContext_Route_created_at(ctx, field)
-			case "updated_at":
-				return ec.fieldContext_Route_updated_at(ctx, field)
+				return ec.fieldContext_TripRoute_distance(ctx, field)
+			case "availableProducts":
+				return ec.fieldContext_TripRoute_availableProducts(ctx, field)
 			}
-			return nil, fmt.Errorf("no field named %q was found under type Route", field.Name)
+			return nil, fmt.Errorf("no field named %q was found under type TripRoute", field.Name)
 		},
 	}
 	return fc, nil
@@ -9872,8 +9811,6 @@ func (ec *executionContext) _Trip(ctx context.Context, sel ast.SelectionSet, obj
 			}
 		case "cost":
 			out.Values[i] = ec._Trip_cost(ctx, field, obj)
-		case "route_id":
-			out.Values[i] = ec._Trip_route_id(ctx, field, obj)
 		case "route":
 			out.Values[i] = ec._Trip_route(ctx, field, obj)
 		case "recipient":
@@ -11276,13 +11213,6 @@ func (ec *executionContext) marshalOGps2ᚖgithubᚗcomᚋedwinlomoloᚋuziᚑap
 	return ec._Gps(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalORoute2ᚖgithubᚗcomᚋedwinlomoloᚋuziᚑapiᚋgqlᚋmodelᚐRoute(ctx context.Context, sel ast.SelectionSet, v *model.Route) graphql.Marshaler {
-	if v == nil {
-		return graphql.Null
-	}
-	return ec._Route(ctx, sel, v)
-}
-
 func (ec *executionContext) unmarshalOString2ᚖstring(ctx context.Context, v interface{}) (*string, error) {
 	if v == nil {
 		return nil, nil
@@ -11320,6 +11250,13 @@ func (ec *executionContext) marshalOTrip2ᚖgithubᚗcomᚋedwinlomoloᚋuziᚑa
 		return graphql.Null
 	}
 	return ec._Trip(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalOTripRoute2ᚖgithubᚗcomᚋedwinlomoloᚋuziᚑapiᚋgqlᚋmodelᚐTripRoute(ctx context.Context, sel ast.SelectionSet, v *model.TripRoute) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._TripRoute(ctx, sel, v)
 }
 
 func (ec *executionContext) unmarshalOUUID2ᚖgithubᚗcomᚋgoogleᚋuuidᚐUUID(ctx context.Context, v interface{}) (*uuid.UUID, error) {

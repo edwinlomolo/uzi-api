@@ -53,6 +53,9 @@ type GpsInput struct {
 	Lng float64 `json:"lng"`
 }
 
+type Mutation struct {
+}
+
 type Place struct {
 	ID            string `json:"id"`
 	MainText      string `json:"mainText"`
@@ -67,6 +70,9 @@ type Product struct {
 	Price       int        `json:"price"`
 	CreatedAt   *time.Time `json:"created_at,omitempty"`
 	UpdatedAt   *time.Time `json:"updated_at,omitempty"`
+}
+
+type Query struct {
 }
 
 type Recipient struct {
@@ -102,6 +108,9 @@ type Session struct {
 	CourierStatus *CourierStatus `json:"courierStatus,omitempty"`
 }
 
+type Subscription struct {
+}
+
 type Trip struct {
 	ID            uuid.UUID  `json:"id"`
 	CourierID     *uuid.UUID `json:"courier_id,omitempty"`
@@ -111,8 +120,7 @@ type Trip struct {
 	EndLocation   *Gps       `json:"end_location,omitempty"`
 	Status        TripStatus `json:"status"`
 	Cost          *string    `json:"cost,omitempty"`
-	RouteID       *uuid.UUID `json:"route_id,omitempty"`
-	Route         *Route     `json:"route,omitempty"`
+	Route         *TripRoute `json:"route,omitempty"`
 	Recipient     *Recipient `json:"recipient"`
 	CreatedAt     *time.Time `json:"created_at,omitempty"`
 	UpdatedAt     *time.Time `json:"updated_at,omitempty"`

@@ -87,8 +87,3 @@ LIMIT 1;
 SELECT * FROM trips
 WHERE courier_id = $1
 LIMIT 1;
-
--- name: AssignTripRoute :one
-UPDATE trips
-SET route_id = $1
-RETURNING *;
