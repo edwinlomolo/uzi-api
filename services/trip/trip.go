@@ -159,6 +159,7 @@ func (t *tripClient) UnassignTrip(courierID uuid.UUID) error {
 	return nil
 }
 
+// TODO save confirmed pickup
 func (t *tripClient) CreateTrip(
 	args sqlStore.CreateTripParams,
 ) (*model.Trip, error) {
@@ -413,6 +414,7 @@ func (t *tripClient) GetTripRecipient(tripID uuid.UUID) (*model.Recipient, error
 }
 
 func (t *tripClient) GetTrip(tripID uuid.UUID) (*model.Trip, error) {
+	var trp *model.Trip
 	trip, err := t.store.GetTrip(context.Background(), tripID)
 	if err != nil {
 		uziErr := fmt.Errorf("%s:%v", "get trip", err)
@@ -420,12 +422,39 @@ func (t *tripClient) GetTrip(tripID uuid.UUID) (*model.Trip, error) {
 		return nil, uziErr
 	}
 
-	return &model.Trip{
+	trp = &model.Trip{
 		ID:            trip.ID,
 		Status:        model.TripStatus(trip.Status),
 		CourierID:     &trip.CourierID.UUID,
 		StartLocation: util.ParsePostgisLocation(trip.StartLocation),
-	}, nil
+	}
+
+	if &trip.CourierID != nil {
+		pickup := model.TripInput{
+			Location: &model.GpsInput{
+				Lat: trp.StartLocation.Lat,
+				Lng: trp.StartLocation.Lng,
+			},
+		}
+		courierGps, err := t.store.GetCourierLocation(context.Background(), trip.CourierID.UUID)
+		if err != nil {
+			return nil, err
+		}
+		dropoff := model.TripInput{
+			Location: &model.GpsInput{
+				Lat: util.ParsePostgisLocation(courierGps).Lat,
+				Lng: util.ParsePostgisLocation(courierGps).Lng,
+			},
+		}
+		tripRoute, err := route.Routing.ComputeTripRoute(model.TripRouteInput{Pickup: &pickup, Dropoff: &dropoff})
+		if err != nil {
+			return nil, err
+		}
+
+		trp.Route = tripRoute
+	}
+
+	return trp, nil
 }
 
 func (t *tripClient) PublishTripUpdate(

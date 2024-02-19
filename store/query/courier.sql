@@ -46,3 +46,9 @@ RETURNING *;
 SELECT id, icon, name FROM products
 WHERE id = $1
 LIMIT 1;
+
+-- name: GetCourierLocation :one
+SELECT ST_AsGeoJSON(location) AS location FROM
+couriers
+WHERE id = $1
+LIMIT 1;

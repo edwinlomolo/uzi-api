@@ -94,6 +94,20 @@ func (q *Queries) GetCourierByUserID(ctx context.Context, userID uuid.NullUUID) 
 	return i, err
 }
 
+const getCourierLocation = `-- name: GetCourierLocation :one
+SELECT ST_AsGeoJSON(location) AS location FROM
+couriers
+WHERE id = $1
+LIMIT 1
+`
+
+func (q *Queries) GetCourierLocation(ctx context.Context, id uuid.UUID) (interface{}, error) {
+	row := q.db.QueryRowContext(ctx, getCourierLocation, id)
+	var location interface{}
+	err := row.Scan(&location)
+	return location, err
+}
+
 const getCourierProductByID = `-- name: GetCourierProductByID :one
 SELECT id, icon, name FROM products
 WHERE id = $1

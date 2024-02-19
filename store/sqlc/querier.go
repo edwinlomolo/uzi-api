@@ -32,6 +32,7 @@ type Querier interface {
 	GetCourierAvatar(ctx context.Context, courierID uuid.NullUUID) (GetCourierAvatarRow, error)
 	GetCourierByID(ctx context.Context, id uuid.UUID) (GetCourierByIDRow, error)
 	GetCourierByUserID(ctx context.Context, userID uuid.NullUUID) (GetCourierByUserIDRow, error)
+	GetCourierLocation(ctx context.Context, id uuid.UUID) (interface{}, error)
 	GetCourierNearPickupPoint(ctx context.Context, arg GetCourierNearPickupPointParams) ([]GetCourierNearPickupPointRow, error)
 	GetCourierProductByID(ctx context.Context, id uuid.UUID) (GetCourierProductByIDRow, error)
 	GetCourierStatus(ctx context.Context, userID uuid.NullUUID) (string, error)
