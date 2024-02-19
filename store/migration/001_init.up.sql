@@ -56,7 +56,6 @@ CREATE TABLE IF NOT EXISTS trips (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   start_location GEOGRAPHY NOT NULL,
   end_location GEOGRAPHY NOT NULL,
-  confirmed_pickup GEOGRAPHY NOT NULL,
   courier_id UUID REFERENCES couriers ON DELETE SET NULL,
   user_id UUID NOT NULL REFERENCES users ON DELETE CASCADE,
   route_id UUID REFERENCES routes ON DELETE SET NULL,

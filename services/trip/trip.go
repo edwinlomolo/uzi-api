@@ -300,15 +300,6 @@ func (t *tripClient) MatchCourier(tripID uuid.UUID, pickup model.TripInput) {
 			case <-timeoutCtx.Done():
 				if !courierFound {
 					t.PublishTripUpdate(tripID, model.TripStatusCourierNotFound, TRIP_UPDATES)
-
-					done := make(chan struct{})
-					go func() {
-						defer close(done)
-						if err := t.SetTripStatus(tripID, model.TripStatusCourierNotFound); err != nil {
-							return
-						}
-					}()
-					<-done
 				}
 
 				return
@@ -334,15 +325,6 @@ func (t *tripClient) MatchCourier(tripID uuid.UUID, pickup model.TripInput) {
 				if courier != nil && !courierFound {
 					courierFound = true
 					t.PublishTripUpdate(tripID, model.TripStatusCourierFound, TRIP_UPDATES)
-
-					done := make(chan struct{})
-					go func() {
-						defer close(done)
-						if err := t.SetTripStatus(tripID, model.TripStatusCourierFound); err != nil {
-							return
-						}
-					}()
-					<-done
 
 					assignErr := t.AssignCourierToTrip(tripID, courier.ID)
 					if assignErr == nil {
@@ -467,6 +449,8 @@ func (t *tripClient) PublishTripUpdate(
 		defer close(done)
 		update := model.TripUpdate{ID: tripID, Status: status}
 
+		t.SetTripStatus(tripID, status)
+
 		switch status {
 		case model.TripStatusCourierArriving,
 			model.TripStatusCourierEnRoute,
@@ -547,11 +531,6 @@ func (t *tripClient) GetCourierTrip(courierID uuid.UUID) (*model.Trip, error) {
 }
 
 func (t *tripClient) CancelTrip(tripID uuid.UUID) error {
-	err := t.SetTripStatus(tripID, model.TripStatusCancelled)
-	if err != nil {
-		return err
-	}
-
 	done := make(chan struct{})
 	go func() {
 		defer close(done)
