@@ -105,29 +105,9 @@ func (r *mutationResolver) CreateTrip(ctx context.Context, input model.CreateTri
 	return trip, err
 }
 
-// CourierArriving is the resolver for the courierArriving field.
-func (r *mutationResolver) CourierArriving(ctx context.Context, tripID uuid.UUID) (bool, error) {
-	err := r.tripService.PublishTripUpdate(tripID, model.TripStatusCourierArriving, t.TRIP_UPDATES)
-	if err != nil {
-		return false, err
-	}
-
-	return true, nil
-}
-
-// CourierEnroute is the resolver for the courierEnroute field.
-func (r *mutationResolver) CourierEnroute(ctx context.Context, tripID uuid.UUID) (bool, error) {
-	err := r.tripService.PublishTripUpdate(tripID, model.TripStatusCourierEnRoute, t.TRIP_UPDATES)
-	if err != nil {
-		return false, err
-	}
-
-	return true, nil
-}
-
-// CancelTrip is the resolver for the cancelTrip field.
-func (r *mutationResolver) CancelTrip(ctx context.Context, tripID uuid.UUID) (bool, error) {
-	err := r.tripService.CancelTrip(tripID)
+// ReportTripStatus is the resolver for the reportTripStatus field.
+func (r *mutationResolver) ReportTripStatus(ctx context.Context, tripID uuid.UUID, status model.TripStatus) (bool, error) {
+	err := r.tripService.ReportTripStatus(tripID, status)
 	if err != nil {
 		return false, err
 	}
@@ -175,6 +155,12 @@ func (r *queryResolver) GetCourierNearPickupPoint(ctx context.Context, point mod
 // GetTripDetails is the resolver for the getTripDetails field.
 func (r *queryResolver) GetTripDetails(ctx context.Context, tripID uuid.UUID) (*model.Trip, error) {
 	return r.tripService.GetTrip(tripID)
+}
+
+// GetCourierTrip is the resolver for the getCourierTrip field.
+func (r *queryResolver) GetCourierTrip(ctx context.Context) (*model.Trip, error) {
+	courierID := getCourierIDFromResolverContext(ctx, r)
+	return r.tripService.GetCourierTrip(courierID)
 }
 
 // TripUpdates is the resolver for the tripUpdates field.

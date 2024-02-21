@@ -50,7 +50,7 @@ type TripService interface {
 	PublishTripUpdate(tripID uuid.UUID, status model.TripStatus, channel string) error
 	GetTripCourier(courierID uuid.UUID) (*model.Courier, error)
 	GetCourierTrip(courierID uuid.UUID) (*model.Trip, error)
-	CancelTrip(trip uuid.UUID) error
+	ReportTripStatus(tripID uuid.UUID, status model.TripStatus) error
 }
 
 type tripClient struct {
@@ -554,20 +554,35 @@ func (t *tripClient) GetCourierTrip(courierID uuid.UUID) (*model.Trip, error) {
 	}, nil
 }
 
-func (t *tripClient) CancelTrip(tripID uuid.UUID) error {
-	done := make(chan struct{})
-	go func() {
-		defer close(done)
+func (t *tripClient) ReportTripStatus(tripID uuid.UUID, status model.TripStatus) error {
+	// Are we cancelling trip
+	switch status {
+	case model.TripStatusCancelled:
 		trip, err := t.GetTrip(tripID)
 		if err != nil {
-			return
+			return err
 		}
-		// Trip hasn't been assigned yet
-		if trip.CourierID != nil {
-			t.PublishTripUpdate(tripID, model.TripStatusCancelled, ASSIGN_TRIP)
+
+		// Check hasn't been assigned yet
+		if trip.CourierID.String() == constants.ZERO_UUID {
+			go t.PublishTripUpdate(tripID, model.TripStatusCancelled, getTripStatusChannel(status))
 		}
-	}()
-	<-done
+	default:
+		go t.PublishTripUpdate(tripID, status, getTripStatusChannel(status))
+	}
 
 	return nil
+}
+
+func getTripStatusChannel(status model.TripStatus) string {
+	switch status {
+	case model.TripStatusCourierArriving,
+		model.TripStatusCourierEnRoute:
+		return TRIP_UPDATES
+	case model.TripStatusCourierAssigned,
+		model.TripStatusCancelled:
+		return ASSIGN_TRIP
+	default:
+		return ""
+	}
 }
