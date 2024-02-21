@@ -10,7 +10,7 @@ RETURNING *;
 SELECT c.id, c.product_id, p.* FROM couriers c
 JOIN products p
 ON ST_DWithin(c.location, sqlc.arg(point)::geography, sqlc.arg(radius))
-WHERE c.product_id = p.id AND c.status = 'OFFLINE' AND c.verified = 'true'
+WHERE c.product_id = p.id AND c.status = 'ONLINE' AND c.verified = 'true'
 ORDER BY p.relevance ASC;
 
 -- name: FindAvailableCourier :one
@@ -25,7 +25,7 @@ couriers
 WHERE ST_DWithin(location, sqlc.arg(point)::geography, sqlc.arg(radius)) AND status = 'ONLINE' AND verified = 'true';
 
 -- name: GetTrip :one
-SELECT id, status, courier_id, ST_AsGeoJSON(start_location) AS start_location FROM trips
+SELECT id, status, courier_id, ST_AsGeoJSON(confirmed_pickup) AS confirmed_pickup, ST_AsGeoJSON(start_location) AS start_location FROM trips
 WHERE id = $1
 LIMIT 1;
 

@@ -10,6 +10,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/edwinlomolo/uzi-api/constants"
 	"github.com/edwinlomolo/uzi-api/gql/model"
 	"github.com/edwinlomolo/uzi-api/internal/cache"
 	"github.com/edwinlomolo/uzi-api/internal/logger"
@@ -305,6 +306,7 @@ func (t *tripClient) MatchCourier(tripID uuid.UUID, pickup model.TripInput) {
 				return
 			default:
 				time.Sleep(500 * time.Millisecond)
+
 				trip, err := t.GetTrip(tripID)
 				if err != nil {
 					return
@@ -412,11 +414,11 @@ func (t *tripClient) GetTrip(tripID uuid.UUID) (*model.Trip, error) {
 		StartLocation: util.ParsePostgisLocation(trip.StartLocation),
 	}
 
-	if &trip.CourierID != nil {
+	if trip.CourierID.UUID.String() != constants.ZERO_UUID {
 		pickup := model.TripInput{
 			Location: &model.GpsInput{
-				Lat: trp.StartLocation.Lat,
-				Lng: trp.StartLocation.Lng,
+				Lat: util.ParsePostgisLocation(trip.ConfirmedPickup).Lat,
+				Lng: util.ParsePostgisLocation(trip.ConfirmedPickup).Lng,
 			},
 		}
 		courierGps, err := t.store.GetCourierLocation(context.Background(), trip.CourierID.UUID)
@@ -445,6 +447,8 @@ func (t *tripClient) PublishTripUpdate(
 	status model.TripStatus,
 	channel string,
 ) error {
+	time.Sleep(5 * time.Second)
+
 	done := make(chan struct{})
 	go func() {
 		defer close(done)
@@ -490,8 +494,6 @@ func (t *tripClient) PublishTripUpdate(
 		}
 	}()
 	<-done
-
-	time.Sleep(3 * time.Second)
 	return nil
 }
 

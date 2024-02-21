@@ -351,7 +351,7 @@ const getNearbyAvailableCourierProducts = `-- name: GetNearbyAvailableCourierPro
 SELECT c.id, c.product_id, p.id, p.name, p.description, p.weight_class, p.icon, p.relevance, p.created_at, p.updated_at FROM couriers c
 JOIN products p
 ON ST_DWithin(c.location, $1::geography, $2)
-WHERE c.product_id = p.id AND c.status = 'OFFLINE' AND c.verified = 'true'
+WHERE c.product_id = p.id AND c.status = 'ONLINE' AND c.verified = 'true'
 ORDER BY p.relevance ASC
 `
 
@@ -408,16 +408,17 @@ func (q *Queries) GetNearbyAvailableCourierProducts(ctx context.Context, arg Get
 }
 
 const getTrip = `-- name: GetTrip :one
-SELECT id, status, courier_id, ST_AsGeoJSON(start_location) AS start_location FROM trips
+SELECT id, status, courier_id, ST_AsGeoJSON(confirmed_pickup) AS confirmed_pickup, ST_AsGeoJSON(start_location) AS start_location FROM trips
 WHERE id = $1
 LIMIT 1
 `
 
 type GetTripRow struct {
-	ID            uuid.UUID     `json:"id"`
-	Status        string        `json:"status"`
-	CourierID     uuid.NullUUID `json:"courier_id"`
-	StartLocation interface{}   `json:"start_location"`
+	ID              uuid.UUID     `json:"id"`
+	Status          string        `json:"status"`
+	CourierID       uuid.NullUUID `json:"courier_id"`
+	ConfirmedPickup interface{}   `json:"confirmed_pickup"`
+	StartLocation   interface{}   `json:"start_location"`
 }
 
 func (q *Queries) GetTrip(ctx context.Context, id uuid.UUID) (GetTripRow, error) {
@@ -427,6 +428,7 @@ func (q *Queries) GetTrip(ctx context.Context, id uuid.UUID) (GetTripRow, error)
 		&i.ID,
 		&i.Status,
 		&i.CourierID,
+		&i.ConfirmedPickup,
 		&i.StartLocation,
 	)
 	return i, err
