@@ -55,13 +55,18 @@ func (r *mutationResolver) CreateTrip(ctx context.Context, input model.CreateTri
 		ProductID: stringToUUID(input.TripProductID),
 		StartLocation: fmt.Sprintf(
 			"SRID=4326;POINT(%.8f %.8f)",
-			input.TripInput.Pickup.Location.Lat,
 			input.TripInput.Pickup.Location.Lng,
+			input.TripInput.Pickup.Location.Lat,
 		),
 		EndLocation: fmt.Sprintf(
 			"SRID=4326;POINT(%.8f %.8f)",
-			input.TripInput.Dropoff.Location.Lat,
 			input.TripInput.Dropoff.Location.Lng,
+			input.TripInput.Dropoff.Location.Lat,
+		),
+		ConfirmedPickup: fmt.Sprintf(
+			"SRID=4326;POINT(%.8f %.8f)",
+			input.ConfirmedPickup.Location.Lng,
+			input.ConfirmedPickup.Location.Lat,
 		),
 	}
 	pickup, pickupErr := r.routeService.ParsePickupDropoff(*input.TripInput.Pickup)

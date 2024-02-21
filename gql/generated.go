@@ -8722,7 +8722,7 @@ func (ec *executionContext) unmarshalInputTripRecipientInput(ctx context.Context
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"name", "building_name", "unit_name", "phone"}
+	fieldsInOrder := [...]string{"name", "building_name", "unit_name", "phone", "trip_note"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -8757,6 +8757,13 @@ func (ec *executionContext) unmarshalInputTripRecipientInput(ctx context.Context
 				return it, err
 			}
 			it.Phone = data
+		case "trip_note":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("trip_note"))
+			data, err := ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.TripNote = data
 		}
 	}
 

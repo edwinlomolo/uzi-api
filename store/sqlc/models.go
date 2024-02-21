@@ -42,6 +42,7 @@ type Recipient struct {
 	Building  sql.NullString `json:"building"`
 	Unit      sql.NullString `json:"unit"`
 	Phone     string         `json:"phone"`
+	TripNote  string         `json:"trip_note"`
 	TripID    uuid.NullUUID  `json:"trip_id"`
 	CreatedAt time.Time      `json:"created_at"`
 	UpdatedAt time.Time      `json:"updated_at"`
@@ -67,17 +68,18 @@ type Session struct {
 }
 
 type Trip struct {
-	ID            uuid.UUID      `json:"id"`
-	StartLocation interface{}    `json:"start_location"`
-	EndLocation   interface{}    `json:"end_location"`
-	CourierID     uuid.NullUUID  `json:"courier_id"`
-	UserID        uuid.UUID      `json:"user_id"`
-	RouteID       uuid.NullUUID  `json:"route_id"`
-	ProductID     uuid.UUID      `json:"product_id"`
-	Cost          sql.NullString `json:"cost"`
-	Status        string         `json:"status"`
-	CreatedAt     time.Time      `json:"created_at"`
-	UpdatedAt     time.Time      `json:"updated_at"`
+	ID              uuid.UUID      `json:"id"`
+	StartLocation   interface{}    `json:"start_location"`
+	EndLocation     interface{}    `json:"end_location"`
+	ConfirmedPickup interface{}    `json:"confirmed_pickup"`
+	CourierID       uuid.NullUUID  `json:"courier_id"`
+	UserID          uuid.UUID      `json:"user_id"`
+	RouteID         uuid.NullUUID  `json:"route_id"`
+	ProductID       uuid.UUID      `json:"product_id"`
+	Cost            sql.NullString `json:"cost"`
+	Status          string         `json:"status"`
+	CreatedAt       time.Time      `json:"created_at"`
+	UpdatedAt       time.Time      `json:"updated_at"`
 }
 
 type Upload struct {

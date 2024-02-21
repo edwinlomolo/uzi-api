@@ -1,8 +1,8 @@
 -- name: CreateTrip :one
 INSERT INTO trips (
-  user_id, product_id, start_location, end_location
+  user_id, product_id, confirmed_pickup, start_location, end_location
 ) VALUES (
-  $1, $2, sqlc.arg(start_location), sqlc.arg(end_location)
+  $1, $2, $3, sqlc.arg(start_location), sqlc.arg(end_location)
 )
 RETURNING *;
 
@@ -72,9 +72,9 @@ LIMIT 1;
 
 -- name: CreateRecipient :one
 INSERT INTO recipients (
-  name, building, unit, phone, trip_id
+  name, building, unit, phone, trip_id, trip_note
 ) VALUES (
-  $1, $2, $3, $4, $5
+  $1, $2, $3, $4, $5, $6
 )
 RETURNING *;
 

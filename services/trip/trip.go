@@ -348,8 +348,9 @@ func (t *tripClient) CreateTripRecipient(
 	input model.TripRecipientInput,
 ) error {
 	rArgs := sqlStore.CreateRecipientParams{
-		Name:  input.Name,
-		Phone: input.Phone,
+		Name:     input.Name,
+		Phone:    input.Phone,
+		TripNote: input.TripNote,
 		Building: sql.NullString{
 			String: *input.BuildingName,
 			Valid:  true,

@@ -59,6 +59,7 @@ input TripRecipientInput {
   building_name: String
   unit_name: String
   phone: String!
+  trip_note: String!
 }
 
 input CreateTripInput {

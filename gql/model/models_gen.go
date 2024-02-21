@@ -137,6 +137,7 @@ type TripRecipientInput struct {
 	BuildingName *string `json:"building_name,omitempty"`
 	UnitName     *string `json:"unit_name,omitempty"`
 	Phone        string  `json:"phone"`
+	TripNote     string  `json:"trip_note"`
 }
 
 type TripRoute struct {
