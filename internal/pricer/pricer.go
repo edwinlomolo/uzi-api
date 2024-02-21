@@ -1,10 +1,16 @@
 package pricer
 
 import (
+	"context"
+	"fmt"
 	"math"
 
 	"github.com/edwinlomolo/uzi-api/config"
+	"github.com/edwinlomolo/uzi-api/constants"
+	"github.com/edwinlomolo/uzi-api/gql/model"
 	"github.com/edwinlomolo/uzi-api/internal/logger"
+	"github.com/edwinlomolo/uzi-api/store"
+	"github.com/edwinlomolo/uzi-api/store/sqlc"
 	"github.com/sirupsen/logrus"
 )
 
@@ -14,15 +20,17 @@ var (
 
 type Pricing interface {
 	CalculateTripCost(weightClass, distance int, earnWithFuel bool) int
+	GetTripCost(trip model.Trip, distance int) (int, error)
 	CalculateTripRevenue(tripCost int) int
 }
 
 type pricerClient struct {
 	logger *logrus.Logger
+	store  *sqlc.Queries
 }
 
 func NewPricer() {
-	Pricer = &pricerClient{logger.Logger}
+	Pricer = &pricerClient{logger.Logger, store.DB}
 }
 
 func (p *pricerClient) CalculateTripCost(
@@ -67,4 +75,26 @@ func (p *pricerClient) CalculateTripRevenue(
 
 func (p *pricerClient) byminuteWage() int {
 	return config.Config.Pricer.HourlyWage / 60
+}
+
+func (p *pricerClient) GetTripCost(trip model.Trip, distance int) (int, error) {
+	if trip.CourierID.String() == constants.ZERO_UUID {
+		return 0, nil
+	}
+
+	courier, err := p.store.GetCourierByID(context.Background(), *trip.CourierID)
+	if err != nil {
+		uziErr := fmt.Errorf("%s:%v", "trip cost", err)
+		p.logger.Errorf(uziErr.Error())
+		return 0, uziErr
+	}
+
+	product, productErr := p.store.GetCourierProductByID(context.Background(), courier.ProductID.UUID)
+	if productErr != nil {
+		uziErr := fmt.Errorf("%s:%v", "trip cost", productErr)
+		p.logger.Errorf(uziErr.Error())
+		return 0, productErr
+	}
+
+	return p.CalculateTripCost(int(product.WeightClass), distance, product.Name != "UziX"), nil
 }

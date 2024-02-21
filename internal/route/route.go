@@ -277,13 +277,12 @@ func (r *routeClient) GetNearbyAvailableProducts(
 	}
 
 	for _, item := range nearbys {
-		earnWithFuel := item.Name != "UziX"
 		product := &model.Product{
 			ID: item.ID_2,
 			Price: pricer.Pricer.CalculateTripCost(
 				int(item.WeightClass),
 				tripDistance,
-				earnWithFuel,
+				item.Name != "UziX",
 			),
 			Name:        item.Name,
 			Description: item.Description,

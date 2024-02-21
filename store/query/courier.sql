@@ -43,7 +43,7 @@ WHERE user_id = $1
 RETURNING *;
 
 -- name: GetCourierProductByID :one
-SELECT id, icon, name FROM products
+SELECT id, icon, name, weight_class FROM products
 WHERE id = $1
 LIMIT 1;
 

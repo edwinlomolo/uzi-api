@@ -6,7 +6,7 @@ type Trip {
   start_location: Gps
   end_location: Gps
   status: TripStatus!
-  cost: String
+  cost: Int!
   route: TripRoute
   recipient: Recipient!
   created_at: Time

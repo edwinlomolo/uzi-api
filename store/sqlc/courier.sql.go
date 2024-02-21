@@ -109,21 +109,27 @@ func (q *Queries) GetCourierLocation(ctx context.Context, id uuid.UUID) (interfa
 }
 
 const getCourierProductByID = `-- name: GetCourierProductByID :one
-SELECT id, icon, name FROM products
+SELECT id, icon, name, weight_class FROM products
 WHERE id = $1
 LIMIT 1
 `
 
 type GetCourierProductByIDRow struct {
-	ID   uuid.UUID `json:"id"`
-	Icon string    `json:"icon"`
-	Name string    `json:"name"`
+	ID          uuid.UUID `json:"id"`
+	Icon        string    `json:"icon"`
+	Name        string    `json:"name"`
+	WeightClass int32     `json:"weight_class"`
 }
 
 func (q *Queries) GetCourierProductByID(ctx context.Context, id uuid.UUID) (GetCourierProductByIDRow, error) {
 	row := q.db.QueryRowContext(ctx, getCourierProductByID, id)
 	var i GetCourierProductByIDRow
-	err := row.Scan(&i.ID, &i.Icon, &i.Name)
+	err := row.Scan(
+		&i.ID,
+		&i.Icon,
+		&i.Name,
+		&i.WeightClass,
+	)
 	return i, err
 }
 

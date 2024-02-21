@@ -120,7 +120,7 @@ type Trip struct {
 	StartLocation *Gps       `json:"start_location,omitempty"`
 	EndLocation   *Gps       `json:"end_location,omitempty"`
 	Status        TripStatus `json:"status"`
-	Cost          *string    `json:"cost,omitempty"`
+	Cost          int        `json:"cost"`
 	Route         *TripRoute `json:"route,omitempty"`
 	Recipient     *Recipient `json:"recipient"`
 	CreatedAt     *time.Time `json:"created_at,omitempty"`

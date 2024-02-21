@@ -14,6 +14,7 @@ import (
 	"github.com/edwinlomolo/uzi-api/gql/model"
 	"github.com/edwinlomolo/uzi-api/internal/cache"
 	"github.com/edwinlomolo/uzi-api/internal/logger"
+	"github.com/edwinlomolo/uzi-api/internal/pricer"
 	"github.com/edwinlomolo/uzi-api/internal/route"
 	"github.com/edwinlomolo/uzi-api/internal/util"
 	"github.com/edwinlomolo/uzi-api/store"
@@ -438,6 +439,12 @@ func (t *tripClient) GetTrip(tripID uuid.UUID) (*model.Trip, error) {
 
 		trp.Route = tripRoute
 	}
+
+	cost, costErr := pricer.Pricer.GetTripCost(*trp, trp.Route.Distance)
+	if costErr != nil {
+		return nil, costErr
+	}
+	trp.Cost = cost
 
 	return trp, nil
 }

@@ -5582,11 +5582,14 @@ func (ec *executionContext) _Trip_cost(ctx context.Context, field graphql.Collec
 		return graphql.Null
 	}
 	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
 		return graphql.Null
 	}
-	res := resTmp.(*string)
+	res := resTmp.(int)
 	fc.Result = res
-	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
+	return ec.marshalNInt2int(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Trip_cost(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -5596,7 +5599,7 @@ func (ec *executionContext) fieldContext_Trip_cost(ctx context.Context, field gr
 		IsMethod:   false,
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
+			return nil, errors.New("field of type Int does not have child fields")
 		},
 	}
 	return fc, nil
@@ -9877,6 +9880,9 @@ func (ec *executionContext) _Trip(ctx context.Context, sel ast.SelectionSet, obj
 			}
 		case "cost":
 			out.Values[i] = ec._Trip_cost(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
 		case "route":
 			out.Values[i] = ec._Trip_route(ctx, field, obj)
 		case "recipient":
