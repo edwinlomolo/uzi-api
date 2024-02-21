@@ -413,25 +413,39 @@ func (t *tripClient) GetTrip(tripID uuid.UUID) (*model.Trip, error) {
 		Status:        model.TripStatus(trip.Status),
 		CourierID:     &trip.CourierID.UUID,
 		StartLocation: util.ParsePostgisLocation(trip.StartLocation),
+		EndLocation:   util.ParsePostgisLocation(trip.EndLocation),
 	}
 
 	if trip.CourierID.UUID.String() != constants.ZERO_UUID {
-		pickup := model.TripInput{
-			Location: &model.GpsInput{
+		pickup := model.TripInput{}
+		dropoff := model.TripInput{}
+
+		switch trp.Status {
+		case model.TripStatusCourierArriving:
+			courierGps, err := t.store.GetCourierLocation(context.Background(), trip.CourierID.UUID)
+			if err != nil {
+				return nil, err
+			}
+
+			pickup.Location = &model.GpsInput{
 				Lat: util.ParsePostgisLocation(trip.ConfirmedPickup).Lat,
 				Lng: util.ParsePostgisLocation(trip.ConfirmedPickup).Lng,
-			},
-		}
-		courierGps, err := t.store.GetCourierLocation(context.Background(), trip.CourierID.UUID)
-		if err != nil {
-			return nil, err
-		}
-		dropoff := model.TripInput{
-			Location: &model.GpsInput{
+			}
+			dropoff.Location = &model.GpsInput{
 				Lat: util.ParsePostgisLocation(courierGps).Lat,
 				Lng: util.ParsePostgisLocation(courierGps).Lng,
-			},
+			}
+		case model.TripStatusCourierEnRoute:
+			pickup.Location = &model.GpsInput{
+				Lat: util.ParsePostgisLocation(trp.StartLocation).Lat,
+				Lng: util.ParsePostgisLocation(trp.StartLocation).Lng,
+			}
+			dropoff.Location = &model.GpsInput{
+				Lat: util.ParsePostgisLocation(trp.EndLocation).Lat,
+				Lng: util.ParsePostgisLocation(trp.EndLocation).Lng,
+			}
 		}
+
 		tripRoute, err := route.Routing.ComputeTripRoute(model.TripRouteInput{Pickup: &pickup, Dropoff: &dropoff})
 		if err != nil {
 			return nil, err
