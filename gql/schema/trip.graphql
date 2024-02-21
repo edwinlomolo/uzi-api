@@ -26,6 +26,7 @@ type Recipient {
   building_name: String
   unit_name: String
   phone: String!
+  trip_note: String!
   trip_id: UUID!
   trip: Trip!
   created_at: Time

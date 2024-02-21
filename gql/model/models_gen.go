@@ -81,6 +81,7 @@ type Recipient struct {
 	BuildingName *string    `json:"building_name,omitempty"`
 	UnitName     *string    `json:"unit_name,omitempty"`
 	Phone        string     `json:"phone"`
+	TripNote     string     `json:"trip_note"`
 	TripID       uuid.UUID  `json:"trip_id"`
 	Trip         *Trip      `json:"trip"`
 	CreatedAt    *time.Time `json:"created_at,omitempty"`
