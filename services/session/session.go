@@ -137,8 +137,8 @@ func (sc *sessionClient) createNewSession(
 	}, nil
 }
 
-func (sc *sessionClient) getSession(sessionID uuid.UUID) (*model.Session, error) {
-	foundSess, sessErr := sc.store.GetSession(context.Background(), sessionID)
+func (sc *sessionClient) getSession(userID uuid.UUID) (*model.Session, error) {
+	foundSess, sessErr := sc.store.GetSession(context.Background(), userID)
 	if sessErr == sql.ErrNoRows {
 		return nil, nil
 	} else if sessErr != nil {
