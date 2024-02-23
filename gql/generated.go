@@ -114,7 +114,6 @@ type ComplexityRoot struct {
 		ComputeTripRoute          func(childComplexity int, input model.TripRouteInput) int
 		GetCourierDocuments       func(childComplexity int) int
 		GetCourierNearPickupPoint func(childComplexity int, point model.GpsInput) int
-		GetCourierTrip            func(childComplexity int) int
 		GetTripDetails            func(childComplexity int, tripID uuid.UUID) int
 		Hello                     func(childComplexity int) int
 		ReverseGeocode            func(childComplexity int, place model.GpsInput) int
@@ -233,7 +232,6 @@ type QueryResolver interface {
 	ComputeTripRoute(ctx context.Context, input model.TripRouteInput) (*model.TripRoute, error)
 	GetCourierNearPickupPoint(ctx context.Context, point model.GpsInput) ([]*model.Courier, error)
 	GetTripDetails(ctx context.Context, tripID uuid.UUID) (*model.Trip, error)
-	GetCourierTrip(ctx context.Context) (*model.Trip, error)
 }
 type RecipientResolver interface {
 	Trip(ctx context.Context, obj *model.Recipient) (*model.Trip, error)
@@ -581,13 +579,6 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Query.GetCourierNearPickupPoint(childComplexity, args["point"].(model.GpsInput)), true
-
-	case "Query.getCourierTrip":
-		if e.complexity.Query.GetCourierTrip == nil {
-			break
-		}
-
-		return e.complexity.Query.GetCourierTrip(childComplexity), true
 
 	case "Query.getTripDetails":
 		if e.complexity.Query.GetTripDetails == nil {
@@ -3708,76 +3699,6 @@ func (ec *executionContext) fieldContext_Query_getTripDetails(ctx context.Contex
 	if fc.Args, err = ec.field_Query_getTripDetails_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return fc, err
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _Query_getCourierTrip(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Query_getCourierTrip(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Query().GetCourierTrip(rctx)
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(*model.Trip)
-	fc.Result = res
-	return ec.marshalNTrip2ᚖgithubᚗcomᚋedwinlomoloᚋuziᚑapiᚋgqlᚋmodelᚐTrip(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_Query_getCourierTrip(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Query",
-		Field:      field,
-		IsMethod:   true,
-		IsResolver: true,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			switch field.Name {
-			case "id":
-				return ec.fieldContext_Trip_id(ctx, field)
-			case "courier_id":
-				return ec.fieldContext_Trip_courier_id(ctx, field)
-			case "courier":
-				return ec.fieldContext_Trip_courier(ctx, field)
-			case "user_id":
-				return ec.fieldContext_Trip_user_id(ctx, field)
-			case "start_location":
-				return ec.fieldContext_Trip_start_location(ctx, field)
-			case "end_location":
-				return ec.fieldContext_Trip_end_location(ctx, field)
-			case "status":
-				return ec.fieldContext_Trip_status(ctx, field)
-			case "cost":
-				return ec.fieldContext_Trip_cost(ctx, field)
-			case "route":
-				return ec.fieldContext_Trip_route(ctx, field)
-			case "recipient":
-				return ec.fieldContext_Trip_recipient(ctx, field)
-			case "created_at":
-				return ec.fieldContext_Trip_created_at(ctx, field)
-			case "updated_at":
-				return ec.fieldContext_Trip_updated_at(ctx, field)
-			}
-			return nil, fmt.Errorf("no field named %q was found under type Trip", field.Name)
-		},
 	}
 	return fc, nil
 }
@@ -9454,28 +9375,6 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 					}
 				}()
 				res = ec._Query_getTripDetails(ctx, field)
-				if res == graphql.Null {
-					atomic.AddUint32(&fs.Invalids, 1)
-				}
-				return res
-			}
-
-			rrm := func(ctx context.Context) graphql.Marshaler {
-				return ec.OperationContext.RootResolverMiddleware(ctx,
-					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
-			}
-
-			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
-		case "getCourierTrip":
-			field := field
-
-			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
-				defer func() {
-					if r := recover(); r != nil {
-						ec.Error(ctx, ec.Recover(ctx, r))
-					}
-				}()
-				res = ec._Query_getCourierTrip(ctx, field)
 				if res == graphql.Null {
 					atomic.AddUint32(&fs.Invalids, 1)
 				}

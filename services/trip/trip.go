@@ -47,7 +47,6 @@ type TripService interface {
 	GetTripRecipient(tripID uuid.UUID) (*model.Recipient, error)
 	GetTrip(tripID uuid.UUID) (*model.Trip, error)
 	GetCourierAssignedTrip(courierID uuid.UUID) error
-	PublishTripUpdate(tripID uuid.UUID, status model.TripStatus, channel string) error
 	GetTripCourier(courierID uuid.UUID) (*model.Courier, error)
 	GetCourierTrip(courierID uuid.UUID) (*model.Trip, error)
 	ReportTripStatus(tripID uuid.UUID, status model.TripStatus) error
@@ -301,7 +300,7 @@ func (t *tripClient) MatchCourier(tripID uuid.UUID, pickup model.TripInput) {
 			select {
 			case <-timeoutCtx.Done():
 				if !courierFound {
-					t.PublishTripUpdate(tripID, model.TripStatusCourierNotFound, TRIP_UPDATES)
+					t.ReportTripStatus(tripID, model.TripStatusCourierNotFound)
 				}
 
 				return
@@ -327,11 +326,11 @@ func (t *tripClient) MatchCourier(tripID uuid.UUID, pickup model.TripInput) {
 
 				if courier != nil && !courierFound {
 					courierFound = true
-					t.PublishTripUpdate(tripID, model.TripStatusCourierFound, TRIP_UPDATES)
+					t.ReportTripStatus(trip.ID, model.TripStatusCourierFound)
 
-					assignErr := t.AssignCourierToTrip(tripID, courier.ID)
+					assignErr := t.AssignCourierToTrip(trip.ID, courier.ID)
 					if assignErr == nil {
-						t.PublishTripUpdate(tripID, model.TripStatusCourierAssigned, ASSIGN_TRIP)
+						t.ReportTripStatus(tripID, model.TripStatusCourierAssigned)
 						return
 					} else if assignErr != nil {
 						t.logger.Errorf(assignErr.Error())
@@ -400,7 +399,6 @@ func (t *tripClient) GetTripRecipient(tripID uuid.UUID) (*model.Recipient, error
 }
 
 func (t *tripClient) GetTrip(tripID uuid.UUID) (*model.Trip, error) {
-	var trp *model.Trip
 	trip, err := t.store.GetTrip(context.Background(), tripID)
 	if err != nil {
 		uziErr := fmt.Errorf("%s:%v", "get trip", err)
@@ -408,7 +406,7 @@ func (t *tripClient) GetTrip(tripID uuid.UUID) (*model.Trip, error) {
 		return nil, uziErr
 	}
 
-	trp = &model.Trip{
+	trp := &model.Trip{
 		ID:            trip.ID,
 		Status:        model.TripStatus(trip.Status),
 		CourierID:     &trip.CourierID.UUID,
@@ -416,54 +414,58 @@ func (t *tripClient) GetTrip(tripID uuid.UUID) (*model.Trip, error) {
 		EndLocation:   util.ParsePostgisLocation(trip.EndLocation),
 	}
 
-	if trip.CourierID.UUID.String() != constants.ZERO_UUID {
+	if trp.CourierID.String() != constants.ZERO_UUID {
 		pickup := model.TripInput{}
 		dropoff := model.TripInput{}
 
 		switch trp.Status {
-		case model.TripStatusCourierArriving:
-			courierGps, err := t.store.GetCourierLocation(context.Background(), trip.CourierID.UUID)
+		case model.TripStatusCourierArriving,
+			model.TripStatusCourierAssigned:
+			courierGps, err := t.store.GetCourierLocation(context.Background(), *trp.CourierID)
 			if err != nil {
 				return nil, err
 			}
 
 			pickup.Location = &model.GpsInput{
-				Lat: util.ParsePostgisLocation(trip.ConfirmedPickup).Lat,
-				Lng: util.ParsePostgisLocation(trip.ConfirmedPickup).Lng,
-			}
-			dropoff.Location = &model.GpsInput{
 				Lat: util.ParsePostgisLocation(courierGps).Lat,
 				Lng: util.ParsePostgisLocation(courierGps).Lng,
 			}
+			dropoff.Location = &model.GpsInput{
+				Lat: util.ParsePostgisLocation(trip.ConfirmedPickup).Lat,
+				Lng: util.ParsePostgisLocation(trip.ConfirmedPickup).Lng,
+			}
+			tripRoute, err := route.Routing.ComputeTripRoute(model.TripRouteInput{Pickup: &pickup, Dropoff: &dropoff})
+			if err != nil {
+				return nil, err
+			}
+			trp.Route = tripRoute
 		case model.TripStatusCourierEnRoute:
 			pickup.Location = &model.GpsInput{
-				Lat: util.ParsePostgisLocation(trp.StartLocation).Lat,
-				Lng: util.ParsePostgisLocation(trp.StartLocation).Lng,
+				Lat: util.ParsePostgisLocation(trip.ConfirmedPickup).Lat,
+				Lng: util.ParsePostgisLocation(trip.ConfirmedPickup).Lng,
 			}
 			dropoff.Location = &model.GpsInput{
 				Lat: util.ParsePostgisLocation(trp.EndLocation).Lat,
 				Lng: util.ParsePostgisLocation(trp.EndLocation).Lng,
 			}
+			tripRoute, err := route.Routing.ComputeTripRoute(model.TripRouteInput{Pickup: &pickup, Dropoff: &dropoff})
+			if err != nil {
+				return nil, err
+			}
+			trp.Route = tripRoute
 		}
 
-		tripRoute, err := route.Routing.ComputeTripRoute(model.TripRouteInput{Pickup: &pickup, Dropoff: &dropoff})
-		if err != nil {
-			return nil, err
+		cost, costErr := pricer.Pricer.GetTripCost(*trp, trp.Route.Distance)
+		if costErr != nil {
+			return nil, costErr
 		}
-
-		trp.Route = tripRoute
+		trp.Cost = cost
 	}
-
-	cost, costErr := pricer.Pricer.GetTripCost(*trp, trp.Route.Distance)
-	if costErr != nil {
-		return nil, costErr
-	}
-	trp.Cost = cost
 
 	return trp, nil
 }
 
-func (t *tripClient) PublishTripUpdate(
+func (t *tripClient) publishTripUpdate(
 	tripID uuid.UUID,
 	status model.TripStatus,
 	channel string,
@@ -565,10 +567,10 @@ func (t *tripClient) ReportTripStatus(tripID uuid.UUID, status model.TripStatus)
 
 		// Check hasn't been assigned yet
 		if trip.CourierID.String() == constants.ZERO_UUID {
-			go t.PublishTripUpdate(tripID, model.TripStatusCancelled, getTripStatusChannel(status))
+			go t.publishTripUpdate(tripID, model.TripStatusCancelled, getTripStatusChannel(status))
 		}
 	default:
-		go t.PublishTripUpdate(tripID, status, getTripStatusChannel(status))
+		go t.publishTripUpdate(tripID, status, getTripStatusChannel(status))
 	}
 
 	return nil
@@ -577,7 +579,8 @@ func (t *tripClient) ReportTripStatus(tripID uuid.UUID, status model.TripStatus)
 func getTripStatusChannel(status model.TripStatus) string {
 	switch status {
 	case model.TripStatusCourierArriving,
-		model.TripStatusCourierEnRoute:
+		model.TripStatusCourierEnRoute,
+		model.TripStatusComplete:
 		return TRIP_UPDATES
 	case model.TripStatusCourierAssigned,
 		model.TripStatusCancelled:

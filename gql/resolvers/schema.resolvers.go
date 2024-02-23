@@ -90,15 +90,12 @@ func (r *mutationResolver) CreateTrip(ctx context.Context, input model.CreateTri
 
 	trip, err := r.tripService.CreateTrip(params)
 
-	done := make(chan struct{})
 	go func() {
-		defer close(done)
 		err := r.tripService.CreateTripRecipient(trip.ID, *input.Recipient)
 		if err != nil {
 			return
 		}
 	}()
-	<-done
 
 	r.tripService.MatchCourier(trip.ID, *input.TripInput.Pickup)
 
@@ -155,12 +152,6 @@ func (r *queryResolver) GetCourierNearPickupPoint(ctx context.Context, point mod
 // GetTripDetails is the resolver for the getTripDetails field.
 func (r *queryResolver) GetTripDetails(ctx context.Context, tripID uuid.UUID) (*model.Trip, error) {
 	return r.tripService.GetTrip(tripID)
-}
-
-// GetCourierTrip is the resolver for the getCourierTrip field.
-func (r *queryResolver) GetCourierTrip(ctx context.Context) (*model.Trip, error) {
-	courierID := getCourierIDFromResolverContext(ctx, r)
-	return r.tripService.GetCourierTrip(courierID)
 }
 
 // TripUpdates is the resolver for the tripUpdates field.
@@ -242,3 +233,14 @@ func (r *Resolver) Subscription() gql.SubscriptionResolver { return &subscriptio
 type mutationResolver struct{ *Resolver }
 type queryResolver struct{ *Resolver }
 type subscriptionResolver struct{ *Resolver }
+
+// !!! WARNING !!!
+// The code below was going to be deleted when updating resolvers. It has been copied here so you have
+// one last chance to move it out of harms way if you want. There are two reasons this happens:
+//   - When renaming or deleting a resolver the old code will be put in here. You can safely delete
+//     it when you're done.
+//   - You have helper methods in this file. Move them out to keep these resolver files clean.
+func (r *queryResolver) GetCourierTrip(ctx context.Context) (*model.Trip, error) {
+	courierID := getCourierIDFromResolverContext(ctx, r)
+	return r.tripService.GetTrip(courierID)
+}
