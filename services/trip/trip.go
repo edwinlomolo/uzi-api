@@ -48,7 +48,7 @@ type TripService interface {
 	GetTrip(tripID uuid.UUID) (*model.Trip, error)
 	GetCourierAssignedTrip(courierID uuid.UUID) error
 	GetTripCourier(courierID uuid.UUID) (*model.Courier, error)
-	GetCourierTrip(courierID uuid.UUID) (*model.Trip, error)
+	GetCourierTrip(tripID uuid.UUID) (*model.Trip, error)
 	ReportTripStatus(tripID uuid.UUID, status model.TripStatus) error
 }
 
@@ -160,7 +160,6 @@ func (t *tripClient) UnassignTrip(courierID uuid.UUID) error {
 	return nil
 }
 
-// TODO save confirmed pickup
 func (t *tripClient) CreateTrip(
 	args sqlStore.CreateTripParams,
 ) (*model.Trip, error) {
@@ -287,6 +286,7 @@ func (t *tripClient) MatchCourier(tripID uuid.UUID, pickup model.TripInput) {
 		t.logger.Fatalln(parseErr)
 	}
 
+	// TODO use a 5/10/15 minute timeout - trick impatiency cancellation from client(user)
 	timeoutCtx, cancel := context.WithTimeout(
 		context.Background(),
 		time.Minute,
@@ -539,9 +539,9 @@ func (t *tripClient) GetTripCourier(courierID uuid.UUID) (*model.Courier, error)
 	}, nil
 }
 
-func (t *tripClient) GetCourierTrip(courierID uuid.UUID) (*model.Trip, error) {
-	cid := uuid.NullUUID{UUID: courierID, Valid: true}
-	trip, err := t.store.GetCourierTrip(context.Background(), cid)
+func (t *tripClient) GetCourierTrip(tripID uuid.UUID) (*model.Trip, error) {
+	tid := uuid.NullUUID{UUID: tripID, Valid: true}
+	trip, err := t.store.GetCourierTrip(context.Background(), tid)
 	if err == sql.ErrNoRows {
 		t.logger.Errorf(ErrCourierTripNotFound.Error())
 		return nil, ErrCourierTripNotFound
@@ -558,7 +558,7 @@ func (t *tripClient) GetCourierTrip(courierID uuid.UUID) (*model.Trip, error) {
 }
 
 func (t *tripClient) ReportTripStatus(tripID uuid.UUID, status model.TripStatus) error {
-	// Are we cancelling trip
+	// Are we cancelling trip?
 	switch status {
 	case model.TripStatusCancelled:
 		trip, err := t.GetTrip(tripID)
@@ -566,7 +566,7 @@ func (t *tripClient) ReportTripStatus(tripID uuid.UUID, status model.TripStatus)
 			return err
 		}
 
-		// Check hasn't been assigned yet
+		// Check courier hasn't been assigned yet
 		if trip.CourierID.String() == constants.ZERO_UUID {
 			go t.publishTripUpdate(tripID, model.TripStatusCancelled, getTripStatusChannel(status))
 		}
