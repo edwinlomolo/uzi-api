@@ -195,8 +195,11 @@ func (r *subscriptionResolver) TripUpdates(ctx context.Context, tripID uuid.UUID
 }
 
 // AssignTrip is the resolver for the assignTrip field.
-func (r *subscriptionResolver) AssignTrip(ctx context.Context) (<-chan *model.TripUpdate, error) {
-	cid := getCourierIDFromResolverContext(ctx, r)
+func (r *subscriptionResolver) AssignTrip(ctx context.Context, userID uuid.UUID) (<-chan *model.TripUpdate, error) {
+	c, err := r.GetCourierByUserID(userID)
+	if err != nil {
+		return nil, err
+	}
 
 	pubsub := r.redisClient.Subscribe(context.Background(), t.ASSIGN_TRIP)
 
@@ -218,7 +221,7 @@ func (r *subscriptionResolver) AssignTrip(ctx context.Context) (<-chan *model.Tr
 				logger.Logger.Errorf(uziErr.Error())
 				return
 			}
-			if *update.CourierID == cid {
+			if *update.CourierID == c.ID {
 				ch <- update
 			}
 		}
