@@ -391,6 +391,7 @@ func (t *tripClient) GetTripRecipient(tripID uuid.UUID) (*model.Recipient, error
 
 	return &model.Recipient{
 		ID:           r.ID,
+		Phone:        r.Phone,
 		Name:         r.Name,
 		BuildingName: &r.Building.String,
 		UnitName:     &r.Unit.String,
