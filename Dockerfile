@@ -1,5 +1,5 @@
 # An official Go runtime
-FROM golang:1.19
+FROM golang:1.22
 
 ENV DBDRIVER=$DBDRIVER
 ENV DATABASE_URI=$DATABASE_URI
