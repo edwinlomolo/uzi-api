@@ -35,6 +35,6 @@ COPY . .
 RUN go mod download && go mod verify
 RUN CGO_ENABLED=0 GOOS=linux go build -o uzi-api
 
-EXPOSE 4000
+EXPOSE 8000
 
 CMD ["./uzi-api"]
