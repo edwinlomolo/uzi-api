@@ -12,4 +12,4 @@ test:
 	go test -v ./...
 # Run server
 server:
-	go run cmd/main.go
+	go run server.go
