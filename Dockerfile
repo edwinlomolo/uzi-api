@@ -1,4 +1,4 @@
-FROM golang:1.22 as builder
+FROM golang:1.22
 
 # Postgres
 ENV DBDRIVER=$DBDRIVER
@@ -29,15 +29,12 @@ ENV PAYSTACK_SECRET_KEY=$PAYSTACK_SECRET_KEY
 # Pricer
 ENV MINIMUM_HOURLY_WAGE=$MINIMUM_HOURLY_WAGE
 
-WORKDIR /usr/src/app
-COPY go.mod go.sum ./
-RUN go mod download && go mod verify
+RUN mkdir -p go/src/app
+WORKDIR go/src/app
 COPY . .
-RUN go build -v -o /run-app .
-
-FROM alpine:latest
+RUN go mod download && go mod verify
+RUN CGO_ENABLED=0 GOOS=linux go build -o uzi-api
 
 EXPOSE 4000
 
-COPY --from=builder /run-app /usr/local/bin/
-CMD ["run-app"]
+CMD ["./uzi-api"]
