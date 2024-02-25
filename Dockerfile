@@ -1,5 +1,4 @@
-ARG GO_VERSION=1
-FROM golang:${GO_VERSION}-alpine as builder
+FROM golang:1.22 as builder
 
 # Postgres
 ENV DBDRIVER=$DBDRIVER
