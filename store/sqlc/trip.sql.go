@@ -201,8 +201,8 @@ RETURNING id, start_location, end_location, confirmed_pickup, courier_id, user_i
 `
 
 type CreateTripCostParams struct {
-	Cost sql.NullString `json:"cost"`
-	ID   uuid.UUID      `json:"id"`
+	Cost sql.NullInt32 `json:"cost"`
+	ID   uuid.UUID     `json:"id"`
 }
 
 func (q *Queries) CreateTripCost(ctx context.Context, arg CreateTripCostParams) (Trip, error) {
@@ -408,7 +408,7 @@ func (q *Queries) GetNearbyAvailableCourierProducts(ctx context.Context, arg Get
 }
 
 const getTrip = `-- name: GetTrip :one
-SELECT id, status, courier_id, ST_AsGeoJSON(confirmed_pickup) AS confirmed_pickup, ST_AsGeoJSON(start_location) AS start_location, ST_AsGeoJSON(end_location) AS end_location FROM trips
+SELECT id, status, courier_id, cost, ST_AsGeoJSON(confirmed_pickup) AS confirmed_pickup, ST_AsGeoJSON(start_location) AS start_location, ST_AsGeoJSON(end_location) AS end_location FROM trips
 WHERE id = $1
 LIMIT 1
 `
@@ -417,6 +417,7 @@ type GetTripRow struct {
 	ID              uuid.UUID     `json:"id"`
 	Status          string        `json:"status"`
 	CourierID       uuid.NullUUID `json:"courier_id"`
+	Cost            sql.NullInt32 `json:"cost"`
 	ConfirmedPickup interface{}   `json:"confirmed_pickup"`
 	StartLocation   interface{}   `json:"start_location"`
 	EndLocation     interface{}   `json:"end_location"`
@@ -429,6 +430,7 @@ func (q *Queries) GetTrip(ctx context.Context, id uuid.UUID) (GetTripRow, error)
 		&i.ID,
 		&i.Status,
 		&i.CourierID,
+		&i.Cost,
 		&i.ConfirmedPickup,
 		&i.StartLocation,
 		&i.EndLocation,

@@ -6,7 +6,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"strconv"
 	"sync"
 	"time"
 
@@ -183,11 +182,9 @@ func (t *tripClient) CreateTripCost(tripID uuid.UUID, cost int) error {
 	t.mu.Lock()
 	defer t.mu.Unlock()
 
-	tripCost := strconv.Itoa(cost)
-
 	args := sqlStore.CreateTripCostParams{
 		ID:   tripID,
-		Cost: sql.NullString{String: tripCost, Valid: true},
+		Cost: sql.NullInt32{Int32: int32(cost), Valid: true},
 	}
 	if _, err := t.store.CreateTripCost(
 		context.Background(),
@@ -408,11 +405,11 @@ func (t *tripClient) GetTrip(tripID uuid.UUID) (*model.Trip, error) {
 	}
 
 	trp := &model.Trip{
-		ID:            trip.ID,
-		Status:        model.TripStatus(trip.Status),
-		CourierID:     &trip.CourierID.UUID,
-		StartLocation: util.ParsePostgisLocation(trip.StartLocation),
-		EndLocation:   util.ParsePostgisLocation(trip.EndLocation),
+		ID:          trip.ID,
+		Status:      model.TripStatus(trip.Status),
+		CourierID:   &trip.CourierID.UUID,
+		Cost:        int(trip.Cost.Int32),
+		EndLocation: util.ParsePostgisLocation(trip.EndLocation),
 	}
 
 	if trp.CourierID.String() != constants.ZERO_UUID {
@@ -440,27 +437,43 @@ func (t *tripClient) GetTrip(tripID uuid.UUID) (*model.Trip, error) {
 				return nil, err
 			}
 			trp.Route = tripRoute
+			cost, costErr := pricer.Pricer.GetTripCost(*trp, trp.Route.Distance)
+			if costErr != nil {
+				return nil, costErr
+			}
+			trp.Cost = cost
 		case model.TripStatusCourierEnRoute:
 			pickup.Location = &model.GpsInput{
 				Lat: util.ParsePostgisLocation(trip.ConfirmedPickup).Lat,
 				Lng: util.ParsePostgisLocation(trip.ConfirmedPickup).Lng,
 			}
 			dropoff.Location = &model.GpsInput{
-				Lat: util.ParsePostgisLocation(trp.EndLocation).Lat,
-				Lng: util.ParsePostgisLocation(trp.EndLocation).Lng,
+				Lat: trp.EndLocation.Lat,
+				Lng: trp.EndLocation.Lng,
 			}
 			tripRoute, err := route.Routing.ComputeTripRoute(model.TripRouteInput{Pickup: &pickup, Dropoff: &dropoff})
 			if err != nil {
 				return nil, err
 			}
 			trp.Route = tripRoute
-		}
+			cost, costErr := pricer.Pricer.GetTripCost(*trp, trp.Route.Distance)
+			if costErr != nil {
+				return nil, costErr
+			}
+			trp.Cost = cost
 
-		cost, costErr := pricer.Pricer.GetTripCost(*trp, trp.Route.Distance)
-		if costErr != nil {
-			return nil, costErr
+			go func() {
+				_, err := t.store.CreateTripCost(context.Background(), sqlStore.CreateTripCostParams{
+					ID:   tripID,
+					Cost: sql.NullInt32{Int32: int32(trp.Cost), Valid: true},
+				})
+				uziErr := fmt.Errorf("%s:%v", "create trip cost", err)
+				t.logger.Errorf("%s:%v", uziErr.Error())
+				if err != nil {
+					return
+				}
+			}()
 		}
-		trp.Cost = cost
 	}
 
 	return trp, nil

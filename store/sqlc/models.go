@@ -68,18 +68,18 @@ type Session struct {
 }
 
 type Trip struct {
-	ID              uuid.UUID      `json:"id"`
-	StartLocation   interface{}    `json:"start_location"`
-	EndLocation     interface{}    `json:"end_location"`
-	ConfirmedPickup interface{}    `json:"confirmed_pickup"`
-	CourierID       uuid.NullUUID  `json:"courier_id"`
-	UserID          uuid.UUID      `json:"user_id"`
-	RouteID         uuid.NullUUID  `json:"route_id"`
-	ProductID       uuid.UUID      `json:"product_id"`
-	Cost            sql.NullString `json:"cost"`
-	Status          string         `json:"status"`
-	CreatedAt       time.Time      `json:"created_at"`
-	UpdatedAt       time.Time      `json:"updated_at"`
+	ID              uuid.UUID     `json:"id"`
+	StartLocation   interface{}   `json:"start_location"`
+	EndLocation     interface{}   `json:"end_location"`
+	ConfirmedPickup interface{}   `json:"confirmed_pickup"`
+	CourierID       uuid.NullUUID `json:"courier_id"`
+	UserID          uuid.UUID     `json:"user_id"`
+	RouteID         uuid.NullUUID `json:"route_id"`
+	ProductID       uuid.UUID     `json:"product_id"`
+	Cost            sql.NullInt32 `json:"cost"`
+	Status          string        `json:"status"`
+	CreatedAt       time.Time     `json:"created_at"`
+	UpdatedAt       time.Time     `json:"updated_at"`
 }
 
 type Upload struct {
