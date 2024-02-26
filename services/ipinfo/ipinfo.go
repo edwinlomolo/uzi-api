@@ -41,7 +41,8 @@ func NewIpinfoService() {
 
 	IpInfo = &ipinfoClient{
 		config.Config.Ipinfo,
-		logger.Logger, client,
+		logger.Logger,
+		client,
 	}
 	logger.Logger.Infoln("Ipinfo service...OK")
 }
@@ -102,7 +103,7 @@ func (ipc *ipinfoCache) Set(
 		context.Background(),
 		key,
 		data,
-		time.Hour*24*365).Err(); err != nil {
+		time.Hour*24).Err(); err != nil {
 		uziErr := fmt.Errorf("%s:%v", "ipinfo cache", err.Error())
 		ipc.logger.Errorf(uziErr.Error())
 		return uziErr
