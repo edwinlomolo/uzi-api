@@ -132,17 +132,24 @@ func (u *uploadClient) updateUploadVerificationStatus(
 }
 
 func (u *uploadClient) createUserUpload(reason, uri string, ID uuid.UUID) error {
-	createParams := sqlStore.CreateUserUploadParams{
+	createParams := sqlStore.GetUserUploadParams{
 		Type: reason,
-		Uri:  uri,
 		UserID: uuid.NullUUID{
 			UUID:  ID,
 			Valid: true,
 		},
 	}
 
-	foundUpload, foundErr := u.store.CreateUserUpload(context.Background(), createParams)
+	foundUpload, foundErr := u.store.GetUserUpload(context.Background(), createParams)
 	if foundErr == sql.ErrNoRows {
+		createParams := sqlStore.CreateUserUploadParams{
+			Type: reason,
+			Uri:  uri,
+			UserID: uuid.NullUUID{
+				UUID:  ID,
+				Valid: true,
+			},
+		}
 		_, createErr := u.store.CreateUserUpload(context.Background(), createParams)
 		if createErr != nil {
 			uziErr := fmt.Errorf("%s:%v", "user upload", createErr)

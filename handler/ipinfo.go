@@ -6,14 +6,13 @@ import (
 	"net/http"
 
 	"github.com/edwinlomolo/uzi-api/internal/logger"
-	"github.com/edwinlomolo/uzi-api/internal/util"
 	"github.com/edwinlomolo/uzi-api/services/ipinfo"
 )
 
 func Ipinfo() http.HandlerFunc {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		logger := logger.Logger
-		ip := util.GetIp(r)
+		ip := GetIp(r)
 
 		ipinfo, err := ipinfo.IpInfo.GetIpinfo(ip)
 		if err != nil {

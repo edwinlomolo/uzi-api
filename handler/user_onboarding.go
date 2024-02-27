@@ -7,7 +7,6 @@ import (
 	"net/http"
 
 	"github.com/edwinlomolo/uzi-api/internal/logger"
-	"github.com/edwinlomolo/uzi-api/internal/util"
 	"github.com/edwinlomolo/uzi-api/services/session"
 	"github.com/edwinlomolo/uzi-api/services/user"
 )
@@ -18,7 +17,7 @@ func UserOnboarding() http.HandlerFunc {
 		logger := logger.Logger
 		userService := user.User
 		sessionService := session.Session
-		ip := util.GetIp(r)
+		ip := GetIp(r)
 
 		body, bodyErr := io.ReadAll(r.Body)
 		if bodyErr != nil {

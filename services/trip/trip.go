@@ -283,10 +283,10 @@ func (t *tripClient) MatchCourier(tripID uuid.UUID, pickup model.TripInput) {
 		t.logger.Fatalln(parseErr)
 	}
 
-	// TODO use a 5/10/15 minute timeout - trick impatiency cancellation from client(user)
+	// use a 5/10/15 minute timeout - trick impatiency cancellation from client(user)
 	timeoutCtx, cancel := context.WithTimeout(
 		context.Background(),
-		time.Minute,
+		time.Minute*10,
 	)
 
 	go func() {
@@ -412,6 +412,7 @@ func (t *tripClient) GetTrip(tripID uuid.UUID) (*model.Trip, error) {
 		EndLocation: util.ParsePostgisLocation(trip.EndLocation),
 	}
 
+	// Return trip route also
 	if trp.CourierID.String() != constants.ZERO_UUID {
 		pickup := model.TripInput{}
 		dropoff := model.TripInput{}
@@ -462,6 +463,7 @@ func (t *tripClient) GetTrip(tripID uuid.UUID) (*model.Trip, error) {
 			}
 			trp.Cost = cost
 
+			// Create cost while en-route. Is it okay to do this here
 			go func() {
 				_, err := t.store.CreateTripCost(context.Background(), sqlStore.CreateTripCostParams{
 					ID:   tripID,

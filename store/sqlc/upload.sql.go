@@ -162,6 +162,33 @@ func (q *Queries) GetCourierUploads(ctx context.Context, courierID uuid.NullUUID
 	return items, nil
 }
 
+const getUserUpload = `-- name: GetUserUpload :one
+SELECT id, type, uri, verification, courier_id, user_id, created_at, updated_at FROM uploads
+WHERE user_id = $1 AND type = $2
+LIMIT 1
+`
+
+type GetUserUploadParams struct {
+	UserID uuid.NullUUID `json:"user_id"`
+	Type   string        `json:"type"`
+}
+
+func (q *Queries) GetUserUpload(ctx context.Context, arg GetUserUploadParams) (Upload, error) {
+	row := q.db.QueryRowContext(ctx, getUserUpload, arg.UserID, arg.Type)
+	var i Upload
+	err := row.Scan(
+		&i.ID,
+		&i.Type,
+		&i.Uri,
+		&i.Verification,
+		&i.CourierID,
+		&i.UserID,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
 const updateUpload = `-- name: UpdateUpload :one
 UPDATE uploads
 SET uri = COALESCE($2, uri), verification = COALESCE($3, verification)

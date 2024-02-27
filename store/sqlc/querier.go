@@ -43,6 +43,7 @@ type Querier interface {
 	GetSession(ctx context.Context, id uuid.UUID) (Session, error)
 	GetTrip(ctx context.Context, id uuid.UUID) (GetTripRow, error)
 	GetTripRecipient(ctx context.Context, tripID uuid.NullUUID) (Recipient, error)
+	GetUserUpload(ctx context.Context, arg GetUserUploadParams) (Upload, error)
 	IsCourier(ctx context.Context, userID uuid.NullUUID) (sql.NullBool, error)
 	IsUserOnboarding(ctx context.Context, id uuid.UUID) (bool, error)
 	SetCourierStatus(ctx context.Context, arg SetCourierStatusParams) (Courier, error)

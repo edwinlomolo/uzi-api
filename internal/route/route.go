@@ -20,7 +20,6 @@ import (
 	"github.com/edwinlomolo/uzi-api/services/location"
 	"github.com/edwinlomolo/uzi-api/store"
 	sqlStore "github.com/edwinlomolo/uzi-api/store/sqlc"
-	"github.com/google/uuid"
 	"github.com/redis/go-redis/v9"
 	"github.com/sirupsen/logrus"
 )
@@ -41,7 +40,6 @@ type Route interface {
 		params sqlStore.GetNearbyAvailableCourierProductsParams,
 		tripDistance int,
 	) ([]*model.Product, error)
-	CreateRoute(tripID uuid.UUID, distance string, tripState model.TripStatus) (*model.Route, error)
 }
 
 type routeClient struct {
@@ -145,12 +143,12 @@ func (r *routeClient) computeRoute(
 		tripRoute.Polyline = routeRes.Routes[0].Polyline.EncodedPolyline
 		tripRoute.Distance = routeRes.Routes[0].Distance
 
-		done := make(chan struct{})
-		go func() {
-			defer close(done)
-			r.cache.Set(context.Background(), cacheKey, tripRoute, time.Hour*24)
-		}()
-		<-done
+		// Let the above fallthrough and shortcircuit here not to super-charge in dev
+		if config.IsDev() {
+			go func() {
+				r.cache.Set(context.Background(), cacheKey, tripRoute, time.Hour*24)
+			}()
+		}
 	} else {
 		route := (tripInfo).(*model.TripRoute)
 		tripRoute.Polyline = route.Polyline
@@ -293,8 +291,4 @@ func (r *routeClient) GetNearbyAvailableProducts(
 	}
 
 	return nearbyProducts, nil
-}
-
-func (r *routeClient) CreateRoute(tripID uuid.UUID, distance string, tripState model.TripStatus) (*model.Route, error) {
-	return nil, nil
 }

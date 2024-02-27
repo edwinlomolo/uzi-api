@@ -5,12 +5,9 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
-	"time"
 
 	"github.com/edwinlomolo/uzi-api/gql/model"
-	"github.com/edwinlomolo/uzi-api/internal/cache"
 	"github.com/edwinlomolo/uzi-api/internal/logger"
-	"github.com/edwinlomolo/uzi-api/internal/util"
 	"github.com/edwinlomolo/uzi-api/services/courier"
 	"github.com/edwinlomolo/uzi-api/store"
 	sqlStore "github.com/edwinlomolo/uzi-api/store/sqlc"
@@ -42,7 +39,6 @@ type userClient struct {
 	store  *sqlStore.Queries
 	logger *logrus.Logger
 	ctx    context.Context
-	cache  cache.Cache
 }
 
 func NewUserService() {
@@ -50,7 +46,6 @@ func NewUserService() {
 		store.DB,
 		logger.Logger,
 		context.TODO(),
-		cache.Rdb,
 	}
 	logger.Logger.Infoln("User service...OK")
 }
@@ -67,8 +62,6 @@ func (u *userClient) FindOrCreate(user SigninInput) (*model.User, error) {
 }
 
 func (u *userClient) createUser(user SigninInput) (*model.User, error) {
-	var res model.User
-
 	newUser, newUserErr := u.store.CreateUser(
 		context.Background(),
 		sqlStore.CreateUserParams{
@@ -88,16 +81,15 @@ func (u *userClient) createUser(user SigninInput) (*model.User, error) {
 		}
 	}
 
-	res.ID = newUser.ID
-	res.FirstName = newUser.FirstName
-	res.LastName = newUser.LastName
-	res.Phone = newUser.Phone
-
-	return &res, nil
+	return &model.User{
+		ID:        newUser.ID,
+		FirstName: newUser.FirstName,
+		LastName:  newUser.LastName,
+		Phone:     newUser.Phone,
+	}, nil
 }
 
 func (u *userClient) getUser(phone string) (*model.User, error) {
-	var user model.User
 	foundUser, getErr := u.store.FindByPhone(context.Background(), phone)
 	if getErr == sql.ErrNoRows {
 		return nil, nil
@@ -107,12 +99,12 @@ func (u *userClient) getUser(phone string) (*model.User, error) {
 		return nil, err
 	}
 
-	user.ID = foundUser.ID
-	user.FirstName = foundUser.FirstName
-	user.LastName = foundUser.LastName
-	user.Phone = foundUser.Phone
-
-	return &user, nil
+	return &model.User{
+		ID:        foundUser.ID,
+		FirstName: foundUser.FirstName,
+		LastName:  foundUser.LastName,
+		Phone:     foundUser.Phone,
+	}, nil
 }
 
 func (u *userClient) GetUserByPhone(phone string) (*model.User, error) {
@@ -120,44 +112,23 @@ func (u *userClient) GetUserByPhone(phone string) (*model.User, error) {
 }
 
 func (u *userClient) findUserByID(id uuid.UUID) (*model.User, error) {
-	var user *model.User
-	cacheKey := util.Base64Key(id.String())
-	cacheUser, cacheErr := u.cache.Get(context.Background(), cacheKey, &model.User{})
-	if cacheErr != nil {
-		return nil, cacheErr
+	foundUser, getErr := u.store.FindUserByID(context.Background(), id)
+	if getErr == sql.ErrNoRows {
+		err := fmt.Errorf("%s:%v", "not found", userNotFound)
+		u.logger.Errorf(err.Error())
+		return nil, err
+	} else if getErr != nil {
+		err := fmt.Errorf("%s:%v", "get user", getErr)
+		u.logger.Errorf(err.Error())
+		return nil, err
 	}
 
-	if cacheUser == nil {
-		foundUser, getErr := u.store.FindUserByID(context.Background(), id)
-		if getErr == sql.ErrNoRows {
-			err := fmt.Errorf("%s:%v", "not found", userNotFound)
-			u.logger.Errorf(err.Error())
-			return nil, err
-		} else if getErr != nil {
-			err := fmt.Errorf("%s:%v", "get user", getErr)
-			u.logger.Errorf(err.Error())
-			return nil, err
-		}
-
-		user = &model.User{
-			ID:        foundUser.ID,
-			FirstName: foundUser.FirstName,
-			LastName:  foundUser.LastName,
-			Phone:     foundUser.Phone,
-		}
-
-		done := make(chan struct{})
-		go func() {
-			defer close(done)
-			u.cache.Set(context.Background(), cacheKey, user, time.Hour)
-		}()
-		<-done
-
-		return user, nil
-	}
-
-	v := (cacheUser).(*model.User)
-	return v, nil
+	return &model.User{
+		ID:        foundUser.ID,
+		FirstName: foundUser.FirstName,
+		LastName:  foundUser.LastName,
+		Phone:     foundUser.Phone,
+	}, nil
 }
 
 func (u *userClient) FindUserByID(id uuid.UUID) (*model.User, error) {
@@ -165,9 +136,6 @@ func (u *userClient) FindUserByID(id uuid.UUID) (*model.User, error) {
 }
 
 func (u *userClient) OnboardUser(user SigninInput) (*model.User, error) {
-	var updatedUser model.User
-	cacheKey := util.Base64Key(user.Phone)
-
 	if len(user.FirstName) == 0 || len(user.LastName) == 0 {
 		inputErr := fmt.Errorf("%s:%v", "invalid inputs", noEmptyName)
 		u.logger.Errorf(inputErr.Error())
@@ -198,17 +166,10 @@ func (u *userClient) OnboardUser(user SigninInput) (*model.User, error) {
 		return nil, onboardingErr
 	}
 
-	updatedUser.ID = newUser.ID
-	updatedUser.FirstName = newUser.FirstName
-	updatedUser.LastName = newUser.LastName
-	updatedUser.Phone = newUser.Phone
-
-	done := make(chan struct{})
-	go func() {
-		defer close(done)
-		u.cache.Set(context.Background(), cacheKey, updatedUser, time.Hour)
-	}()
-	<-done
-
-	return &updatedUser, nil
+	return &model.User{
+		ID:        newUser.ID,
+		FirstName: newUser.FirstName,
+		LastName:  newUser.LastName,
+		Phone:     newUser.Phone,
+	}, nil
 }

@@ -4,6 +4,7 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"strconv"
+	"time"
 
 	"github.com/edwinlomolo/uzi-api/gql/model"
 )
@@ -42,4 +43,15 @@ func ParsePostgisLocation(p interface{}) *model.Gps {
 	} else {
 		return nil
 	}
+}
+
+func ParseDuration(
+	duration string,
+) (time.Duration, error) {
+	t, err := time.ParseDuration(duration)
+	if err != nil {
+		panic(err)
+	}
+
+	return t, nil
 }

@@ -30,6 +30,11 @@ INSERT INTO uploads (
 )
 RETURNING *;
 
+-- name: GetUserUpload :one
+SELECT * FROM uploads
+WHERE user_id = $1 AND type = $2
+LIMIT 1;
+
 -- name: GetCourierAvatar :one
 SELECT id, uri FROM uploads
 WHERE courier_id = $1 AND type = 'DP';

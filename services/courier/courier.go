@@ -121,7 +121,6 @@ func (c *courierClient) GetCourierStatus(
 func (c *courierClient) getCourierByUserID(
 	userID uuid.UUID,
 ) (*model.Courier, error) {
-	var courier model.Courier
 	foundCourier, err := c.store.GetCourierByUserID(
 		context.Background(),
 		uuid.NullUUID{
@@ -137,13 +136,13 @@ func (c *courierClient) getCourierByUserID(
 		return nil, uziErr
 	}
 
-	courier.ID = foundCourier.ID
-	courier.UserID = foundCourier.UserID.UUID
-	courier.Avatar = c.getAvatar(foundCourier.ID)
-	courier.ProductID = foundCourier.ProductID.UUID
-	courier.Location = util.ParsePostgisLocation(foundCourier.Location)
-
-	return &courier, nil
+	return &model.Courier{
+		ID:        foundCourier.ID,
+		UserID:    foundCourier.UserID.UUID,
+		Avatar:    c.getAvatar(foundCourier.ID),
+		ProductID: foundCourier.ProductID.UUID,
+		Location:  util.ParsePostgisLocation(foundCourier.Location),
+	}, nil
 }
 
 func (c *courierClient) getAvatar(
@@ -205,7 +204,7 @@ func (c *courierClient) TrackCourierLocation(
 	go func() {
 		defer close(done)
 		t, err := trip.Trip.GetCourierTrip(courier.ID)
-		if err != nil {
+		if err != nil && !errors.Is(err, trip.ErrCourierTripNotFound) {
 			return
 		}
 
