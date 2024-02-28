@@ -3,7 +3,6 @@
 
 .DS_Store
 ui/.DS_Store
-ui/web
 
 # Elastic Beanstalk Files
 .elasticbeanstalk/*
