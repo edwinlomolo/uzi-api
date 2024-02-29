@@ -2,7 +2,6 @@ package pricer
 
 import (
 	"context"
-	"fmt"
 	"math"
 
 	"github.com/edwinlomolo/uzi-api/config"
@@ -25,8 +24,8 @@ type Pricing interface {
 }
 
 type pricerClient struct {
-	logger *logrus.Logger
-	store  *sqlc.Queries
+	log   *logrus.Logger
+	store *sqlc.Queries
 }
 
 func NewPricer() {
@@ -84,15 +83,19 @@ func (p *pricerClient) GetTripCost(trip model.Trip, distance int) (int, error) {
 
 	courier, err := p.store.GetCourierByID(context.Background(), *trip.CourierID)
 	if err != nil {
-		uziErr := fmt.Errorf("%s:%v", "trip cost", err)
-		p.logger.Errorf(uziErr.Error())
-		return 0, uziErr
+		p.log.WithFields(logrus.Fields{
+			"error":    err,
+			"distance": distance,
+		}).Errorf("get trip courier for trip cost calculation")
+		return 0, err
 	}
 
 	product, productErr := p.store.GetCourierProductByID(context.Background(), courier.ProductID.UUID)
 	if productErr != nil {
-		uziErr := fmt.Errorf("%s:%v", "trip cost", productErr)
-		p.logger.Errorf(uziErr.Error())
+		p.log.WithFields(logrus.Fields{
+			"error":              productErr,
+			"courier_product_id": courier.ProductID.UUID,
+		}).Errorf("get trip courier product for trip cost calculation")
 		return 0, productErr
 	}
 

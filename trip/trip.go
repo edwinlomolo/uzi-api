@@ -53,10 +53,10 @@ type TripService interface {
 }
 
 type tripClient struct {
-	redis  *redis.Client
-	logger *logrus.Logger
-	store  *sqlStore.Queries
-	mu     sync.Mutex
+	redis *redis.Client
+	log   *logrus.Logger
+	store *sqlStore.Queries
+	mu    sync.Mutex
 }
 
 var Trip TripService
@@ -84,9 +84,8 @@ func (t *tripClient) FindAvailableCourier(pickup model.GpsInput) (*model.Courier
 	if err == sql.ErrNoRows {
 		return nil, nil
 	} else if err != nil {
-		uziErr := fmt.Errorf("%s: %v", "available courier", err.Error())
-		t.logger.Errorf(uziErr.Error())
-		return nil, uziErr
+		t.log.WithError(err).Errorf("find available courier")
+		return nil, err
 	}
 
 	return &model.Courier{
@@ -103,9 +102,12 @@ func (t *tripClient) AssignCourierToTrip(tripID, courierID uuid.UUID) error {
 
 	err := t.getCourierAssignedTrip(courierID)
 	if err != nil {
-		uziErr := fmt.Errorf("%s:%v", "assigned trip", err)
-		t.logger.Errorf(uziErr.Error())
-		return uziErr
+		t.log.WithFields(logrus.Fields{
+			"courier_id": courierID,
+			"trip_id":    tripID,
+			"error":      err,
+		}).Errorf("get assigned trip")
+		return err
 	}
 
 	args := sqlStore.AssignCourierToTripParams{
@@ -120,9 +122,12 @@ func (t *tripClient) AssignCourierToTrip(tripID, courierID uuid.UUID) error {
 		args,
 	)
 	if assignCourierErr != nil {
-		uziErr := fmt.Errorf("%s:%v", "assign courier", assignCourierErr)
-		t.logger.Errorf(uziErr.Error())
-		return uziErr
+		t.log.WithFields(logrus.Fields{
+			"courier_id": courierID,
+			"trip_id":    args.TripID.UUID,
+			"error":      assignCourierErr,
+		}).Errorf("assign courier")
+		return assignCourierErr
 	}
 
 	courierArgs := sqlStore.AssignTripToCourierParams{
@@ -137,9 +142,12 @@ func (t *tripClient) AssignCourierToTrip(tripID, courierID uuid.UUID) error {
 		courierArgs,
 	)
 	if assignTripErr != nil {
-		uziErr := fmt.Errorf("%s:%v", "assign trip", assignTripErr)
-		t.logger.Errorf(uziErr.Error())
-		return uziErr
+		t.log.WithFields(logrus.Fields{
+			"courier_id": courierArgs.CourierID.UUID,
+			"trip_id":    tripID,
+			"error":      assignTripErr,
+		}).Errorf("assign trip")
+		return assignTripErr
 	}
 
 	return nil
@@ -153,9 +161,11 @@ func (t *tripClient) UnassignTrip(courierID uuid.UUID) error {
 		context.Background(),
 		courierID,
 	); err != nil {
-		uziErr := fmt.Errorf("%s:%v", "unassign trip", err)
-		t.logger.Errorf(uziErr.Error())
-		return nil
+		t.log.WithFields(logrus.Fields{
+			"courier_id": courierID,
+			"error":      err,
+		}).Errorf("unassign trip")
+		return err
 	}
 
 	return nil
@@ -170,7 +180,10 @@ func (t *tripClient) CreateTrip(
 	createTrip, err := t.store.CreateTrip(context.Background(), args)
 	if err != nil {
 		uziErr := fmt.Errorf("%s:%v", "create trip", err)
-		t.logger.Errorf(uziErr.Error())
+		t.log.WithFields(logrus.Fields{
+			"error":  err,
+			"params": args,
+		}).Errorf("create trip")
 		return nil, uziErr
 	}
 
@@ -193,7 +206,11 @@ func (t *tripClient) CreateTripCost(tripID uuid.UUID, cost int) error {
 		args,
 	); err != nil {
 		uziErr := fmt.Errorf("%s:%v", "trip cost", err)
-		t.logger.Errorf(uziErr.Error())
+		t.log.WithFields(logrus.Fields{
+			"error":   err,
+			"trip_id": tripID,
+			"cost":    cost,
+		}).Errorf(uziErr.Error())
 		return uziErr
 	}
 
@@ -215,7 +232,11 @@ func (t *tripClient) SetTripStatus(
 		context.Background(),
 		tripArgs); err != nil {
 		uziErr := fmt.Errorf("%s:%v", "trip status", err)
-		t.logger.Errorf(uziErr.Error())
+		t.log.WithFields(logrus.Fields{
+			"trip_id": tripID,
+			"status":  status.String(),
+			"error":   err,
+		}).Errorf("trip status")
 		return uziErr
 	}
 
@@ -245,9 +266,8 @@ func (t *tripClient) GetCourierNearPickupPoint(
 	if err == sql.ErrNoRows {
 		return make([]*model.Courier, 0), nil
 	} else if err != nil {
-		uziErr := fmt.Errorf("%s: %v", "near pickup", err.Error())
-		t.logger.Errorf(uziErr.Error())
-		return nil, uziErr
+		t.log.WithError(err).Errorf("courier new pickup point")
+		return nil, err
 	}
 
 	for _, item := range foundCouriers {
@@ -282,7 +302,10 @@ func (t *tripClient) GetCourierAssignedTrip(courierID uuid.UUID) error {
 func (t *tripClient) MatchCourier(tripID uuid.UUID, pickup model.TripInput) {
 	pkp, parseErr := routing.Routing.ParsePickupDropoff(pickup)
 	if parseErr != nil {
-		t.logger.Fatalln(parseErr)
+		t.log.WithFields(logrus.Fields{
+			"pickup": pickup,
+			"error":  parseErr,
+		}).Errorf("cleanup trip pickup input")
 	}
 
 	// use a 5/10/15 minute timeout - trick impatiency cancellation from client(user)
@@ -332,10 +355,6 @@ func (t *tripClient) MatchCourier(tripID uuid.UUID, pickup model.TripInput) {
 						t.ReportTripStatus(tripID, model.TripStatusCourierAssigned)
 						return
 					} else if assignErr != nil {
-						t.logger.Errorf(assignErr.Error())
-						return
-					} else if assignErr != nil {
-						t.logger.Errorf(err.Error())
 						return
 					}
 				}
@@ -366,9 +385,11 @@ func (t *tripClient) CreateTripRecipient(
 		},
 	}
 	if _, err := t.store.CreateRecipient(context.Background(), rArgs); err != nil {
-		uziErr := fmt.Errorf("%s:%v", "new recipient", err)
-		t.logger.Errorf(uziErr.Error())
-		return uziErr
+		t.log.WithFields(logrus.Fields{
+			"error":     err,
+			"recipient": rArgs,
+		}).Errorf("create trip recipient")
+		return err
 	}
 
 	return nil
@@ -383,9 +404,11 @@ func (t *tripClient) GetTripRecipient(tripID uuid.UUID) (*model.Recipient, error
 		},
 	)
 	if err != nil {
-		uziErr := fmt.Errorf("%s:%v", "get recipient", err)
-		t.logger.Errorf(uziErr.Error())
-		return nil, uziErr
+		t.log.WithFields(logrus.Fields{
+			"trip_id": tripID,
+			"error":   err,
+		}).Errorf("get trip recipient")
+		return nil, err
 	}
 
 	return &model.Recipient{
@@ -401,9 +424,11 @@ func (t *tripClient) GetTripRecipient(tripID uuid.UUID) (*model.Recipient, error
 func (t *tripClient) GetTrip(tripID uuid.UUID) (*model.Trip, error) {
 	trip, err := t.store.GetTrip(context.Background(), tripID)
 	if err != nil {
-		uziErr := fmt.Errorf("%s:%v", "get trip", err)
-		t.logger.Errorf(uziErr.Error())
-		return nil, uziErr
+		t.log.WithFields(logrus.Fields{
+			"trip_id": tripID,
+			"error":   err,
+		}).Errorf("get trip")
+		return nil, err
 	}
 
 	trp := &model.Trip{
@@ -471,8 +496,11 @@ func (t *tripClient) GetTrip(tripID uuid.UUID) (*model.Trip, error) {
 					ID:   tripID,
 					Cost: sql.NullInt32{Int32: int32(trp.Cost), Valid: true},
 				})
-				uziErr := fmt.Errorf("%s:%v", "create trip cost", err)
-				t.logger.Errorf("%s:%v", uziErr.Error())
+				t.log.WithFields(logrus.Fields{
+					"error":   err,
+					"trip_id": tripID,
+					"cost":    trp.Cost,
+				}).Errorf("create trip cost")
 				if err != nil {
 					return
 				}
@@ -522,15 +550,13 @@ func (t *tripClient) publishTripUpdate(
 
 		u, marshalErr := json.Marshal(update)
 		if marshalErr != nil {
-			uziErr := fmt.Errorf("%s:%v", "trip update", marshalErr)
-			logger.Logger.Errorf(uziErr.Error())
+			t.log.WithError(marshalErr).Errorf("marshal trip update")
 			return
 		}
 
 		pubTripErr := t.redis.Publish(context.Background(), channel, u).Err()
 		if pubTripErr != nil {
-			uziErr := fmt.Errorf("%s:%v", "publish update", pubTripErr)
-			logger.Logger.Errorf(uziErr.Error())
+			t.log.WithError(pubTripErr).Errorf("redis publish trip update")
 			return
 		}
 	}()
@@ -543,9 +569,11 @@ func (t *tripClient) GetTripCourier(courierID uuid.UUID) (*model.Courier, error)
 	if err == sql.ErrNoRows {
 		return nil, nil
 	} else if err != nil {
-		uziErr := fmt.Errorf("%s:%v", "trip courier", err)
-		t.logger.Errorf(uziErr.Error())
-		return nil, uziErr
+		t.log.WithFields(logrus.Fields{
+			"courier_id": courierID,
+			"error":      err,
+		}).Errorf("get trip courier")
+		return nil, err
 	}
 
 	return &model.Courier{
@@ -560,12 +588,14 @@ func (t *tripClient) GetCourierTrip(tripID uuid.UUID) (*model.Trip, error) {
 	tid := uuid.NullUUID{UUID: tripID, Valid: true}
 	trip, err := t.store.GetCourierTrip(context.Background(), tid)
 	if err == sql.ErrNoRows {
-		t.logger.Errorf(ErrCourierTripNotFound.Error())
+		t.log.Errorf(ErrCourierTripNotFound.Error())
 		return nil, ErrCourierTripNotFound
 	} else if err != nil {
-		uziErr := fmt.Errorf("%s:%v", "courier trip", err)
-		t.logger.Errorf(uziErr.Error())
-		return nil, uziErr
+		t.log.WithFields(logrus.Fields{
+			"trip_id": tripID,
+			"error":   err,
+		}).Errorf("get courier trip")
+		return nil, err
 	}
 
 	return &model.Trip{

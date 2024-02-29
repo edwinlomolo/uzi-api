@@ -3,7 +3,6 @@ package session
 import (
 	"context"
 	"database/sql"
-	"fmt"
 
 	"github.com/edwinlomolo/uzi-api/config"
 	"github.com/edwinlomolo/uzi-api/courier"
@@ -27,7 +26,7 @@ type SessionService interface {
 type sessionClient struct {
 	jwtClient jwt.JwtService
 	store     *sqlStore.Queries
-	logger    *logrus.Logger
+	log       *logrus.Logger
 	config    config.Jwt
 }
 
@@ -96,9 +95,12 @@ func (sc *sessionClient) createNewSession(
 		sessParams,
 	)
 	if newSessErr != nil {
-		err := fmt.Errorf("%s:%v", "create session", newSessErr)
-		sc.logger.Errorf(err.Error())
-		return nil, err
+		sc.log.WithFields(logrus.Fields{
+			"user_id":    userID,
+			"user_agent": userAgent,
+			"error":      newSessErr,
+		}).Errorf("create new session")
+		return nil, newSessErr
 	}
 
 	claims, err := jwt.NewPayload(userID.String(), ip, phone, sc.config.Expires)
@@ -142,9 +144,11 @@ func (sc *sessionClient) getSession(userID uuid.UUID) (*model.Session, error) {
 	if sessErr == sql.ErrNoRows {
 		return nil, nil
 	} else if sessErr != nil {
-		err := fmt.Errorf("%s:%v", "get session", sessErr)
-		sc.logger.Errorf(err.Error())
-		return nil, err
+		sc.log.WithFields(logrus.Fields{
+			"user_id": userID,
+			"error":   sessErr,
+		}).Errorf("get user session")
+		return nil, sessErr
 	}
 
 	claims, err := jwt.NewPayload(

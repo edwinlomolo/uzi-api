@@ -43,25 +43,21 @@ type locationClient struct {
 	nominatim       nominatim
 	places, geocode *maps.Client
 	config          config.GoogleMaps
-	logger          *logrus.Logger
+	log             *logrus.Logger
 	cache           cache.Cache
 }
 
 func NewLocationService() {
-	apiKey := config.Config.GoogleMaps.GooglePlacesApiKey
-
-	places, placesErr := maps.NewClient(maps.WithAPIKey(apiKey))
+	places, placesErr := maps.NewClient(maps.WithAPIKey(config.Config.GoogleMaps.GooglePlacesApiKey))
 	if placesErr != nil {
-		logger.Logger.Errorf("%s:%v", "new places", placesErr.Error())
-		logger.Logger.Fatal(placesErr)
+		logger.Logger.WithError(placesErr).Errorf("new places client")
 	} else {
 		logger.Logger.Infoln("Places service...OK")
 	}
 
-	geocode, geocodeErr := maps.NewClient(maps.WithAPIKey(apiKey))
+	geocode, geocodeErr := maps.NewClient(maps.WithAPIKey(config.Config.GoogleMaps.GoogleGeocodeApiKey))
 	if geocodeErr != nil {
-		logger.Logger.Errorf("%s: %v", "new geocode", geocodeErr.Error())
-		logger.Logger.Fatal(geocodeErr)
+		logger.Logger.WithError(geocodeErr).Errorf("new geocode client")
 	} else {
 		logger.Logger.Infoln("Geocode service...OK")
 	}
@@ -102,9 +98,11 @@ func (l *locationClient) AutocompletePlace(
 
 	places, err := l.places.PlaceAutocomplete(context.Background(), req)
 	if err != nil {
-		placesErr := fmt.Errorf("%s:%v", "place autocomplete", err)
-		l.logger.Errorf(placesErr.Error())
-		return nil, placesErr
+		l.log.WithFields(logrus.Fields{
+			"search_query": searchQuery,
+			"error":        err,
+		}).Errorf("place autocomplete")
+		return nil, err
 	}
 
 	for _, item := range places.Predictions {
@@ -168,7 +166,10 @@ func (l *locationClient) GetPlaceDetails(
 	res, resErr := l.places.PlaceDetails(context.Background(), req)
 	if resErr != nil {
 		uziErr := fmt.Errorf("%s:%v", "place details", resErr)
-		l.logger.Errorf(uziErr.Error())
+		l.log.WithFields(logrus.Fields{
+			"error":    resErr,
+			"place_id": placeID,
+		}).Errorf("place details")
 		return nil, uziErr
 	}
 

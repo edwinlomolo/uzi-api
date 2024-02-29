@@ -3,7 +3,6 @@ package aws
 import (
 	"bytes"
 	"context"
-	"fmt"
 	"mime/multipart"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
@@ -41,8 +40,7 @@ func NewAwsS3Service() {
 		),
 	)
 	if err != nil {
-		uziErr := fmt.Errorf("%s:%v", "new s3", err)
-		log.Fatal(uziErr.Error())
+		log.WithError(err).Errorf("new s3 client")
 	} else {
 		log.Infoln("Aws S3 credential...OK")
 	}
@@ -66,9 +64,8 @@ func (a awsClient) UploadImage(
 
 	uploadRes, err := a.s3.Upload(context.Background(), params)
 	if err != nil {
-		uploadErr := fmt.Errorf("%s:%v", "s3imageupload", err.Error())
-		a.logger.Errorf(uploadErr.Error())
-		return "", uploadErr
+		a.logger.WithError(err).Errorf("s3 image upload")
+		return "", err
 	}
 
 	return uploadRes.Location, nil

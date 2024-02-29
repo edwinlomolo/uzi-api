@@ -2,7 +2,6 @@ package handler
 
 import (
 	"encoding/json"
-	"fmt"
 	"net/http"
 
 	"github.com/edwinlomolo/uzi-api/ipinfo"
@@ -22,9 +21,8 @@ func Ipinfo() http.HandlerFunc {
 
 		res, jsonErr := json.Marshal(ipinfo)
 		if jsonErr != nil {
-			uziErr := fmt.Errorf("%s:%v", "marshal ipinfo", jsonErr)
-			logger.Errorf(uziErr.Error())
-			http.Error(w, uziErr.Error(), http.StatusInternalServerError)
+			logger.WithError(jsonErr).Errorf("marshal ipinfo res")
+			http.Error(w, jsonErr.Error(), http.StatusInternalServerError)
 			return
 		}
 

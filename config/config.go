@@ -69,6 +69,11 @@ func rdbmsConfig() RDBMS {
 	rdbmsConfig.Uri = strings.TrimSpace(os.Getenv("DATABASE_URI"))
 	rdbmsConfig.Env.Driver = strings.TrimSpace(os.Getenv("DBDRIVER"))
 	rdbmsConfig.MigrationUrl = strings.TrimSpace(os.Getenv("MIGRATION_URL"))
+	forceMigrate, err := strconv.ParseBool(strings.TrimSpace(os.Getenv("FORCE_MIGRATION")))
+	if err != nil {
+		panic(err)
+	}
+	rdbmsConfig.ForceMigrate = forceMigrate
 
 	return rdbmsConfig
 }
@@ -81,13 +86,6 @@ func databaseConfig() Database {
 
 	databaseConfig.Rdbms = rdbmsConfig()
 	databaseConfig.Redis = redisConfig()
-
-	forceMigration, err := strconv.ParseBool(strings.TrimSpace(os.Getenv("FORCE_MIGRATION")))
-	if err != nil {
-		panic(err)
-	}
-
-	databaseConfig.ForceMigration = forceMigration
 
 	return databaseConfig
 }

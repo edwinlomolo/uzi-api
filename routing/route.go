@@ -44,7 +44,7 @@ type Route interface {
 
 type routeClient struct {
 	redis  *redis.Client
-	logger *logrus.Logger
+	log    *logrus.Logger
 	store  *sqlStore.Queries
 	config config.GoogleMaps
 	cache  cache.Cache
@@ -181,16 +181,17 @@ func (r *routeClient) requestGoogleRoute(
 ) (*routeresponse, error) {
 	reqPayload, payloadErr := json.Marshal(routeParams)
 	if payloadErr != nil {
-		err := fmt.Errorf("%s:%v", "marshal", payloadErr.Error())
-		r.logger.Errorf(err.Error())
-		return nil, err
+		r.log.WithFields(logrus.Fields{
+			"route_params": routeParams,
+			"error":        payloadErr,
+		}).Errorf("marshal route params")
+		return nil, payloadErr
 	}
 
 	req, reqErr := http.NewRequest("POST", routeV2, bytes.NewBuffer(reqPayload))
 	if reqErr != nil {
-		err := fmt.Errorf("%s:%v", "new request", reqErr.Error())
-		r.logger.Errorf(err.Error())
-		return nil, err
+		r.log.WithError(reqErr).Errorf("compute route request")
+		return nil, reqErr
 	}
 	req.Header.Add("Content-Type", "application/json")
 	req.Header.Add("X-Goog-Api-Key", r.config.GoogleRoutesApiKey)
@@ -202,15 +203,13 @@ func (r *routeClient) requestGoogleRoute(
 	c := &http.Client{}
 	res, resErr := c.Do(req)
 	if resErr != nil {
-		err := fmt.Errorf("%s:%v", ErrComputeRoute.Error(), resErr.Error())
-		r.logger.Errorf(err.Error())
-		return nil, err
+		r.log.WithError(resErr).Errorf("call google compute route api")
+		return nil, resErr
 	}
 
 	if err := json.NewDecoder(res.Body).Decode(&routeResponse); err != nil {
-		jsonErr := fmt.Errorf("%s:%v", ErrComputeRoute.Error(), err.Error())
-		r.logger.Errorf(jsonErr.Error())
-		return nil, jsonErr
+		r.log.WithError(err).Errorf("unmarshal google compute route res")
+		return nil, err
 	}
 
 	if routeResponse.Error.Code > 0 {
@@ -219,7 +218,10 @@ func (r *routeClient) requestGoogleRoute(
 			routeResponse.Error.Status,
 			routeResponse.Error.Message,
 		)
-		r.logger.Errorf(resErr.Error())
+		r.log.WithFields(logrus.Fields{
+			"status":  routeResponse.Error.Status,
+			"message": routeResponse.Error.Message,
+		}).Errorf("google compute route res error")
 		return nil, resErr
 	}
 
@@ -269,9 +271,8 @@ func (r *routeClient) GetNearbyAvailableProducts(
 	if nearbyErr == sql.ErrNoRows {
 		return make([]*model.Product, 0), nil
 	} else if nearbyErr != nil {
-		uziErr := fmt.Errorf("%s:%v", "nearby products", nearbyErr.Error())
-		r.logger.Errorf(uziErr.Error())
-		return nil, uziErr
+		r.log.WithError(nearbyErr).Errorf("nearby courier products")
+		return nil, nearbyErr
 	}
 
 	for _, item := range nearbys {

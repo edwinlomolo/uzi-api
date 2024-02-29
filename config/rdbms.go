@@ -9,4 +9,5 @@ type RDBMS struct {
 		Driver string
 	}
 	MigrationUrl string
+	ForceMigrate bool
 }

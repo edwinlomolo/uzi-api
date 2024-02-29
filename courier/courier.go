@@ -37,9 +37,9 @@ type CourierService interface {
 }
 
 type courierClient struct {
-	logger *logrus.Logger
-	store  *sqlStore.Queries
-	redis  *redis.Client
+	log   *logrus.Logger
+	store *sqlStore.Queries
+	redis *redis.Client
 }
 
 func NewCourierService() {
@@ -61,9 +61,11 @@ func (c *courierClient) FindOrCreate(
 			},
 		)
 		if newErr != nil {
-			uziErr := fmt.Errorf("%s:%v", "create courier", newErr)
-			c.logger.Errorf(uziErr.Error())
-			return nil, uziErr
+			c.log.WithFields(logrus.Fields{
+				"courier_user_id": userID,
+				"error":           newErr,
+			}).Errorf("find/create courier")
+			return nil, newErr
 		}
 
 		return &model.Courier{
@@ -91,9 +93,11 @@ func (c *courierClient) IsCourier(
 	if err == sql.ErrNoRows {
 		return false, nil
 	} else if err != nil {
-		uziErr := fmt.Errorf("%s:%v", "is courier", err.Error())
-		c.logger.Errorf(uziErr.Error())
-		return false, uziErr
+		c.log.WithFields(logrus.Fields{
+			"courier_user_id": userID,
+			"error":           err,
+		}).Errorf("is courier check")
+		return false, err
 	}
 
 	return isCourier.Bool, nil
@@ -112,9 +116,11 @@ func (c *courierClient) GetCourierStatus(
 	if err == sql.ErrNoRows {
 		return model.CourierStatusOnboarding, nil
 	} else if err != nil {
-		uziErr := fmt.Errorf("%s:%v", "courier status", err.Error())
-		c.logger.Errorf(uziErr.Error())
-		return model.CourierStatusOffline, uziErr
+		c.log.WithFields(logrus.Fields{
+			"courier_user_id": userID,
+			"error":           err,
+		}).Errorf("get courier status")
+		return model.CourierStatusOffline, err
 	}
 
 	return model.CourierStatus(status), nil
@@ -133,9 +139,11 @@ func (c *courierClient) getCourierByUserID(
 	if err == sql.ErrNoRows {
 		return nil, nil
 	} else if err != nil {
-		uziErr := fmt.Errorf("%s:%v", "get courier", err)
-		c.logger.Errorf(uziErr.Error())
-		return nil, uziErr
+		c.log.WithFields(logrus.Fields{
+			"user_id": userID,
+			"error":   err,
+		}).Errorf("get courier by id")
+		return nil, err
 	}
 
 	return &model.Courier{
@@ -158,8 +166,10 @@ func (c *courierClient) getAvatar(
 	if err == sql.ErrNoRows {
 		return nil
 	} else if err != nil {
-		uziErr := fmt.Errorf("%s:%v", "get avatar", err)
-		c.logger.Errorf(uziErr.Error())
+		c.log.WithFields(logrus.Fields{
+			"courier_id": courierID,
+			"error":      err,
+		}).Errorf("get courier avatar")
 		return nil
 	}
 
@@ -197,9 +207,11 @@ func (c *courierClient) TrackCourierLocation(
 	if _, updateErr := c.store.TrackCourierLocation(
 		context.Background(),
 		args); updateErr != nil {
-		uziErr := fmt.Errorf("%s:%v", "track location", updateErr)
-		c.logger.Errorf(uziErr.Error())
-		return uziErr
+		c.log.WithFields(logrus.Fields{
+			"courier_user_id": userID,
+			"error":           updateErr,
+		}).Errorf("track courier location")
+		return updateErr
 	}
 
 	done := make(chan struct{})
@@ -221,14 +233,16 @@ func (c *courierClient) TrackCourierLocation(
 			}
 			u, marshalErr := json.Marshal(tripUpdate)
 			if marshalErr != nil {
-				uziErr := fmt.Errorf("%s:%v", "marshal update", marshalErr)
-				c.logger.Errorf(uziErr.Error())
+				c.log.WithError(marshalErr).Errorf("marshal courier arriving/enroute trip update")
 				return
 			}
 			tripUpdateErr := c.redis.Publish(context.Background(), trip.TRIP_UPDATES, u).Err()
 			if tripUpdateErr != nil {
-				uziErr := fmt.Errorf("%s:%v", "publish update", tripUpdateErr)
-				c.logger.Errorf(uziErr.Error())
+				c.log.WithFields(logrus.Fields{
+					"status":  t.Status,
+					"trip_id": t.ID,
+					"error":   tripUpdateErr,
+				}).Errorf("publish courier arriving/enroute trip update")
 				return
 			}
 		}
@@ -249,9 +263,11 @@ func (c *courierClient) UpdateCourierStatus(
 	if _, setErr := c.store.SetCourierStatus(
 		context.Background(),
 		args); setErr != nil {
-		uziErr := fmt.Errorf("%s:%v", "set status", setErr.Error())
-		c.logger.Errorf(uziErr.Error())
-		return false, uziErr
+		c.log.WithFields(logrus.Fields{
+			"courier_user_id": userID,
+			"error":           setErr,
+		}).Errorf("update courier status")
+		return false, setErr
 	}
 
 	return true, nil
@@ -267,9 +283,11 @@ func (c *courierClient) GetCourierProduct(
 	if err == sql.ErrNoRows {
 		return nil, nil
 	} else if err != nil {
-		uziErr := fmt.Errorf("%s:%v", "courier product", err.Error())
-		c.logger.Errorf(uziErr.Error())
-		return nil, uziErr
+		c.log.WithFields(logrus.Fields{
+			"product_id": productID,
+			"error":      err,
+		}).Errorf("get courier product")
+		return nil, err
 	}
 
 	return &model.Product{
@@ -289,9 +307,11 @@ func (c *courierClient) GetCourierByID(
 	if err == sql.ErrNoRows {
 		return nil, nil
 	} else if err != nil {
-		uziErr := fmt.Errorf("%s:%v", "courier by id", err)
-		c.logger.Errorf(uziErr.Error())
-		return nil, uziErr
+		c.log.WithFields(logrus.Fields{
+			"courier_id": courierID,
+			"error":      err,
+		}).Errorf("get courier by id")
+		return nil, err
 	}
 
 	return &model.Courier{

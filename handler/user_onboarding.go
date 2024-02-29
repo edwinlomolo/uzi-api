@@ -2,7 +2,6 @@ package handler
 
 import (
 	"encoding/json"
-	"fmt"
 	"io"
 	"net/http"
 
@@ -21,16 +20,14 @@ func UserOnboarding() http.HandlerFunc {
 
 		body, bodyErr := io.ReadAll(r.Body)
 		if bodyErr != nil {
-			uziErr := fmt.Errorf("%s:%v", "reading body", bodyErr)
-			logger.Errorf(uziErr.Error())
-			http.Error(w, uziErr.Error(), http.StatusBadRequest)
+			logger.WithError(bodyErr).Errorf("reading req body")
+			http.Error(w, bodyErr.Error(), http.StatusBadRequest)
 			return
 		}
 
 		if err := json.Unmarshal(body, &bodyReq); err != nil {
-			uziErr := fmt.Errorf("%s:%v", "unmarshalbody", err)
-			logger.Errorf(uziErr.Error())
-			http.Error(w, uziErr.Error(), http.StatusInternalServerError)
+			logger.WithError(err).Errorf("unmarshal body req")
+			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
 
@@ -47,9 +44,8 @@ func UserOnboarding() http.HandlerFunc {
 
 		res, resErr := json.Marshal(session)
 		if resErr != nil {
-			uziErr := fmt.Errorf("%s:%v", "session marshal", resErr)
-			logger.Errorf(uziErr.Error())
-			http.Error(w, uziErr.Error(), http.StatusInternalServerError)
+			logger.WithError(resErr).Errorf("marshal session res")
+			http.Error(w, resErr.Error(), http.StatusInternalServerError)
 			return
 		}
 

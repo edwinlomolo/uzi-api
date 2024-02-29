@@ -32,7 +32,6 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/gorilla/websocket"
 	"github.com/rs/cors"
-	"github.com/sirupsen/logrus"
 )
 
 // TODO probably setup server client and user factory paradigm
@@ -51,7 +50,7 @@ func main() {
 	config.LoadConfig()
 	logger.NewLogger()
 	store.InitializeStorage()
-	cache.NewCache(config.Config.Database.Redis, logger.Logger)
+	cache.NewCache()
 	ipinfo.NewIpinfoService()
 	jwt.NewJwtService()
 	user.NewUserService()
@@ -97,5 +96,5 @@ func main() {
 	}
 
 	// Run server TODO refactor this to one setup func to start server
-	logrus.Fatal(s.ListenAndServe())
+	logger.Logger.Fatal(s.ListenAndServe())
 }

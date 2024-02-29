@@ -25,9 +25,9 @@ type UploadService interface {
 }
 
 type uploadClient struct {
-	s3     aws.Aws
-	logger *logrus.Logger
-	store  *sqlStore.Queries
+	s3    aws.Aws
+	log   *logrus.Logger
+	store *sqlStore.Queries
 }
 
 func NewUploadService() {
@@ -70,16 +70,22 @@ func (u *uploadClient) createCourierUpload(reason, uri string, id uuid.UUID) err
 
 		_, createErr := u.store.CreateCourierUpload(context.Background(), createArgs)
 		if createErr != nil {
-			uziErr := fmt.Errorf("%s:%v", "courier upload", createErr)
-			u.logger.Errorf(uziErr.Error())
-			return uziErr
+			u.log.WithFields(logrus.Fields{
+				"error":      createErr,
+				"type":       createArgs.Type,
+				"courier_id": createArgs.CourierID.UUID,
+			}).Errorf("create courier upload")
+			return createErr
 		}
 
 		return nil
 	} else if getErr != nil {
-		uziErr := fmt.Errorf("%s:%v", "courier upload", getErr)
-		u.logger.Errorf(uziErr.Error())
-		return uziErr
+		u.log.WithFields(logrus.Fields{
+			"error":      getErr,
+			"courier_id": courierArgs.CourierID.UUID,
+			"type":       courierArgs.Type,
+		}).Errorf("get courier upload")
+		return getErr
 	}
 
 	return u.updateUploadUri(courierUpload.Uri, courierUpload.ID)
@@ -101,9 +107,11 @@ func (u *uploadClient) updateUploadUri(uri string, ID uuid.UUID) error {
 	if _, updateErr := u.store.UpdateUpload(
 		context.Background(),
 		updateParams); updateErr != nil {
-		uziErr := fmt.Errorf("%s:%v", "update upload", updateErr)
-		u.logger.Errorf(uziErr.Error())
-		return uziErr
+		u.log.WithFields(logrus.Fields{
+			"error":     updateErr,
+			"upload_id": ID,
+		}).Errorf("update upload")
+		return updateErr
 	}
 
 	return nil
@@ -120,19 +128,20 @@ func (u *uploadClient) updateUploadVerificationStatus(
 			Valid:  true,
 		},
 	}
-	if _, updateErr := u.store.UpdateUpload(
-		context.Background(),
-		args); updateErr != nil {
-		err := fmt.Errorf("%s:%v", "upload verification", updateErr)
-		u.logger.Errorf(err.Error())
-		return err
+	if _, updateErr := u.store.UpdateUpload(context.Background(), args); updateErr != nil {
+		u.log.WithFields(logrus.Fields{
+			"error":     updateErr,
+			"upload_id": id,
+			"status":    status.String(),
+		}).Errorf("update upload verification status")
+		return updateErr
 	}
 
 	return nil
 }
 
 func (u *uploadClient) createUserUpload(reason, uri string, ID uuid.UUID) error {
-	createParams := sqlStore.GetUserUploadParams{
+	getParams := sqlStore.GetUserUploadParams{
 		Type: reason,
 		UserID: uuid.NullUUID{
 			UUID:  ID,
@@ -140,7 +149,7 @@ func (u *uploadClient) createUserUpload(reason, uri string, ID uuid.UUID) error 
 		},
 	}
 
-	foundUpload, foundErr := u.store.GetUserUpload(context.Background(), createParams)
+	foundUpload, foundErr := u.store.GetUserUpload(context.Background(), getParams)
 	if foundErr == sql.ErrNoRows {
 		createParams := sqlStore.CreateUserUploadParams{
 			Type: reason,
@@ -152,13 +161,20 @@ func (u *uploadClient) createUserUpload(reason, uri string, ID uuid.UUID) error 
 		}
 		_, createErr := u.store.CreateUserUpload(context.Background(), createParams)
 		if createErr != nil {
-			uziErr := fmt.Errorf("%s:%v", "user upload", createErr)
-			u.logger.Errorf(uziErr.Error())
-			return uziErr
+			u.log.WithFields(logrus.Fields{
+				"error":   createErr,
+				"type":    createParams.Type,
+				"user_id": createParams.UserID.UUID,
+			}).Errorf("create user upload")
+			return createErr
 		}
 	} else if foundErr != nil {
 		uziErr := fmt.Errorf("%s:%v", "user upload", foundErr)
-		u.logger.Errorf(uziErr.Error())
+		u.log.WithFields(logrus.Fields{
+			"error":   foundErr,
+			"type":    getParams.Type,
+			"user_id": getParams.UserID.UUID,
+		}).Errorf("found user upload")
 		return uziErr
 	}
 
@@ -173,9 +189,11 @@ func (u *uploadClient) GetCourierUploads(
 	args := uuid.NullUUID{UUID: courierID, Valid: true}
 	uplds, uploadsErr := u.store.GetCourierUploads(context.Background(), args)
 	if uploadsErr != nil {
-		uziErr := fmt.Errorf("%s:%v", "courier uploads", uploadsErr)
-		u.logger.Errorf(uziErr.Error())
-		return nil, uziErr
+		u.log.WithFields(logrus.Fields{
+			"error":      uploadsErr,
+			"courier_id": courierID,
+		}).Errorf("get courier uploads")
+		return nil, uploadsErr
 	}
 
 	for _, i := range uplds {

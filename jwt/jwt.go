@@ -2,7 +2,6 @@ package jwt
 
 import (
 	"errors"
-	"fmt"
 
 	"github.com/edwinlomolo/uzi-api/config"
 	"github.com/edwinlomolo/uzi-api/logger"
@@ -21,7 +20,7 @@ type JwtService interface {
 }
 
 type jwtClient struct {
-	logger *logrus.Logger
+	log    *logrus.Logger
 	secret string
 }
 
@@ -38,9 +37,11 @@ func (jwtc *jwtClient) Sign(
 		claims,
 	).SignedString(secret)
 	if signJwtErr != nil {
-		uziErr := fmt.Errorf("%s:%v", "sign jwt", signJwtErr.Error())
-		jwtc.logger.Errorf(uziErr.Error())
-		return "", uziErr
+		jwtc.log.WithFields(logrus.Fields{
+			"claims": claims,
+			"error":  signJwtErr,
+		}).Errorf("sign jwt")
+		return "", signJwtErr
 	}
 
 	return token, nil
@@ -51,7 +52,9 @@ func (jwtc *jwtClient) Validate(
 ) (*jsonwebtoken.Token, error) {
 	keyFunc := func(tkn *jsonwebtoken.Token) (interface{}, error) {
 		if _, ok := tkn.Method.(*jsonwebtoken.SigningMethodHMAC); !ok {
-			jwtc.logger.Errorf(ErrInvalidAlgorithm.Error())
+			jwtc.log.WithFields(logrus.Fields{
+				"jwt": jwt,
+			}).Errorf(ErrInvalidAlgorithm.Error())
 			return nil, ErrInvalidAlgorithm
 		}
 
@@ -60,9 +63,10 @@ func (jwtc *jwtClient) Validate(
 
 	token, tokenErr := jsonwebtoken.ParseWithClaims(jwt, &Payload{}, keyFunc)
 	if tokenErr != nil {
-		uziErr := fmt.Errorf("%s:%v", "parse claims", tokenErr.Error())
-		jwtc.logger.Errorf(uziErr.Error())
-		return nil, uziErr
+		jwtc.log.WithFields(logrus.Fields{
+			"error": tokenErr,
+		}).Errorf("parse token claims")
+		return nil, tokenErr
 	}
 
 	return token, nil

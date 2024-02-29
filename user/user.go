@@ -36,9 +36,9 @@ type SigninInput struct {
 }
 
 type userClient struct {
-	store  *sqlStore.Queries
-	logger *logrus.Logger
-	ctx    context.Context
+	store *sqlStore.Queries
+	log   *logrus.Logger
+	ctx   context.Context
 }
 
 func NewUserService() {
@@ -70,9 +70,11 @@ func (u *userClient) createUser(user SigninInput) (*model.User, error) {
 			Phone:     user.Phone,
 		})
 	if newUserErr != nil {
-		err := fmt.Errorf("%s:%v", "create user", newUserErr)
-		u.logger.Errorf(err.Error())
-		return nil, err
+		u.log.WithFields(logrus.Fields{
+			"error": newUserErr,
+			"user":  user,
+		}).Errorf("create new user")
+		return nil, newUserErr
 	}
 
 	if user.Courier {
@@ -94,9 +96,11 @@ func (u *userClient) getUser(phone string) (*model.User, error) {
 	if getErr == sql.ErrNoRows {
 		return nil, nil
 	} else if getErr != nil {
-		err := fmt.Errorf("%s:%v", "get user", getErr)
-		u.logger.Errorf(err.Error())
-		return nil, err
+		u.log.WithFields(logrus.Fields{
+			"error": getErr,
+			"phone": phone,
+		}).Errorf("get user by phone")
+		return nil, getErr
 	}
 
 	return &model.User{
@@ -114,13 +118,17 @@ func (u *userClient) GetUserByPhone(phone string) (*model.User, error) {
 func (u *userClient) findUserByID(id uuid.UUID) (*model.User, error) {
 	foundUser, getErr := u.store.FindUserByID(context.Background(), id)
 	if getErr == sql.ErrNoRows {
-		err := fmt.Errorf("%s:%v", "not found", userNotFound)
-		u.logger.Errorf(err.Error())
-		return nil, err
+		u.log.WithFields(logrus.Fields{
+			"user_id": id,
+			"error":   userNotFound.Error(),
+		}).Errorf(userNotFound.Error())
+		return nil, userNotFound
 	} else if getErr != nil {
-		err := fmt.Errorf("%s:%v", "get user", getErr)
-		u.logger.Errorf(err.Error())
-		return nil, err
+		u.log.WithFields(logrus.Fields{
+			"error":   getErr,
+			"user_id": id,
+		}).Errorf("get user by id")
+		return nil, getErr
 	}
 
 	return &model.User{
@@ -138,7 +146,7 @@ func (u *userClient) FindUserByID(id uuid.UUID) (*model.User, error) {
 func (u *userClient) OnboardUser(user SigninInput) (*model.User, error) {
 	if len(user.FirstName) == 0 || len(user.LastName) == 0 {
 		inputErr := fmt.Errorf("%s:%v", "invalid inputs", noEmptyName)
-		u.logger.Errorf(inputErr.Error())
+		u.log.Errorf(inputErr.Error())
 		return nil, inputErr
 	}
 
@@ -151,7 +159,7 @@ func (u *userClient) OnboardUser(user SigninInput) (*model.User, error) {
 		})
 	if onboardErr != nil {
 		err := fmt.Errorf("%s:%v", "update user", onboardErr)
-		u.logger.Errorf(err.Error())
+		u.log.Errorf(err.Error())
 		return nil, err
 	}
 
@@ -162,7 +170,10 @@ func (u *userClient) OnboardUser(user SigninInput) (*model.User, error) {
 			Onboarding: false,
 		}); err != nil {
 		onboardingErr := fmt.Errorf("%s:%v", "user onboarding", err)
-		u.logger.Errorf(onboardingErr.Error())
+		u.log.WithFields(logrus.Fields{
+			"error": err,
+			"phone": user.Phone,
+		}).Errorf("set user onboarding status")
 		return nil, onboardingErr
 	}
 

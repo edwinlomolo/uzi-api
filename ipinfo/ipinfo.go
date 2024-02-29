@@ -3,7 +3,6 @@ package ipinfo
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"net"
 	"time"
 
@@ -26,7 +25,7 @@ type IpInfoService interface {
 
 type ipinfoClient struct {
 	config config.Ipinfo
-	logger *logrus.Logger
+	log    *logrus.Logger
 	client *ipinfo.Client
 }
 
@@ -52,17 +51,19 @@ func (ipc *ipinfoClient) GetIpinfo(
 ) (*ipinfo.Core, error) {
 	info, err := ipc.client.GetIPInfo(net.ParseIP(ip))
 	if err != nil {
-		ipErr := fmt.Errorf("%s:%v", "ipinfo", err)
-		ipc.logger.Errorf(ipErr.Error())
-		return nil, ipErr
+		ipc.log.WithFields(logrus.Fields{
+			"ip":    ip,
+			"error": err,
+		}).Errorf("get ip info")
+		return nil, err
 	}
 
 	return info, nil
 }
 
 type ipinfoCache struct {
-	logger *logrus.Logger
-	redis  *redis.Client
+	log   *logrus.Logger
+	redis *redis.Client
 }
 
 func (ipc *ipinfoCache) Get(
@@ -75,9 +76,11 @@ func (ipc *ipinfoCache) Get(
 		key,
 	).Result()
 	if err != redis.Nil && err != nil {
-		uziErr := fmt.Errorf("%s:%v", "ipinfo cache", err)
-		ipc.logger.Errorf(uziErr.Error())
-		return nil, uziErr
+		ipc.log.WithFields(logrus.Fields{
+			"key":   key,
+			"error": err,
+		}).Errorf("get: ipinfo cache value")
+		return nil, err
 	}
 
 	if err := json.Unmarshal(
@@ -104,9 +107,12 @@ func (ipc *ipinfoCache) Set(
 		key,
 		data,
 		time.Hour*24).Err(); err != nil {
-		uziErr := fmt.Errorf("%s:%v", "ipinfo cache", err.Error())
-		ipc.logger.Errorf(uziErr.Error())
-		return uziErr
+		ipc.log.WithFields(logrus.Fields{
+			"key":   key,
+			"value": value,
+			"error": err,
+		}).Errorf("set: ipinfo cache value")
+		return err
 	}
 
 	return nil

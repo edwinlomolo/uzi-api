@@ -39,8 +39,8 @@ type nominatim interface {
 }
 
 type nominatimClient struct {
-	logger *logrus.Logger
-	cache  cache.Cache
+	log   *logrus.Logger
+	cache cache.Cache
 }
 
 func newNominatimService(cache cache.Cache) nominatim {
@@ -77,16 +77,17 @@ func (n nominatimClient) ReverseGeocode(
 
 	res, err := http.Get(url)
 	if err != nil {
-		uziErr := fmt.Errorf("%s:%v", "reverse geocode", err)
-		n.logger.Errorf(uziErr.Error())
-		return nil, uziErr
+		n.log.WithFields(logrus.Fields{
+			"error": err,
+			"cords": input,
+		}).Errorf("reverse geocode")
+		return nil, err
 	}
 	defer res.Body.Close()
 
 	if err := json.NewDecoder(res.Body).Decode(&nominatimRes); err != nil {
-		uziErr := fmt.Errorf("%s:%v", "unmarshal", err)
-		n.logger.Errorf(uziErr.Error())
-		return nil, uziErr
+		n.log.WithError(err).Errorf("unmarshal reverse geocode res")
+		return nil, err
 	}
 
 	geo.PlaceID = strconv.Itoa(nominatimRes.PlaceID)
@@ -98,14 +99,18 @@ func (n nominatimClient) ReverseGeocode(
 
 	lat, parseErr := strconv.ParseFloat(nominatimRes.Lat, 64)
 	if parseErr != nil {
-		uziErr := fmt.Errorf("%s:%v", "parse lat", parseErr)
-		n.logger.Errorf(uziErr.Error())
+		n.log.WithFields(logrus.Fields{
+			"error": parseErr,
+			"lat":   lat,
+		}).Errorf("parse latitude")
 		return nil, err
 	}
 	lng, parseErr := strconv.ParseFloat(nominatimRes.Lon, 64)
 	if parseErr != nil {
-		uziErr := fmt.Errorf("%s:%v", "parse lng", parseErr)
-		n.logger.Errorf(uziErr.Error())
+		n.log.WithFields(logrus.Fields{
+			"error":     parseErr,
+			"longitude": lng,
+		}).Errorf("parse longitude")
 		return nil, err
 	}
 

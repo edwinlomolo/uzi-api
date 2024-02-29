@@ -10,7 +10,6 @@ import (
 	"github.com/golang-migrate/migrate/v4"
 	"github.com/golang-migrate/migrate/v4/database/postgres"
 	_ "github.com/golang-migrate/migrate/v4/source/file"
-	"github.com/sirupsen/logrus"
 )
 
 var (
@@ -19,14 +18,10 @@ var (
 
 func InitializeStorage() error {
 	log := logger.Logger
-	configs := config.Config
-	rdbmsConfig := configs.Database.Rdbms
-	isDevelopment := config.IsDev()
-	forceMigrate := configs.Database.ForceMigration
 
-	db, err := sql.Open(rdbmsConfig.Env.Driver, rdbmsConfig.Uri)
+	db, err := sql.Open(config.Config.Database.Rdbms.Env.Driver, config.Config.Database.Rdbms.Uri)
 	if err != nil {
-		log.Errorf("%s:%v", "DatabaseError", err)
+		log.WithError(err).Errorf("open database connection")
 		return err
 	}
 
@@ -36,7 +31,7 @@ func InitializeStorage() error {
 	db.Exec("CREATE EXTENSION IF NOT EXISTS postgis_topology; --OPTIONAL")
 
 	if err := db.Ping(); err != nil {
-		log.Errorf("%s:%v", "DatabasePingError", err.Error())
+		log.WithError(err).Errorf("ping database connection")
 		return err
 	} else if err == nil {
 		log.Infoln("Database connection...OK")
@@ -45,12 +40,7 @@ func InitializeStorage() error {
 	DB = sqlStore.New(db)
 
 	// Setup database schema
-	if err := runDatabaseMigration(
-		db,
-		log,
-		isDevelopment,
-		rdbmsConfig.MigrationUrl,
-		forceMigrate); err == nil {
+	if err := runDatabaseMigration(db); err == nil {
 		log.Infoln("Database migration...DONE")
 	}
 
@@ -58,35 +48,28 @@ func InitializeStorage() error {
 }
 
 // runDbMigration - setup database tables
-func runDatabaseMigration(
-	db *sql.DB,
-	logger *logrus.Logger,
-	isDevelopment bool,
-	migrationUrl string,
-	forceMigrate bool,
-) error {
-	migrationErr := "DatabaseMigrationErr"
-
+func runDatabaseMigration(db *sql.DB) error {
+	log := logger.Logger
 	driver, err := postgres.WithInstance(db, &postgres.Config{})
 	if err != nil {
-		logger.Errorf("%s: %s", migrationErr, err)
+		log.WithError(err).Errorf("migration driver")
 		return err
 	}
 
-	m, err := migrate.NewWithDatabaseInstance(migrationUrl, "postgres", driver)
+	m, err := migrate.NewWithDatabaseInstance(config.Config.Database.Rdbms.MigrationUrl, "postgres", driver)
 	if err != nil {
-		logger.Errorf("%s: %s", migrationErr, err)
+		log.WithError(err).Errorf("new migrate instance")
 		return err
 	}
 
-	if forceMigrate {
+	if config.Config.Database.Rdbms.ForceMigrate {
 		if err := m.Down(); err != nil && err != migrate.ErrNoChange {
-			logger.Errorf("%s:%v", "ResetMigration", err)
+			log.WithError(err).Errorf("reset migration tables")
 		}
 	}
 
 	if err := m.Up(); err != nil && err != migrate.ErrNoChange {
-		logger.Errorf("%s: %s", migrationErr, err)
+		log.WithError(err).Errorf("setup database schema")
 		return err
 	}
 

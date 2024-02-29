@@ -2,7 +2,6 @@ package handler
 
 import (
 	"encoding/json"
-	"fmt"
 	"net/http"
 
 	"github.com/edwinlomolo/uzi-api/aws"
@@ -17,17 +16,15 @@ func UploadDocument() http.HandlerFunc {
 
 		err := r.ParseMultipartForm(maxSize)
 		if err != nil {
-			uziErr := fmt.Errorf("%s:%v", "parsing form multipart", err)
-			logger.Errorf(uziErr.Error())
-			http.Error(w, uziErr.Error(), http.StatusBadRequest)
+			logger.WithError(err).Errorf("parse multipart form")
+			http.Error(w, err.Error(), http.StatusBadRequest)
 			return
 		}
 
 		file, fileHeader, err := r.FormFile("file")
 		if err != nil {
-			uziErr := fmt.Errorf("%s:%v", "reading form file", err)
-			logger.Errorf(uziErr.Error())
-			http.Error(w, uziErr.Error(), http.StatusBadRequest)
+			logger.WithError(err).Errorf("reading req form file value")
+			http.Error(w, err.Error(), http.StatusBadRequest)
 			return
 		}
 		defer file.Close()
@@ -42,9 +39,8 @@ func UploadDocument() http.HandlerFunc {
 			ImageUri string `json:"imageUri"`
 		}{ImageUri: imageUri})
 		if marshalErr != nil {
-			uziErr := fmt.Errorf("%s:%v", "marshal upload res", marshalErr)
-			logger.Errorf(uziErr.Error())
-			http.Error(w, uziErr.Error(), http.StatusInternalServerError)
+			logger.WithError(marshalErr).Errorf("marshal upload res")
+			http.Error(w, marshalErr.Error(), http.StatusInternalServerError)
 			return
 		}
 
