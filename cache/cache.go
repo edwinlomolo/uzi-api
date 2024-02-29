@@ -29,7 +29,7 @@ func NewCache() {
 	log := logger.Logger
 	opts, err := redis.ParseURL(config.Config.Database.Redis.Url)
 	if err != nil {
-		log.Errorf("%s-%v", "new cache", err.Error())
+		log.WithError(err).Errorf("new cache client")
 	} else {
 		log.Infoln("Redis cache...OK")
 	}
