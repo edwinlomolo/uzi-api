@@ -12,7 +12,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/feature/s3/manager"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"github.com/edwinlomolo/uzi-api/config"
-	"github.com/edwinlomolo/uzi-api/internal/logger"
+	"github.com/edwinlomolo/uzi-api/logger"
 	"github.com/sirupsen/logrus"
 )
 

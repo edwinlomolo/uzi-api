@@ -1,4 +1,4 @@
-package route
+package routing
 
 type routepoint struct {
 	Location latlng `json:"latLng"`

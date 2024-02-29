@@ -2,14 +2,15 @@ package location
 
 import (
 	"context"
+	"encoding/base64"
+	"encoding/json"
 	"fmt"
 	"time"
 
+	"github.com/edwinlomolo/uzi-api/cache"
 	"github.com/edwinlomolo/uzi-api/config"
 	"github.com/edwinlomolo/uzi-api/gql/model"
-	"github.com/edwinlomolo/uzi-api/internal/cache"
-	"github.com/edwinlomolo/uzi-api/internal/logger"
-	"github.com/edwinlomolo/uzi-api/internal/util"
+	"github.com/edwinlomolo/uzi-api/logger"
 	"github.com/sirupsen/logrus"
 	"googlemaps.github.io/maps"
 )
@@ -20,10 +21,16 @@ const (
 
 var Location LocationService
 
+type point struct {
+	Type        string    `json:"type"`
+	Coordinates []float64 `json:"coordinates"`
+}
+
 type LocationService interface {
 	GeocodeLatLng(input model.GpsInput) (*Geocode, error)
 	AutocompletePlace(query string) ([]*model.Place, error)
 	GetPlaceDetails(placeID string) (*Geocode, error)
+	ParsePostgisLocation(point interface{}) *model.Gps
 }
 
 type Geocode struct {
@@ -73,7 +80,7 @@ func (l *locationClient) AutocompletePlace(
 	searchQuery string,
 ) ([]*model.Place, error) {
 	var pls []*model.Place
-	cacheKey := util.Base64Key(searchQuery)
+	cacheKey := base64Key(searchQuery)
 	placesCache, placesCacheErr := l.cache.Get(context.Background(), cacheKey, &[]*model.Place{})
 	if placesCacheErr != nil {
 		return nil, placesCacheErr
@@ -124,7 +131,7 @@ func (l *locationClient) GeocodeLatLng(
 	input model.GpsInput,
 ) (*Geocode, error) {
 	var geo *Geocode
-	cacheKey := util.FloatToString(input.Lat) + util.FloatToString(input.Lng)
+	cacheKey := base64Key(input)
 
 	geocodeCache, geocodeCacheErr := l.cache.Get(context.Background(), cacheKey, geo)
 	if geocodeCacheErr != nil {
@@ -180,4 +187,31 @@ func (l *locationClient) GetPlaceDetails(
 	<-done
 
 	return placeDetails, nil
+}
+
+func base64Key(key interface{}) string {
+	keyString, err := json.Marshal(key)
+	if err != nil {
+		panic(err)
+	}
+	encoded := base64.StdEncoding.EncodeToString([]byte(keyString))
+
+	return encoded
+}
+
+func (l *locationClient) ParsePostgisLocation(p interface{}) *model.Gps {
+	var location *point
+
+	if p != nil {
+		json.Unmarshal([]byte((p).(string)), &location)
+
+		lat := &location.Coordinates[1]
+		lng := &location.Coordinates[0]
+		return &model.Gps{
+			Lat: *lat,
+			Lng: *lng,
+		}
+	} else {
+		return nil
+	}
 }

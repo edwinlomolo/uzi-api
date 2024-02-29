@@ -5,7 +5,7 @@ import (
 	"fmt"
 
 	"github.com/edwinlomolo/uzi-api/config"
-	"github.com/edwinlomolo/uzi-api/internal/logger"
+	"github.com/edwinlomolo/uzi-api/logger"
 	sqlStore "github.com/edwinlomolo/uzi-api/store/sqlc"
 	"github.com/golang-migrate/migrate/v4"
 	"github.com/golang-migrate/migrate/v4/database/postgres"
@@ -51,7 +51,7 @@ func InitializeStorage() error {
 		isDevelopment,
 		rdbmsConfig.MigrationUrl,
 		forceMigrate); err == nil {
-		log.Infoln("Database migration...OK")
+		log.Infoln("Database migration...DONE")
 	}
 
 	return nil

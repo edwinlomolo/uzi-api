@@ -1,9 +1,10 @@
-package route
+package routing
 
 import (
 	"bytes"
 	"context"
 	"database/sql"
+	"encoding/base64"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -11,13 +12,12 @@ import (
 	"sync"
 	"time"
 
+	"github.com/edwinlomolo/uzi-api/cache"
 	"github.com/edwinlomolo/uzi-api/config"
 	"github.com/edwinlomolo/uzi-api/gql/model"
-	"github.com/edwinlomolo/uzi-api/internal/cache"
-	"github.com/edwinlomolo/uzi-api/internal/logger"
-	"github.com/edwinlomolo/uzi-api/internal/pricer"
-	"github.com/edwinlomolo/uzi-api/internal/util"
-	"github.com/edwinlomolo/uzi-api/services/location"
+	"github.com/edwinlomolo/uzi-api/location"
+	"github.com/edwinlomolo/uzi-api/logger"
+	"github.com/edwinlomolo/uzi-api/pricer"
 	"github.com/edwinlomolo/uzi-api/store"
 	sqlStore "github.com/edwinlomolo/uzi-api/store/sqlc"
 	"github.com/redis/go-redis/v9"
@@ -127,7 +127,7 @@ func (r *routeClient) computeRoute(
 		},
 	)
 
-	cacheKey := util.Base64Key(routeParams)
+	cacheKey := base64Key(routeParams)
 
 	tripInfo, tripInfoErr := r.cache.Get(context.Background(), cacheKey, tripRoute)
 	if tripInfoErr != nil {
@@ -291,4 +291,14 @@ func (r *routeClient) GetNearbyAvailableProducts(
 	}
 
 	return nearbyProducts, nil
+}
+
+func base64Key(key interface{}) string {
+	keyString, err := json.Marshal(key)
+	if err != nil {
+		panic(err)
+	}
+	encoded := base64.StdEncoding.EncodeToString([]byte(keyString))
+
+	return encoded
 }

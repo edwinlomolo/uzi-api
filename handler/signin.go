@@ -6,9 +6,9 @@ import (
 	"io"
 	"net/http"
 
-	"github.com/edwinlomolo/uzi-api/internal/logger"
-	"github.com/edwinlomolo/uzi-api/services/session"
-	"github.com/edwinlomolo/uzi-api/services/user"
+	"github.com/edwinlomolo/uzi-api/logger"
+	"github.com/edwinlomolo/uzi-api/session"
+	"github.com/edwinlomolo/uzi-api/user"
 )
 
 func Signin() http.HandlerFunc {

@@ -10,25 +10,25 @@ import (
 	"github.com/99designs/gqlgen/graphql/handler/lru"
 	"github.com/99designs/gqlgen/graphql/handler/transport"
 	"github.com/99designs/gqlgen/graphql/playground"
+	"github.com/edwinlomolo/uzi-api/aws"
+	"github.com/edwinlomolo/uzi-api/cache"
 	"github.com/edwinlomolo/uzi-api/config"
+	"github.com/edwinlomolo/uzi-api/courier"
 	"github.com/edwinlomolo/uzi-api/gql"
 	"github.com/edwinlomolo/uzi-api/gql/resolvers"
 	"github.com/edwinlomolo/uzi-api/handler"
-	"github.com/edwinlomolo/uzi-api/internal/aws"
-	"github.com/edwinlomolo/uzi-api/internal/cache"
-	"github.com/edwinlomolo/uzi-api/internal/jwt"
-	"github.com/edwinlomolo/uzi-api/internal/logger"
-	"github.com/edwinlomolo/uzi-api/internal/middleware"
-	"github.com/edwinlomolo/uzi-api/internal/pricer"
-	"github.com/edwinlomolo/uzi-api/internal/route"
-	"github.com/edwinlomolo/uzi-api/services/courier"
-	"github.com/edwinlomolo/uzi-api/services/ipinfo"
-	"github.com/edwinlomolo/uzi-api/services/location"
-	"github.com/edwinlomolo/uzi-api/services/session"
-	"github.com/edwinlomolo/uzi-api/services/trip"
-	"github.com/edwinlomolo/uzi-api/services/upload"
-	"github.com/edwinlomolo/uzi-api/services/user"
+	"github.com/edwinlomolo/uzi-api/ipinfo"
+	"github.com/edwinlomolo/uzi-api/jwt"
+	"github.com/edwinlomolo/uzi-api/location"
+	"github.com/edwinlomolo/uzi-api/logger"
+	"github.com/edwinlomolo/uzi-api/middleware"
+	"github.com/edwinlomolo/uzi-api/pricer"
+	"github.com/edwinlomolo/uzi-api/routing"
+	"github.com/edwinlomolo/uzi-api/session"
 	"github.com/edwinlomolo/uzi-api/store"
+	"github.com/edwinlomolo/uzi-api/trip"
+	"github.com/edwinlomolo/uzi-api/upload"
+	"github.com/edwinlomolo/uzi-api/user"
 	"github.com/go-chi/chi/v5"
 	"github.com/gorilla/websocket"
 	"github.com/rs/cors"
@@ -60,7 +60,7 @@ func main() {
 	aws.NewAwsS3Service()
 	upload.NewUploadService()
 	location.NewLocationService()
-	route.NewRouteService()
+	routing.NewRouteService()
 	trip.NewTripService()
 	pricer.NewPricer()
 

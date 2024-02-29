@@ -5,7 +5,7 @@ import (
 	"fmt"
 
 	"github.com/edwinlomolo/uzi-api/config"
-	"github.com/edwinlomolo/uzi-api/internal/logger"
+	"github.com/edwinlomolo/uzi-api/logger"
 	jsonwebtoken "github.com/golang-jwt/jwt/v5"
 	"github.com/sirupsen/logrus"
 )

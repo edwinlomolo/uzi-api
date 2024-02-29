@@ -9,13 +9,13 @@ import (
 	"sync"
 	"time"
 
+	"github.com/edwinlomolo/uzi-api/cache"
 	"github.com/edwinlomolo/uzi-api/constants"
 	"github.com/edwinlomolo/uzi-api/gql/model"
-	"github.com/edwinlomolo/uzi-api/internal/cache"
-	"github.com/edwinlomolo/uzi-api/internal/logger"
-	"github.com/edwinlomolo/uzi-api/internal/pricer"
-	"github.com/edwinlomolo/uzi-api/internal/route"
-	"github.com/edwinlomolo/uzi-api/internal/util"
+	l "github.com/edwinlomolo/uzi-api/location"
+	"github.com/edwinlomolo/uzi-api/logger"
+	"github.com/edwinlomolo/uzi-api/pricer"
+	"github.com/edwinlomolo/uzi-api/routing"
 	"github.com/edwinlomolo/uzi-api/store"
 	sqlStore "github.com/edwinlomolo/uzi-api/store/sqlc"
 	"github.com/google/uuid"
@@ -31,6 +31,7 @@ const (
 var (
 	ErrCourierAlreadyAssigned = errors.New("courier has active trip")
 	ErrCourierTripNotFound    = errors.New("courier trip not found")
+	location                  l.LocationService
 )
 
 type TripService interface {
@@ -61,6 +62,7 @@ type tripClient struct {
 var Trip TripService
 
 func NewTripService() {
+	location = l.Location
 	Trip = &tripClient{
 		cache.Redis,
 		logger.Logger,
@@ -91,7 +93,7 @@ func (t *tripClient) FindAvailableCourier(pickup model.GpsInput) (*model.Courier
 		ID:        c.ID,
 		UserID:    c.UserID.UUID,
 		ProductID: c.ProductID.UUID,
-		Location:  util.ParsePostgisLocation(c.Location),
+		Location:  location.ParsePostgisLocation(c.Location),
 	}, nil
 }
 
@@ -252,7 +254,7 @@ func (t *tripClient) GetCourierNearPickupPoint(
 		courier := &model.Courier{
 			ID:        item.ID,
 			ProductID: item.ProductID.UUID,
-			Location:  util.ParsePostgisLocation(item.Location),
+			Location:  location.ParsePostgisLocation(item.Location),
 		}
 
 		couriers = append(couriers, courier)
@@ -278,7 +280,7 @@ func (t *tripClient) GetCourierAssignedTrip(courierID uuid.UUID) error {
 }
 
 func (t *tripClient) MatchCourier(tripID uuid.UUID, pickup model.TripInput) {
-	pkp, parseErr := route.Routing.ParsePickupDropoff(pickup)
+	pkp, parseErr := routing.Routing.ParsePickupDropoff(pickup)
 	if parseErr != nil {
 		t.logger.Fatalln(parseErr)
 	}
@@ -409,7 +411,7 @@ func (t *tripClient) GetTrip(tripID uuid.UUID) (*model.Trip, error) {
 		Status:      model.TripStatus(trip.Status),
 		CourierID:   &trip.CourierID.UUID,
 		Cost:        int(trip.Cost.Int32),
-		EndLocation: util.ParsePostgisLocation(trip.EndLocation),
+		EndLocation: location.ParsePostgisLocation(trip.EndLocation),
 	}
 
 	// Return trip route also
@@ -426,14 +428,14 @@ func (t *tripClient) GetTrip(tripID uuid.UUID) (*model.Trip, error) {
 			}
 
 			pickup.Location = &model.GpsInput{
-				Lat: util.ParsePostgisLocation(courierGps).Lat,
-				Lng: util.ParsePostgisLocation(courierGps).Lng,
+				Lat: location.ParsePostgisLocation(courierGps).Lat,
+				Lng: location.ParsePostgisLocation(courierGps).Lng,
 			}
 			dropoff.Location = &model.GpsInput{
-				Lat: util.ParsePostgisLocation(trip.ConfirmedPickup).Lat,
-				Lng: util.ParsePostgisLocation(trip.ConfirmedPickup).Lng,
+				Lat: location.ParsePostgisLocation(trip.ConfirmedPickup).Lat,
+				Lng: location.ParsePostgisLocation(trip.ConfirmedPickup).Lng,
 			}
-			tripRoute, err := route.Routing.ComputeTripRoute(model.TripRouteInput{Pickup: &pickup, Dropoff: &dropoff})
+			tripRoute, err := routing.Routing.ComputeTripRoute(model.TripRouteInput{Pickup: &pickup, Dropoff: &dropoff})
 			if err != nil {
 				return nil, err
 			}
@@ -445,14 +447,14 @@ func (t *tripClient) GetTrip(tripID uuid.UUID) (*model.Trip, error) {
 			trp.Cost = cost
 		case model.TripStatusCourierEnRoute:
 			pickup.Location = &model.GpsInput{
-				Lat: util.ParsePostgisLocation(trip.ConfirmedPickup).Lat,
-				Lng: util.ParsePostgisLocation(trip.ConfirmedPickup).Lng,
+				Lat: location.ParsePostgisLocation(trip.ConfirmedPickup).Lat,
+				Lng: location.ParsePostgisLocation(trip.ConfirmedPickup).Lng,
 			}
 			dropoff.Location = &model.GpsInput{
 				Lat: trp.EndLocation.Lat,
 				Lng: trp.EndLocation.Lng,
 			}
-			tripRoute, err := route.Routing.ComputeTripRoute(model.TripRouteInput{Pickup: &pickup, Dropoff: &dropoff})
+			tripRoute, err := routing.Routing.ComputeTripRoute(model.TripRouteInput{Pickup: &pickup, Dropoff: &dropoff})
 			if err != nil {
 				return nil, err
 			}
@@ -550,7 +552,7 @@ func (t *tripClient) GetTripCourier(courierID uuid.UUID) (*model.Courier, error)
 		ID:       courier.ID,
 		TripID:   &courier.TripID.UUID,
 		UserID:   courier.UserID.UUID,
-		Location: util.ParsePostgisLocation(courier.Location),
+		Location: location.ParsePostgisLocation(courier.Location),
 	}, nil
 }
 

@@ -1,14 +1,14 @@
 package resolvers
 
 import (
+	"github.com/edwinlomolo/uzi-api/cache"
+	"github.com/edwinlomolo/uzi-api/courier"
 	"github.com/edwinlomolo/uzi-api/gql"
-	"github.com/edwinlomolo/uzi-api/internal/cache"
-	"github.com/edwinlomolo/uzi-api/internal/route"
-	"github.com/edwinlomolo/uzi-api/services/courier"
-	"github.com/edwinlomolo/uzi-api/services/location"
-	"github.com/edwinlomolo/uzi-api/services/trip"
-	"github.com/edwinlomolo/uzi-api/services/upload"
-	"github.com/edwinlomolo/uzi-api/services/user"
+	"github.com/edwinlomolo/uzi-api/location"
+	"github.com/edwinlomolo/uzi-api/routing"
+	"github.com/edwinlomolo/uzi-api/trip"
+	"github.com/edwinlomolo/uzi-api/upload"
+	"github.com/edwinlomolo/uzi-api/user"
 	"github.com/redis/go-redis/v9"
 )
 
@@ -22,7 +22,7 @@ type Resolver struct {
 	upload.UploadService
 	courier.CourierService
 	location.LocationService
-	routeService route.Route
+	routeService routing.Route
 	tripService  trip.TripService
 	redisClient  *redis.Client
 	userService  user.UserService
@@ -33,7 +33,7 @@ func New() gql.Config {
 		upload.Upload,
 		courier.Courier,
 		location.Location,
-		route.Routing,
+		routing.Routing,
 		trip.Trip,
 		cache.Redis,
 		user.User,

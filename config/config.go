@@ -4,8 +4,9 @@ import (
 	"os"
 	"strconv"
 	"strings"
+	"time"
 
-	"github.com/edwinlomolo/uzi-api/internal/util"
+	"github.com/edwinlomolo/uzi-api/logger"
 	"github.com/joho/godotenv"
 	"github.com/sirupsen/logrus"
 )
@@ -119,12 +120,12 @@ func jwtConfig() Jwt {
 
 	Env()
 
-	jwtExpires, err := util.ParseDuration(strings.TrimSpace(os.Getenv("JWTEXPIRE")))
+	duration, err := time.ParseDuration(strings.TrimSpace(os.Getenv("JWTEXPIRE")))
 	if err != nil {
-		panic(err)
+		logger.Logger.WithError(err).Errorf("jwt expire parsing")
 	}
 
-	jwtConfig.Expires = jwtExpires
+	jwtConfig.Expires = duration
 	jwtConfig.Secret = strings.TrimSpace(os.Getenv("JWTSECRET"))
 
 	return jwtConfig

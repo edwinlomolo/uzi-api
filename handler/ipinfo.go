@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/edwinlomolo/uzi-api/internal/logger"
-	"github.com/edwinlomolo/uzi-api/services/ipinfo"
+	"github.com/edwinlomolo/uzi-api/ipinfo"
+	"github.com/edwinlomolo/uzi-api/logger"
 )
 
 func Ipinfo() http.HandlerFunc {

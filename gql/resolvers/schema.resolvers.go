@@ -11,10 +11,10 @@ import (
 
 	"github.com/edwinlomolo/uzi-api/gql"
 	"github.com/edwinlomolo/uzi-api/gql/model"
-	"github.com/edwinlomolo/uzi-api/internal/logger"
-	"github.com/edwinlomolo/uzi-api/services/location"
-	t "github.com/edwinlomolo/uzi-api/services/trip"
+	"github.com/edwinlomolo/uzi-api/location"
+	"github.com/edwinlomolo/uzi-api/logger"
 	"github.com/edwinlomolo/uzi-api/store/sqlc"
+	t "github.com/edwinlomolo/uzi-api/trip"
 	"github.com/google/uuid"
 )
 

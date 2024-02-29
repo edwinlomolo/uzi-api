@@ -3,8 +3,8 @@ package resolvers
 import (
 	"context"
 
-	"github.com/edwinlomolo/uzi-api/internal/logger"
-	"github.com/edwinlomolo/uzi-api/services/courier"
+	"github.com/edwinlomolo/uzi-api/courier"
+	"github.com/edwinlomolo/uzi-api/logger"
 	"github.com/google/uuid"
 )
 

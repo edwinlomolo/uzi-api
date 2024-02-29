@@ -7,13 +7,13 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/edwinlomolo/uzi-api/cache"
 	"github.com/edwinlomolo/uzi-api/gql/model"
-	"github.com/edwinlomolo/uzi-api/internal/cache"
-	"github.com/edwinlomolo/uzi-api/internal/logger"
-	"github.com/edwinlomolo/uzi-api/internal/util"
-	"github.com/edwinlomolo/uzi-api/services/trip"
+	l "github.com/edwinlomolo/uzi-api/location"
+	"github.com/edwinlomolo/uzi-api/logger"
 	"github.com/edwinlomolo/uzi-api/store"
 	sqlStore "github.com/edwinlomolo/uzi-api/store/sqlc"
+	"github.com/edwinlomolo/uzi-api/trip"
 	"github.com/google/uuid"
 	"github.com/redis/go-redis/v9"
 	"github.com/sirupsen/logrus"
@@ -22,6 +22,7 @@ import (
 var (
 	ErrNoCourierErr = errors.New("no courier found")
 	Courier         CourierService
+	location        l.LocationService
 )
 
 type CourierService interface {
@@ -43,6 +44,7 @@ type courierClient struct {
 
 func NewCourierService() {
 	Courier = &courierClient{logger.Logger, store.DB, cache.Redis}
+	location = l.Location
 	logger.Logger.Infoln("Courier sevice...OK")
 }
 
@@ -141,7 +143,7 @@ func (c *courierClient) getCourierByUserID(
 		UserID:    foundCourier.UserID.UUID,
 		Avatar:    c.getAvatar(foundCourier.ID),
 		ProductID: foundCourier.ProductID.UUID,
-		Location:  util.ParsePostgisLocation(foundCourier.Location),
+		Location:  location.ParsePostgisLocation(foundCourier.Location),
 	}, nil
 }
 
@@ -297,7 +299,7 @@ func (c *courierClient) GetCourierByID(
 		TripID:    &courier.TripID.UUID,
 		UserID:    courier.UserID.UUID,
 		ProductID: courier.ProductID.UUID,
-		Location:  util.ParsePostgisLocation(courier.Location),
+		Location:  location.ParsePostgisLocation(courier.Location),
 		Avatar:    c.getAvatar(courierID),
 	}, nil
 }

@@ -17,7 +17,7 @@ import (
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/99designs/gqlgen/graphql/introspection"
 	"github.com/edwinlomolo/uzi-api/gql/model"
-	"github.com/edwinlomolo/uzi-api/services/location"
+	"github.com/edwinlomolo/uzi-api/location"
 	"github.com/google/uuid"
 	gqlparser "github.com/vektah/gqlparser/v2"
 	"github.com/vektah/gqlparser/v2/ast"
@@ -3433,7 +3433,7 @@ func (ec *executionContext) _Query_reverseGeocode(ctx context.Context, field gra
 	}
 	res := resTmp.(*location.Geocode)
 	fc.Result = res
-	return ec.marshalOGeocode2ᚖgithubᚗcomᚋedwinlomoloᚋuziᚑapiᚋservicesᚋlocationᚐGeocode(ctx, field.Selections, res)
+	return ec.marshalOGeocode2ᚖgithubᚗcomᚋedwinlomoloᚋuziᚑapiᚋlocationᚐGeocode(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Query_reverseGeocode(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -11129,7 +11129,7 @@ func (ec *executionContext) marshalOCourierStatus2ᚖgithubᚗcomᚋedwinlomolo�
 	return v
 }
 
-func (ec *executionContext) marshalOGeocode2ᚖgithubᚗcomᚋedwinlomoloᚋuziᚑapiᚋservicesᚋlocationᚐGeocode(ctx context.Context, sel ast.SelectionSet, v *location.Geocode) graphql.Marshaler {
+func (ec *executionContext) marshalOGeocode2ᚖgithubᚗcomᚋedwinlomoloᚋuziᚑapiᚋlocationᚐGeocode(ctx context.Context, sel ast.SelectionSet, v *location.Geocode) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}

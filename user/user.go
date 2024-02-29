@@ -6,9 +6,9 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/edwinlomolo/uzi-api/courier"
 	"github.com/edwinlomolo/uzi-api/gql/model"
-	"github.com/edwinlomolo/uzi-api/internal/logger"
-	"github.com/edwinlomolo/uzi-api/services/courier"
+	"github.com/edwinlomolo/uzi-api/logger"
 	"github.com/edwinlomolo/uzi-api/store"
 	sqlStore "github.com/edwinlomolo/uzi-api/store/sqlc"
 	"github.com/google/uuid"

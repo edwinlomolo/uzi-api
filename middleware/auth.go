@@ -6,8 +6,8 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/edwinlomolo/uzi-api/internal/jwt"
-	"github.com/edwinlomolo/uzi-api/internal/logger"
+	"github.com/edwinlomolo/uzi-api/jwt"
+	"github.com/edwinlomolo/uzi-api/logger"
 	jsonwebtoken "github.com/golang-jwt/jwt/v5"
 )
 

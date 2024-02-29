@@ -8,10 +8,9 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/edwinlomolo/uzi-api/cache"
 	"github.com/edwinlomolo/uzi-api/gql/model"
-	"github.com/edwinlomolo/uzi-api/internal/cache"
-	"github.com/edwinlomolo/uzi-api/internal/logger"
-	"github.com/edwinlomolo/uzi-api/internal/util"
+	"github.com/edwinlomolo/uzi-api/logger"
 	"github.com/sirupsen/logrus"
 )
 
@@ -54,7 +53,7 @@ func newNominatimService(cache cache.Cache) nominatim {
 func (n nominatimClient) ReverseGeocode(
 	input model.GpsInput,
 ) (*Geocode, error) {
-	cacheKey := util.Base64Key(input)
+	cacheKey := base64Key(input)
 
 	var nominatimRes nominatimresponse
 	geo := &Geocode{}
