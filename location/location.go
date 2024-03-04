@@ -15,11 +15,7 @@ import (
 	"googlemaps.github.io/maps"
 )
 
-const (
-	nominatimApi = "https://nominatim.openstreetmap.org"
-)
-
-var Location LocationService
+const nominatimApi = "https://nominatim.openstreetmap.org"
 
 type point struct {
 	Type        string    `json:"type"`
@@ -30,7 +26,6 @@ type LocationService interface {
 	GeocodeLatLng(input model.GpsInput) (*Geocode, error)
 	AutocompletePlace(query string) ([]*model.Place, error)
 	GetPlaceDetails(placeID string) (*Geocode, error)
-	ParsePostgisLocation(point interface{}) *model.Gps
 }
 
 type Geocode struct {
@@ -47,28 +42,29 @@ type locationClient struct {
 	cache           cache.Cache
 }
 
-func NewLocationService() {
+func New(redis cache.Cache) LocationService {
+	log := logger.New()
 	places, placesErr := maps.NewClient(maps.WithAPIKey(config.Config.GoogleMaps.GooglePlacesApiKey))
 	if placesErr != nil {
-		logger.Logger.WithError(placesErr).Errorf("new places client")
+		log.WithError(placesErr).Errorf("new places client")
 	} else {
-		logger.Logger.Infoln("Places service...OK")
+		log.Infoln("Places service...OK")
 	}
 
 	geocode, geocodeErr := maps.NewClient(maps.WithAPIKey(config.Config.GoogleMaps.GoogleGeocodeApiKey))
 	if geocodeErr != nil {
-		logger.Logger.WithError(geocodeErr).Errorf("new geocode client")
+		log.WithError(geocodeErr).Errorf("new geocode client")
 	} else {
-		logger.Logger.Infoln("Geocode service...OK")
+		log.Infoln("Geocode service...OK")
 	}
 
-	Location = &locationClient{
-		newNominatimService(cache.Rdb),
+	return &locationClient{
+		newNominatim(redis),
 		places,
 		geocode,
 		config.Config.GoogleMaps,
-		logger.Logger,
-		cache.Rdb,
+		log,
+		redis,
 	}
 }
 
@@ -200,7 +196,7 @@ func base64Key(key interface{}) string {
 	return encoded
 }
 
-func (l *locationClient) ParsePostgisLocation(p interface{}) *model.Gps {
+func ParsePostgisLocation(p interface{}) *model.Gps {
 	var location *point
 
 	if p != nil {

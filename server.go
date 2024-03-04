@@ -10,24 +10,16 @@ import (
 	"github.com/99designs/gqlgen/graphql/handler/lru"
 	"github.com/99designs/gqlgen/graphql/handler/transport"
 	"github.com/99designs/gqlgen/graphql/playground"
-	"github.com/edwinlomolo/uzi-api/aws"
 	"github.com/edwinlomolo/uzi-api/cache"
 	"github.com/edwinlomolo/uzi-api/config"
-	"github.com/edwinlomolo/uzi-api/courier"
 	"github.com/edwinlomolo/uzi-api/gql"
 	"github.com/edwinlomolo/uzi-api/gql/resolvers"
 	"github.com/edwinlomolo/uzi-api/handler"
 	"github.com/edwinlomolo/uzi-api/ipinfo"
 	"github.com/edwinlomolo/uzi-api/jwt"
-	"github.com/edwinlomolo/uzi-api/location"
 	"github.com/edwinlomolo/uzi-api/logger"
 	"github.com/edwinlomolo/uzi-api/middleware"
-	"github.com/edwinlomolo/uzi-api/pricer"
-	"github.com/edwinlomolo/uzi-api/routing"
-	"github.com/edwinlomolo/uzi-api/session"
 	"github.com/edwinlomolo/uzi-api/store"
-	"github.com/edwinlomolo/uzi-api/trip"
-	"github.com/edwinlomolo/uzi-api/upload"
 	"github.com/edwinlomolo/uzi-api/user"
 	"github.com/go-chi/chi/v5"
 	"github.com/gorilla/websocket"
@@ -37,34 +29,31 @@ import (
 // TODO probably setup server client and user factory paradigm
 // to setup its dependencies and services with receiver methods
 func main() {
-	// Chi router TODO refactor all these to one setup func
+	// Config
+	config.LoadConfig()
+	// Logger
+	log := logger.New()
+	// Server Routing
 	r := chi.NewRouter()
 	c := cors.New(cors.Options{
 		AllowedOrigins:   []string{"*"},
 		AllowCredentials: true,
 		Debug:            false,
 	})
+	// Middleware
 	r.Use(handler.Logger)
+	// Database queries
+	queries, _ := store.InitializeStorage()
+	// Redis cache client
+	cache := cache.New()
 
-	// Services TODO refactor all these to one setup func
-	config.LoadConfig()
-	logger.NewLogger()
-	store.InitializeStorage()
-	cache.NewCache()
-	ipinfo.NewIpinfoService()
-	jwt.NewJwtService()
-	user.NewUserService()
-	session.NewSessionService()
-	courier.NewCourierService()
-	aws.NewAwsS3Service()
-	upload.NewUploadService()
-	location.NewLocationService()
-	routing.NewRouteService()
-	trip.NewTripService()
-	pricer.NewPricer()
+	// Services
+	ipinfoService := ipinfo.New(cache)
+	jwt.New()
+	userService := user.New(queries, cache)
 
 	// Graphql TODO refactor this to one setup func
-	srv := gqlHandler.New(gql.NewExecutableSchema(resolvers.New()))
+	srv := gqlHandler.New(gql.NewExecutableSchema(resolvers.New(queries, cache, userService)))
 	srv.AddTransport(&transport.POST{})
 	srv.AddTransport(&transport.Websocket{
 		KeepAlivePingInterval: 10 * time.Second,
@@ -81,11 +70,11 @@ func main() {
 	})
 
 	// Routes TODO (look at first route setup comment)
-	r.Get("/ipinfo", handler.Ipinfo())
+	r.Get("/ipinfo", handler.Ipinfo(ipinfoService))
 	r.Get("/", playground.Handler("GraphQL playground", "/api"))
 	r.Handle("/api", middleware.Auth(srv))
-	r.Post("/signin", handler.Signin())
-	r.Post("/user/onboard", handler.UserOnboarding())
+	r.Post("/signin", handler.Signin(userService))
+	r.Post("/user/onboard", handler.UserOnboarding(userService))
 	r.Post("/courier/upload/document", handler.UploadDocument())
 	r.Handle("/subscription", srv)
 
@@ -96,5 +85,5 @@ func main() {
 	}
 
 	// Run server TODO refactor this to one setup func to start server
-	logger.Logger.Fatal(s.ListenAndServe())
+	log.Fatalln(s.ListenAndServe())
 }

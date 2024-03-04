@@ -66,6 +66,7 @@ type Product struct {
 	ID          uuid.UUID  `json:"id"`
 	Name        string     `json:"name"`
 	Description string     `json:"description"`
+	WeightClass int        `json:"weight_class"`
 	IconURL     string     `json:"icon_url"`
 	Price       int        `json:"price"`
 	CreatedAt   *time.Time `json:"created_at,omitempty"`

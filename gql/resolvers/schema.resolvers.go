@@ -13,8 +13,8 @@ import (
 	"github.com/edwinlomolo/uzi-api/gql/model"
 	"github.com/edwinlomolo/uzi-api/location"
 	"github.com/edwinlomolo/uzi-api/logger"
+	t "github.com/edwinlomolo/uzi-api/repository"
 	"github.com/edwinlomolo/uzi-api/store/sqlc"
-	t "github.com/edwinlomolo/uzi-api/trip"
 	"github.com/google/uuid"
 	"github.com/sirupsen/logrus"
 )
@@ -70,11 +70,11 @@ func (r *mutationResolver) CreateTrip(ctx context.Context, input model.CreateTri
 			input.ConfirmedPickup.Location.Lat,
 		),
 	}
-	pickup, pickupErr := r.routeService.ParsePickupDropoff(*input.TripInput.Pickup)
+	pickup, pickupErr := r.tripService.ParsePickupDropoff(*input.TripInput.Pickup)
 	if pickupErr != nil {
 		return nil, pickupErr
 	}
-	dropoff, dropErr := r.routeService.ParsePickupDropoff(*input.TripInput.Dropoff)
+	dropoff, dropErr := r.tripService.ParsePickupDropoff(*input.TripInput.Dropoff)
 	if dropErr != nil {
 		return nil, dropErr
 	}
@@ -142,7 +142,7 @@ func (r *queryResolver) ReverseGeocode(ctx context.Context, place model.GpsInput
 
 // GetRoute is the resolver for the getRoute field.
 func (r *queryResolver) ComputeTripRoute(ctx context.Context, input model.TripRouteInput) (*model.TripRoute, error) {
-	return r.routeService.ComputeTripRoute(input)
+	return r.tripService.ComputeTripRoute(input)
 }
 
 // GetCourierNearPickupPoint is the resolver for the getCourierNearPickupPoint field.
@@ -165,7 +165,7 @@ func (r *subscriptionResolver) TripUpdates(ctx context.Context, tripID uuid.UUID
 		for {
 			msg, err := pubsub.ReceiveMessage(context.Background())
 			if err != nil {
-				logger.Logger.WithFields(logrus.Fields{
+				log.WithFields(logrus.Fields{
 					"error":   err,
 					"trip_id": tripID,
 				}).Errorf("receive trip update")
@@ -175,7 +175,7 @@ func (r *subscriptionResolver) TripUpdates(ctx context.Context, tripID uuid.UUID
 
 			var update *model.TripUpdate
 			if err := json.Unmarshal([]byte(msg.Payload), &update); err != nil {
-				logger.Logger.WithError(err).Errorf("unmarshal redis trip update payload")
+				log.WithError(err).Errorf("unmarshal redis trip update payload")
 				return
 			}
 			if update.ID == tripID {
@@ -202,7 +202,7 @@ func (r *subscriptionResolver) AssignTrip(ctx context.Context, userID uuid.UUID)
 		for {
 			msg, err := pubsub.ReceiveMessage(context.Background())
 			if err != nil {
-				logger.Logger.WithFields(logrus.Fields{
+				log.WithFields(logrus.Fields{
 					"error":   err,
 					"user_id": userID,
 				}).Errorf("trip assignment update")
@@ -212,7 +212,7 @@ func (r *subscriptionResolver) AssignTrip(ctx context.Context, userID uuid.UUID)
 
 			var update *model.TripUpdate
 			if err := json.Unmarshal([]byte(msg.Payload), &update); err != nil {
-				logger.Logger.WithError(err).Errorf("unmarshal redis trip assignment update payload")
+				log.WithError(err).Errorf("unmarshal redis trip assignment update payload")
 				return
 			}
 			if *update.CourierID == c.ID {
@@ -243,6 +243,8 @@ type subscriptionResolver struct{ *Resolver }
 //   - When renaming or deleting a resolver the old code will be put in here. You can safely delete
 //     it when you're done.
 //   - You have helper methods in this file. Move them out to keep these resolver files clean.
+var log = logger.New()
+
 func (r *queryResolver) GetCourierTrip(ctx context.Context) (*model.Trip, error) {
 	courierID := getCourierIDFromResolverContext(ctx, r)
 	return r.tripService.GetTrip(courierID)

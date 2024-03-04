@@ -2,6 +2,7 @@ type Product {
   id: UUID!
   name: String!
   description: String!
+  weight_class: Int!
   icon_url: String!
   price: Int!
   created_at: Time

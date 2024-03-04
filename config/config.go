@@ -8,8 +8,9 @@ import (
 
 	"github.com/edwinlomolo/uzi-api/logger"
 	"github.com/joho/godotenv"
-	"github.com/sirupsen/logrus"
 )
+
+var log = logger.New()
 
 type Configuration struct {
 	Server     Server
@@ -24,10 +25,7 @@ type Configuration struct {
 // Env - load env
 func Env() {
 	// Load os env
-	err := godotenv.Load()
-	if err != nil {
-		logrus.Errorf(".env: %v", err)
-	}
+	godotenv.Load()
 }
 
 var Config *Configuration
@@ -71,7 +69,7 @@ func rdbmsConfig() RDBMS {
 	rdbmsConfig.MigrationUrl = strings.TrimSpace(os.Getenv("MIGRATION_URL"))
 	forceMigrate, err := strconv.ParseBool(strings.TrimSpace(os.Getenv("FORCE_MIGRATION")))
 	if err != nil {
-		panic(err)
+		log.WithError(err).Fatalln("force migrate env")
 	}
 	rdbmsConfig.ForceMigrate = forceMigrate
 
@@ -120,7 +118,7 @@ func jwtConfig() Jwt {
 
 	duration, err := time.ParseDuration(strings.TrimSpace(os.Getenv("JWTEXPIRE")))
 	if err != nil {
-		logger.Logger.WithError(err).Errorf("jwt expire parsing")
+		log.WithError(err).Fatalln("jwt expire parsing")
 	}
 
 	jwtConfig.Expires = duration
@@ -163,7 +161,7 @@ func pricerConfig() Pricer {
 
 	hourlyWage, err := strconv.Atoi(strings.TrimSpace(os.Getenv("MINIMUM_HOURLY_WAGE")))
 	if err != nil {
-		panic(err)
+		log.WithError(err).Fatalln("hourly wage env")
 	}
 
 	pricingConfig.HourlyWage = hourlyWage

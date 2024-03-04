@@ -7,15 +7,14 @@ import (
 	"net/http"
 
 	"github.com/edwinlomolo/uzi-api/logger"
-	"github.com/edwinlomolo/uzi-api/session"
+	repo "github.com/edwinlomolo/uzi-api/repository"
 	"github.com/edwinlomolo/uzi-api/user"
 )
 
-func Signin() http.HandlerFunc {
+func Signin(userService user.UserService) http.HandlerFunc {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		var loginInput user.SigninInput
-		logger := logger.Logger
-		sessionService := session.Session
+		var loginInput repo.SigninInput
+		logger := logger.New()
 		userIp := GetIp(r)
 
 		body, bodyErr := io.ReadAll(r.Body)
@@ -33,7 +32,7 @@ func Signin() http.HandlerFunc {
 			return
 		}
 
-		findSession, findSessionErr := sessionService.SignIn(loginInput, userIp, r.UserAgent())
+		findSession, findSessionErr := userService.SignIn(loginInput, userIp, r.UserAgent())
 		if findSessionErr != nil {
 			http.Error(w, findSessionErr.Error(), http.StatusInternalServerError)
 			return

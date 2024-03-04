@@ -6,23 +6,20 @@ import (
 
 	"github.com/edwinlomolo/uzi-api/config"
 	"github.com/edwinlomolo/uzi-api/logger"
+	"github.com/edwinlomolo/uzi-api/store/sqlc"
 	sqlStore "github.com/edwinlomolo/uzi-api/store/sqlc"
 	"github.com/golang-migrate/migrate/v4"
 	"github.com/golang-migrate/migrate/v4/database/postgres"
 	_ "github.com/golang-migrate/migrate/v4/source/file"
 )
 
-var (
-	DB *sqlStore.Queries
-)
+var log = logger.New()
 
-func InitializeStorage() error {
-	log := logger.Logger
-
+func InitializeStorage() (*sqlc.Queries, error) {
 	db, err := sql.Open(config.Config.Database.Rdbms.Env.Driver, config.Config.Database.Rdbms.Uri)
 	if err != nil {
 		log.WithError(err).Errorf("open database connection")
-		return err
+		return nil, err
 	}
 
 	db.Exec(fmt.Sprintf("CREATE EXTENSION IF NOT EXISTS %q;", "uuid-ossp"))
@@ -32,24 +29,21 @@ func InitializeStorage() error {
 
 	if err := db.Ping(); err != nil {
 		log.WithError(err).Errorf("ping database connection")
-		return err
+		return nil, err
 	} else if err == nil {
 		log.Infoln("Database connection...OK")
 	}
-
-	DB = sqlStore.New(db)
 
 	// Setup database schema
 	if err := runDatabaseMigration(db); err == nil {
 		log.Infoln("Database migration...DONE")
 	}
 
-	return nil
+	return sqlStore.New(db), nil
 }
 
 // runDbMigration - setup database tables
 func runDatabaseMigration(db *sql.DB) error {
-	log := logger.Logger
 	driver, err := postgres.WithInstance(db, &postgres.Config{})
 	if err != nil {
 		log.WithError(err).Errorf("migration driver")

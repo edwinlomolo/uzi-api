@@ -6,16 +6,14 @@ import (
 	"net/http"
 
 	"github.com/edwinlomolo/uzi-api/logger"
-	"github.com/edwinlomolo/uzi-api/session"
+	repo "github.com/edwinlomolo/uzi-api/repository"
 	"github.com/edwinlomolo/uzi-api/user"
 )
 
-func UserOnboarding() http.HandlerFunc {
+func UserOnboarding(userService user.UserService) http.HandlerFunc {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		var bodyReq user.SigninInput
-		logger := logger.Logger
-		userService := user.User
-		sessionService := session.Session
+		var bodyReq repo.SigninInput
+		logger := logger.New()
 		ip := GetIp(r)
 
 		body, bodyErr := io.ReadAll(r.Body)
@@ -36,7 +34,7 @@ func UserOnboarding() http.HandlerFunc {
 			return
 		}
 
-		session, sessionErr := sessionService.SignIn(bodyReq, ip, r.UserAgent())
+		session, sessionErr := userService.SignIn(bodyReq, ip, r.UserAgent())
 		if sessionErr != nil {
 			http.Error(w, sessionErr.Error(), http.StatusInternalServerError)
 			return

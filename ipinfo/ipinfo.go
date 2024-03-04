@@ -15,10 +15,6 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-var (
-	IpInfo IpInfoService
-)
-
 type IpInfoService interface {
 	GetIpinfo(ip string) (*ipinfo.Core, error)
 }
@@ -29,8 +25,9 @@ type ipinfoClient struct {
 	client *ipinfo.Client
 }
 
-func NewIpinfoService() {
-	cache := newCache()
+func New(redis redisCache.Cache) IpInfoService {
+	log := logger.New()
+	cache := newCache(redis)
 	c := ipinfo.NewCache(cache)
 	client := ipinfo.NewClient(
 		nil,
@@ -38,12 +35,12 @@ func NewIpinfoService() {
 		config.Config.Ipinfo.ApiKey,
 	)
 
-	IpInfo = &ipinfoClient{
+	log.Infoln("Ipinfo service...OK")
+	return &ipinfoClient{
 		config.Config.Ipinfo,
-		logger.Logger,
+		log,
 		client,
 	}
-	logger.Logger.Infoln("Ipinfo service...OK")
 }
 
 func (ipc *ipinfoClient) GetIpinfo(
@@ -118,9 +115,9 @@ func (ipc *ipinfoCache) Set(
 	return nil
 }
 
-func newCache() cache.Interface {
+func newCache(c redisCache.Cache) cache.Interface {
 	return &ipinfoCache{
-		logger.Logger,
-		redisCache.Redis,
+		logger.New(),
+		c.Redis(),
 	}
 }

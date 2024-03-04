@@ -4,10 +4,7 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-var (
-	Logger *logrus.Logger
-)
-
-func NewLogger() {
-	Logger = logrus.New()
+func New() *logrus.Logger {
+	log := logrus.New()
+	return log
 }

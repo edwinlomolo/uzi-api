@@ -5,7 +5,7 @@ import (
 	"github.com/edwinlomolo/uzi-api/courier"
 	"github.com/edwinlomolo/uzi-api/gql"
 	"github.com/edwinlomolo/uzi-api/location"
-	"github.com/edwinlomolo/uzi-api/routing"
+	"github.com/edwinlomolo/uzi-api/store/sqlc"
 	"github.com/edwinlomolo/uzi-api/trip"
 	"github.com/edwinlomolo/uzi-api/upload"
 	"github.com/edwinlomolo/uzi-api/user"
@@ -22,21 +22,24 @@ type Resolver struct {
 	upload.UploadService
 	courier.CourierService
 	location.LocationService
-	routeService routing.Route
-	tripService  trip.TripService
-	redisClient  *redis.Client
-	userService  user.UserService
+	tripService trip.TripService
+	redisClient *redis.Client
+	userService user.UserService
 }
 
-func New() gql.Config {
+func New(
+	queries *sqlc.Queries,
+	redis cache.Cache,
+	userService user.UserService,
+) gql.Config {
+
 	c := gql.Config{Resolvers: &Resolver{
-		upload.Upload,
-		courier.Courier,
-		location.Location,
-		routing.Routing,
-		trip.Trip,
-		cache.Redis,
-		user.User,
+		upload.New(queries, redis.Redis()),
+		courier.New(queries, redis),
+		location.New(redis),
+		trip.New(queries, redis),
+		redis.Redis(),
+		userService,
 	}}
 
 	return c

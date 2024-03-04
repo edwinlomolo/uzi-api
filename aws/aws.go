@@ -19,18 +19,14 @@ type Aws interface {
 	UploadImage(multipart.File, *multipart.FileHeader) (string, error)
 }
 
-var (
-	S3 Aws
-)
-
 type awsClient struct {
 	s3     *manager.Uploader
 	config config.Aws
 	logger *logrus.Logger
 }
 
-func NewAwsS3Service() {
-	log := logger.Logger
+func New() Aws {
+	log := logger.New()
 	cfg := config.Config.Aws
 	awsConfig, err := awsConfig.LoadDefaultConfig(
 		context.TODO(),
@@ -46,10 +42,10 @@ func NewAwsS3Service() {
 	}
 
 	s3Client := manager.NewUploader(s3.NewFromConfig(awsConfig))
-	S3 = &awsClient{s3Client, cfg, log}
+	return &awsClient{s3Client, cfg, log}
 }
 
-func (a awsClient) UploadImage(
+func (a *awsClient) UploadImage(
 	file multipart.File,
 	fileHeader *multipart.FileHeader,
 ) (string, error) {

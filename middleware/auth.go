@@ -13,6 +13,7 @@ import (
 
 var (
 	ErrInvalidHeader = errors.New("invalid token header")
+	log              = logger.New()
 )
 
 func Auth(h http.Handler) http.HandlerFunc {
@@ -45,12 +46,11 @@ func validateAuthorizationHeader(
 	r *http.Request,
 ) (*jsonwebtoken.Token, error) {
 	var tokenString string
-	logger := logger.Logger
-	jwtService := jwt.Jwt
+	jwtService := jwt.New()
 
 	authorizationHeader := strings.SplitN(r.Header.Get("Authorization"), " ", 2)
 	if len(authorizationHeader) != 2 || authorizationHeader[0] != "Bearer" {
-		logger.Errorf(ErrInvalidHeader.Error())
+		log.Errorf(ErrInvalidHeader.Error())
 		return nil, ErrInvalidHeader
 	}
 

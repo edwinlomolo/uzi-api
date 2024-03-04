@@ -8,12 +8,12 @@ import (
 	"github.com/edwinlomolo/uzi-api/logger"
 )
 
-func Ipinfo() http.HandlerFunc {
+func Ipinfo(ipinfoService ipinfo.IpInfoService) http.HandlerFunc {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		logger := logger.Logger
+		logger := logger.New()
 		ip := GetIp(r)
 
-		ipinfo, err := ipinfo.IpInfo.GetIpinfo(ip)
+		ipinfo, err := ipinfoService.GetIpinfo(ip)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return

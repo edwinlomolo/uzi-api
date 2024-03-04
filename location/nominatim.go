@@ -43,9 +43,9 @@ type nominatimClient struct {
 	cache cache.Cache
 }
 
-func newNominatimService(cache cache.Cache) nominatim {
+func newNominatim(cache cache.Cache) nominatim {
 	return &nominatimClient{
-		logger.Logger,
+		logger.New(),
 		cache,
 	}
 }

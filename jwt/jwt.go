@@ -10,7 +10,6 @@ import (
 )
 
 var (
-	Jwt                 JwtService
 	ErrInvalidAlgorithm = errors.New("invalid signing algorithm")
 )
 
@@ -24,8 +23,8 @@ type jwtClient struct {
 	secret string
 }
 
-func NewJwtService() {
-	Jwt = &jwtClient{logger.Logger, config.Config.Jwt.Secret}
+func New() JwtService {
+	return &jwtClient{logger.New(), config.Config.Jwt.Secret}
 }
 
 func (jwtc *jwtClient) Sign(

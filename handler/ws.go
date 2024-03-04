@@ -7,13 +7,15 @@ import (
 	"github.com/edwinlomolo/uzi-api/logger"
 )
 
+var log = logger.New()
+
 func WsInit(
 	ctx context.Context,
 	initPayload transport.InitPayload,
 ) (context.Context, *transport.InitPayload, error) {
 	any, ok := initPayload["payload"].(map[string]interface{})
 	if !ok {
-		logger.Logger.Warnln("payload not passed in request")
+		log.Warnln("payload not passed in request")
 	}
 
 	payload := any["headers"].(map[string]interface{})

@@ -4,7 +4,6 @@ import (
 	"context"
 
 	"github.com/edwinlomolo/uzi-api/courier"
-	"github.com/edwinlomolo/uzi-api/logger"
 	"github.com/google/uuid"
 )
 
@@ -13,7 +12,7 @@ func getCourierIDFromResolverContext(ctx context.Context, courier courier.Courie
 
 	uid, err := uuid.Parse(userID)
 	if err != nil {
-		logger.Logger.WithError(err).Errorf("get courier id from resolver ctx")
+		log.WithError(err).Errorf("get courier id from resolver ctx")
 	}
 
 	c, _ := courier.GetCourierByUserID(uid)
@@ -23,7 +22,7 @@ func getCourierIDFromResolverContext(ctx context.Context, courier courier.Courie
 func stringToUUID(id string) uuid.UUID {
 	uid, err := uuid.Parse(id)
 	if err != nil {
-		logger.Logger.WithError(err).Errorf("parse valid string uuid")
+		log.WithError(err).Errorf("parse valid string uuid")
 	}
 
 	return uid

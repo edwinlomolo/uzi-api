@@ -16,17 +16,14 @@ type cacheClient struct {
 	log   *logrus.Logger
 }
 
-var Redis *redis.Client
-var Rdb *cacheClient
-var _ Cache = (*cacheClient)(nil)
-
 type Cache interface {
 	Get(ctx context.Context, key string, returnValue interface{}) (interface{}, error)
 	Set(ctx context.Context, key string, value interface{}, expiration time.Duration) error
+	Redis() *redis.Client
 }
 
-func NewCache() {
-	log := logger.Logger
+func New() Cache {
+	log := logger.New()
 	opts, err := redis.ParseURL(config.Config.Database.Redis.Url)
 	if err != nil {
 		log.WithError(err).Errorf("new cache client")
@@ -35,11 +32,14 @@ func NewCache() {
 	}
 
 	rdb := redis.NewClient(opts)
-	Redis = rdb
-	Rdb = &cacheClient{
+	return &cacheClient{
 		rdb,
 		log,
 	}
+}
+
+func (c *cacheClient) Redis() *redis.Client {
+	return c.cache
 }
 
 func (c *cacheClient) Get(ctx context.Context, key string, returnValue interface{}) (interface{}, error) {
