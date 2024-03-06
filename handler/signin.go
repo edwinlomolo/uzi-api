@@ -15,7 +15,7 @@ func Signin(userService user.UserService) http.HandlerFunc {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		var loginInput repo.SigninInput
 		logger := logger.New()
-		userIp := GetIp(r)
+		userIp := r.Context().Value("ip").(string)
 
 		body, bodyErr := io.ReadAll(r.Body)
 		if bodyErr != nil {

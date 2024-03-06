@@ -14,7 +14,7 @@ func UserOnboarding(userService user.UserService) http.HandlerFunc {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		var bodyReq repo.SigninInput
 		logger := logger.New()
-		ip := GetIp(r)
+		ip := r.Context().Value("ip").(string)
 
 		body, bodyErr := io.ReadAll(r.Body)
 		if bodyErr != nil {

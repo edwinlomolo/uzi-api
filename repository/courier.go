@@ -17,7 +17,7 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-var log = logger.New()
+var log = logger.GetLogger()
 
 type CourierRepository struct {
 	store *sqlc.Queries

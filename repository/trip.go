@@ -691,7 +691,7 @@ func (t *TripRepository) computeRoute(pickup, dropoff location.Geocode) (*model.
 		tripRoute.Distance = routeRes.Routes[0].Distance
 
 		// Let the above fallthrough and shortcircuit here not to super-charge in dev
-		if config.IsDev() {
+		if isDev() {
 			go func() {
 				t.cache.Set(context.Background(), cacheKey, tripRoute, time.Hour*24)
 			}()
@@ -855,4 +855,8 @@ func (t *TripRepository) GetNearbyAvailableProducts(params sqlc.GetNearbyAvailab
 	}
 
 	return nearbys, nil
+}
+
+func isDev() bool {
+	return config.Config.Server.Env == "development"
 }

@@ -24,7 +24,7 @@ type jwtClient struct {
 }
 
 func New() JwtService {
-	return &jwtClient{logger.New(), config.Config.Jwt.Secret}
+	return &jwtClient{logger.GetLogger(), config.Config.Jwt.Secret}
 }
 
 func (jwtc *jwtClient) Sign(

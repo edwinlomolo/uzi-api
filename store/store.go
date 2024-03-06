@@ -13,7 +13,7 @@ import (
 	_ "github.com/golang-migrate/migrate/v4/source/file"
 )
 
-var log = logger.New()
+var log = logger.GetLogger()
 
 func InitializeStorage() (*sqlc.Queries, error) {
 	db, err := sql.Open(config.Config.Database.Rdbms.Env.Driver, config.Config.Database.Rdbms.Uri)

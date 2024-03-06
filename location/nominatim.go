@@ -10,7 +10,6 @@ import (
 
 	"github.com/edwinlomolo/uzi-api/cache"
 	"github.com/edwinlomolo/uzi-api/gql/model"
-	"github.com/edwinlomolo/uzi-api/logger"
 	"github.com/sirupsen/logrus"
 )
 
@@ -39,13 +38,11 @@ type nominatim interface {
 }
 
 type nominatimClient struct {
-	log   *logrus.Logger
 	cache cache.Cache
 }
 
 func newNominatim(cache cache.Cache) nominatim {
 	return &nominatimClient{
-		logger.New(),
 		cache,
 	}
 }
@@ -77,7 +74,7 @@ func (n nominatimClient) ReverseGeocode(
 
 	res, err := http.Get(url)
 	if err != nil {
-		n.log.WithFields(logrus.Fields{
+		log.WithFields(logrus.Fields{
 			"error": err,
 			"cords": input,
 		}).Errorf("reverse geocode")
@@ -86,7 +83,7 @@ func (n nominatimClient) ReverseGeocode(
 	defer res.Body.Close()
 
 	if err := json.NewDecoder(res.Body).Decode(&nominatimRes); err != nil {
-		n.log.WithError(err).Errorf("unmarshal reverse geocode res")
+		log.WithError(err).Errorf("unmarshal reverse geocode res")
 		return nil, err
 	}
 
@@ -99,7 +96,7 @@ func (n nominatimClient) ReverseGeocode(
 
 	lat, parseErr := strconv.ParseFloat(nominatimRes.Lat, 64)
 	if parseErr != nil {
-		n.log.WithFields(logrus.Fields{
+		log.WithFields(logrus.Fields{
 			"error": parseErr,
 			"lat":   lat,
 		}).Errorf("parse latitude")
@@ -107,7 +104,7 @@ func (n nominatimClient) ReverseGeocode(
 	}
 	lng, parseErr := strconv.ParseFloat(nominatimRes.Lon, 64)
 	if parseErr != nil {
-		n.log.WithFields(logrus.Fields{
+		log.WithFields(logrus.Fields{
 			"error":     parseErr,
 			"longitude": lng,
 		}).Errorf("parse longitude")

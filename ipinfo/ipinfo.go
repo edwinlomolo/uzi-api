@@ -15,6 +15,8 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
+var log = logger.GetLogger()
+
 type IpInfoService interface {
 	GetIpinfo(ip string) (*ipinfo.Core, error)
 }
@@ -26,7 +28,6 @@ type ipinfoClient struct {
 }
 
 func New(redis redisCache.Cache) IpInfoService {
-	log := logger.New()
 	cache := newCache(redis)
 	c := ipinfo.NewCache(cache)
 	client := ipinfo.NewClient(

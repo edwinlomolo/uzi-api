@@ -23,7 +23,7 @@ type Cache interface {
 }
 
 func New() Cache {
-	log := logger.New()
+	log := logger.GetLogger()
 	opts, err := redis.ParseURL(config.Config.Database.Redis.Url)
 	if err != nil {
 		log.WithError(err).Errorf("new cache client")

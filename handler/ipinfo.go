@@ -8,10 +8,11 @@ import (
 	"github.com/edwinlomolo/uzi-api/logger"
 )
 
+var log = logger.GetLogger()
+
 func Ipinfo(ipinfoService ipinfo.IpInfoService) http.HandlerFunc {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		logger := logger.New()
-		ip := GetIp(r)
+		ip := r.Context().Value("ip").(string)
 
 		ipinfo, err := ipinfoService.GetIpinfo(ip)
 		if err != nil {
@@ -21,7 +22,7 @@ func Ipinfo(ipinfoService ipinfo.IpInfoService) http.HandlerFunc {
 
 		res, jsonErr := json.Marshal(ipinfo)
 		if jsonErr != nil {
-			logger.WithError(jsonErr).Errorf("marshal ipinfo res")
+			log.WithError(jsonErr).Errorf("marshal ipinfo res")
 			http.Error(w, jsonErr.Error(), http.StatusInternalServerError)
 			return
 		}

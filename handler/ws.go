@@ -4,10 +4,7 @@ import (
 	"context"
 
 	"github.com/99designs/gqlgen/graphql/handler/transport"
-	"github.com/edwinlomolo/uzi-api/logger"
 )
-
-var log = logger.New()
 
 func WsInit(
 	ctx context.Context,

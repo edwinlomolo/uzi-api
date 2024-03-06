@@ -6,11 +6,11 @@ import (
 	"strings"
 	"time"
 
-	"github.com/edwinlomolo/uzi-api/logger"
 	"github.com/joho/godotenv"
+	"github.com/sirupsen/logrus"
 )
 
-var log = logger.New()
+var log = logrus.New()
 
 type Configuration struct {
 	Server     Server
@@ -20,6 +20,7 @@ type Configuration struct {
 	Aws        Aws
 	GoogleMaps GoogleMaps
 	Pricer     Pricer
+	Sentry     Sentry
 }
 
 // Env - load env
@@ -41,78 +42,79 @@ func LoadConfig() {
 	configuration.Aws = awsConfig()
 	configuration.GoogleMaps = googleMapsConfig()
 	configuration.Pricer = pricerConfig()
+	configuration.Sentry = sentryConfig()
 
 	Config = &configuration
 }
 
 // serverConfig - load server configuration
 func serverConfig() Server {
-	var serverConfig Server
+	var config Server
 
 	Env()
 
-	serverConfig.Env = strings.TrimSpace(os.Getenv("SERVERENV"))
-	serverConfig.Port = strings.TrimSpace(os.Getenv("SERVERPORT"))
+	config.Env = strings.TrimSpace(os.Getenv("SERVERENV"))
+	config.Port = strings.TrimSpace(os.Getenv("SERVERPORT"))
 
-	return serverConfig
+	return config
 }
 
 // rdbmsConfig - get relational database management system config
 func rdbmsConfig() RDBMS {
-	var rdbmsConfig RDBMS
+	var config RDBMS
 
 	Env()
 
-	rdbmsConfig.Postal.Uri = strings.TrimSpace(os.Getenv("POSTAL_DATABASE_URI"))
-	rdbmsConfig.Uri = strings.TrimSpace(os.Getenv("DATABASE_URI"))
-	rdbmsConfig.Env.Driver = strings.TrimSpace(os.Getenv("DBDRIVER"))
-	rdbmsConfig.MigrationUrl = strings.TrimSpace(os.Getenv("MIGRATION_URL"))
+	config.Postal.Uri = strings.TrimSpace(os.Getenv("POSTAL_DATABASE_URI"))
+	config.Uri = strings.TrimSpace(os.Getenv("DATABASE_URI"))
+	config.Env.Driver = strings.TrimSpace(os.Getenv("DBDRIVER"))
+	config.MigrationUrl = strings.TrimSpace(os.Getenv("MIGRATION_URL"))
 	forceMigrate, err := strconv.ParseBool(strings.TrimSpace(os.Getenv("FORCE_MIGRATION")))
 	if err != nil {
 		log.WithError(err).Fatalln("force migrate env")
 	}
-	rdbmsConfig.ForceMigrate = forceMigrate
+	config.ForceMigrate = forceMigrate
 
-	return rdbmsConfig
+	return config
 }
 
 // databaseConfig - load database configurations
 func databaseConfig() Database {
-	var databaseConfig Database
+	var config Database
 
 	Env()
 
-	databaseConfig.Rdbms = rdbmsConfig()
-	databaseConfig.Redis = redisConfig()
+	config.Rdbms = rdbmsConfig()
+	config.Redis = redisConfig()
 
-	return databaseConfig
+	return config
 }
 
 // ipinfoConfig - load ipinfo config
 func ipinfoConfig() Ipinfo {
-	var ipInfo Ipinfo
+	var config Ipinfo
 
 	Env()
 
-	ipInfo.ApiKey = strings.TrimSpace(os.Getenv("IPINFO_API_KEY"))
+	config.ApiKey = strings.TrimSpace(os.Getenv("IPINFO_API_KEY"))
 
-	return ipInfo
+	return config
 }
 
 // redisConfig - load redis configs
 func redisConfig() Redis {
-	var redis Redis
+	var config Redis
 
 	Env()
 
-	redis.Url = strings.TrimSpace(os.Getenv("REDIS_ENDPOINT"))
+	config.Url = strings.TrimSpace(os.Getenv("REDIS_ENDPOINT"))
 
-	return redis
+	return config
 }
 
 // jwtConfig - get jwt configs
 func jwtConfig() Jwt {
-	var jwtConfig Jwt
+	var config Jwt
 
 	Env()
 
@@ -121,41 +123,41 @@ func jwtConfig() Jwt {
 		log.WithError(err).Fatalln("jwt expire parsing")
 	}
 
-	jwtConfig.Expires = duration
-	jwtConfig.Secret = strings.TrimSpace(os.Getenv("JWTSECRET"))
+	config.Expires = duration
+	config.Secret = strings.TrimSpace(os.Getenv("JWTSECRET"))
 
-	return jwtConfig
+	return config
 }
 
 // awsConfig - get aws config
 func awsConfig() Aws {
-	var awsConfig Aws
+	var config Aws
 
 	Env()
 
-	awsConfig.AccessKey = strings.TrimSpace(os.Getenv("ACCESS_KEY"))
-	awsConfig.SecretAccessKey = strings.TrimSpace(os.Getenv("SECRET_ACCESS_KEY"))
-	awsConfig.S3.Buckets.Media = strings.TrimSpace(os.Getenv("S3_BUCKET"))
+	config.AccessKey = strings.TrimSpace(os.Getenv("ACCESS_KEY"))
+	config.SecretAccessKey = strings.TrimSpace(os.Getenv("SECRET_ACCESS_KEY"))
+	config.S3.Buckets.Media = strings.TrimSpace(os.Getenv("S3_BUCKET"))
 
-	return awsConfig
+	return config
 }
 
-// googleMapsConfig - get google map config
+// config - get google map config
 func googleMapsConfig() GoogleMaps {
-	var googleMapsConfig GoogleMaps
+	var config GoogleMaps
 
 	Env()
 
-	googleMapsConfig.GooglePlacesApiKey = strings.TrimSpace(os.Getenv("MAPS_PLACES_API_KEY"))
-	googleMapsConfig.GoogleGeocodeApiKey = strings.TrimSpace(os.Getenv("MAPS_GEOCODE_API_KEY"))
-	googleMapsConfig.GoogleRoutesApiKey = strings.TrimSpace(os.Getenv("MAPS_ROUTES_API_KEY"))
+	config.GooglePlacesApiKey = strings.TrimSpace(os.Getenv("MAPS_PLACES_API_KEY"))
+	config.GoogleGeocodeApiKey = strings.TrimSpace(os.Getenv("MAPS_GEOCODE_API_KEY"))
+	config.GoogleRoutesApiKey = strings.TrimSpace(os.Getenv("MAPS_ROUTES_API_KEY"))
 
-	return googleMapsConfig
+	return config
 }
 
 // pricerConfig - get pricing config
 func pricerConfig() Pricer {
-	var pricingConfig Pricer
+	var config Pricer
 
 	Env()
 
@@ -164,19 +166,18 @@ func pricerConfig() Pricer {
 		log.WithError(err).Fatalln("hourly wage env")
 	}
 
-	pricingConfig.HourlyWage = hourlyWage
+	config.HourlyWage = hourlyWage
 
-	return pricingConfig
+	return config
 }
 
-func IsDev() bool {
-	return Config.Server.Env == "development"
-}
+// sentryConfig - get sentry config
+func sentryConfig() Sentry {
+	var config Sentry
 
-func IsProd() bool {
-	return Config.Server.Env == "production"
-}
+	Env()
 
-func IsStaging() bool {
-	return Config.Server.Env == "staging"
+	config.Dsn = strings.TrimSpace(os.Getenv("SENTRY_DSN"))
+
+	return config
 }

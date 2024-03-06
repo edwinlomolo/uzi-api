@@ -26,7 +26,7 @@ type awsClient struct {
 }
 
 func New() Aws {
-	log := logger.New()
+	log := logger.GetLogger()
 	cfg := config.Config.Aws
 	awsConfig, err := awsConfig.LoadDefaultConfig(
 		context.TODO(),

@@ -40,7 +40,7 @@ type tripClient struct {
 }
 
 func New(store *sqlc.Queries, redis cache.Cache) TripService {
-	log := logger.New()
+	log := logger.GetLogger()
 	t := &r.TripRepository{}
 	t.Init(store, redis)
 	log.Infoln("Trip service...OK")

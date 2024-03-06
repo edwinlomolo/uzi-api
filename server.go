@@ -21,6 +21,7 @@ import (
 	"github.com/edwinlomolo/uzi-api/middleware"
 	"github.com/edwinlomolo/uzi-api/store"
 	"github.com/edwinlomolo/uzi-api/user"
+	"github.com/getsentry/sentry-go"
 	"github.com/go-chi/chi/v5"
 	"github.com/gorilla/websocket"
 	"github.com/rs/cors"
@@ -31,8 +32,18 @@ import (
 func main() {
 	// Config
 	config.LoadConfig()
+
 	// Logger
 	log := logger.New()
+
+	if err := sentry.Init(sentry.ClientOptions{
+		Dsn:              config.Config.Sentry.Dsn,
+		EnableTracing:    true,
+		TracesSampleRate: 1.0,
+	}); err != nil {
+		log.WithError(err).Errorf("sentry http middleware")
+	}
+
 	// Server Routing
 	r := chi.NewRouter()
 	c := cors.New(cors.Options{
@@ -41,9 +52,13 @@ func main() {
 		Debug:            false,
 	})
 	// Middleware
-	r.Use(handler.Logger)
+	r.Use(middleware.GetIp)
+	r.Use(middleware.Sentry)
+	r.Use(middleware.Logger)
+
 	// Database queries
 	queries, _ := store.InitializeStorage()
+
 	// Redis cache client
 	cache := cache.New()
 
@@ -72,12 +87,12 @@ func main() {
 	// Routes TODO (look at first route setup comment)
 	r.Route("/v1", func(r chi.Router) {
 		r.Handle("/api", middleware.Auth(srv))
+		r.Post("/signin", handler.Signin(userService))
+		r.Post("/user/onboard", handler.UserOnboarding(userService))
+		r.Post("/courier/upload/document", handler.UploadDocument())
+		r.Get("/ipinfo", handler.Ipinfo(ipinfoService))
 	})
-	r.Get("/ipinfo", handler.Ipinfo(ipinfoService))
 	r.Get("/", playground.Handler("GraphQL playground", "/v1/api"))
-	r.Post("/signin", handler.Signin(userService))
-	r.Post("/user/onboard", handler.UserOnboarding(userService))
-	r.Post("/courier/upload/document", handler.UploadDocument())
 	r.Handle("/subscription", srv)
 
 	// Server

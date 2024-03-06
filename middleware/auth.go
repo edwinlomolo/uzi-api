@@ -13,7 +13,7 @@ import (
 
 var (
 	ErrInvalidHeader = errors.New("invalid token header")
-	log              = logger.New()
+	log              = logger.GetLogger()
 )
 
 func Auth(h http.Handler) http.HandlerFunc {

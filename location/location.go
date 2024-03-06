@@ -17,6 +17,8 @@ import (
 
 const nominatimApi = "https://nominatim.openstreetmap.org"
 
+var log = logger.GetLogger()
+
 type point struct {
 	Type        string    `json:"type"`
 	Coordinates []float64 `json:"coordinates"`
@@ -43,7 +45,6 @@ type locationClient struct {
 }
 
 func New(redis cache.Cache) LocationService {
-	log := logger.New()
 	places, placesErr := maps.NewClient(maps.WithAPIKey(config.Config.GoogleMaps.GooglePlacesApiKey))
 	if placesErr != nil {
 		log.WithError(placesErr).Errorf("new places client")

@@ -18,7 +18,7 @@ type pricerClient struct {
 }
 
 func New() Pricing {
-	return &pricerClient{logger.New()}
+	return &pricerClient{logger.GetLogger()}
 }
 
 func (p *pricerClient) CalculateTripCost(
