@@ -70,9 +70,11 @@ func main() {
 	})
 
 	// Routes TODO (look at first route setup comment)
+	r.Route("/v1", func(r chi.Router) {
+		r.Handle("/api", middleware.Auth(srv))
+	})
 	r.Get("/ipinfo", handler.Ipinfo(ipinfoService))
-	r.Get("/", playground.Handler("GraphQL playground", "/api"))
-	r.Handle("/api", middleware.Auth(srv))
+	r.Get("/", playground.Handler("GraphQL playground", "/v1/api"))
 	r.Post("/signin", handler.Signin(userService))
 	r.Post("/user/onboard", handler.UserOnboarding(userService))
 	r.Post("/courier/upload/document", handler.UploadDocument())
