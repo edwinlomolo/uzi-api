@@ -16,7 +16,7 @@ var (
 	log              = logger.GetLogger()
 )
 
-func Auth(h http.Handler) http.HandlerFunc {
+func Auth(h http.Handler) http.Handler {
 	return http.HandlerFunc(
 		func(w http.ResponseWriter, r *http.Request) {
 			var (

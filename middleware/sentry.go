@@ -9,7 +9,6 @@ import (
 func Sentry(next http.Handler) http.Handler {
 	return http.HandlerFunc(
 		func(w http.ResponseWriter, r *http.Request) {
-
 			sentryHttp.New(sentryHttp.Options{}).Handle(next).ServeHTTP(w, r)
 		})
 }

@@ -86,7 +86,7 @@ func main() {
 
 	// Routes TODO (look at first route setup comment)
 	r.Route("/v1", func(r chi.Router) {
-		r.Handle("/api", middleware.Auth(srv))
+		r.With(middleware.Auth).Handle("/api", srv)
 		r.Post("/signin", handler.Signin(userService))
 		r.Post("/user/onboard", handler.UserOnboarding(userService))
 		r.Post("/courier/upload/document", handler.UploadDocument())
