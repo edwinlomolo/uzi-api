@@ -15,6 +15,8 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
+var az Aws = nil
+
 type Aws interface {
 	UploadImage(multipart.File, *multipart.FileHeader) (string, error)
 }
@@ -25,14 +27,13 @@ type awsClient struct {
 	logger *logrus.Logger
 }
 
-func New() Aws {
+func New() {
 	log := logger.GetLogger()
-	cfg := config.Config.Aws
 	awsConfig, err := awsConfig.LoadDefaultConfig(
 		context.TODO(),
 		awsConfig.WithRegion("eu-west-2"),
 		awsConfig.WithCredentialsProvider(
-			credentials.NewStaticCredentialsProvider(cfg.AccessKey, cfg.SecretAccessKey, ""),
+			credentials.NewStaticCredentialsProvider(config.Config.Aws.AccessKey, config.Config.Aws.SecretAccessKey, ""),
 		),
 	)
 	if err != nil {
@@ -42,7 +43,11 @@ func New() Aws {
 	}
 
 	s3Client := manager.NewUploader(s3.NewFromConfig(awsConfig))
-	return &awsClient{s3Client, cfg, log}
+	az = &awsClient{s3Client, config.Config.Aws, log}
+}
+
+func GetAws() Aws {
+	return az
 }
 
 func (a *awsClient) UploadImage(

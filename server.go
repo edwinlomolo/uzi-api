@@ -10,13 +10,13 @@ import (
 	"github.com/99designs/gqlgen/graphql/handler/lru"
 	"github.com/99designs/gqlgen/graphql/handler/transport"
 	"github.com/99designs/gqlgen/graphql/playground"
+	"github.com/edwinlomolo/uzi-api/aws"
 	"github.com/edwinlomolo/uzi-api/cache"
 	"github.com/edwinlomolo/uzi-api/config"
 	"github.com/edwinlomolo/uzi-api/gql"
 	"github.com/edwinlomolo/uzi-api/gql/resolvers"
 	"github.com/edwinlomolo/uzi-api/handler"
 	"github.com/edwinlomolo/uzi-api/ipinfo"
-	"github.com/edwinlomolo/uzi-api/jwt"
 	"github.com/edwinlomolo/uzi-api/logger"
 	"github.com/edwinlomolo/uzi-api/middleware"
 	"github.com/edwinlomolo/uzi-api/store"
@@ -64,8 +64,8 @@ func main() {
 
 	// Services
 	ipinfoService := ipinfo.New(cache)
-	jwt.New()
 	userService := user.New(queries, cache)
+	aws.New()
 
 	// Graphql TODO refactor this to one setup func
 	srv := gqlHandler.New(gql.NewExecutableSchema(resolvers.New(queries, cache, userService)))
