@@ -473,15 +473,13 @@ func (t *TripRepository) GetTrip(tripID uuid.UUID) (*model.Trip, error) {
 	if trp.CourierID.String() != constants.ZERO_UUID {
 		pickup := model.TripInput{}
 		dropoff := model.TripInput{}
-
+		courierGps, err := t.store.GetCourierLocation(context.Background(), *trp.CourierID)
+		if err != nil {
+			return nil, err
+		}
 		switch trp.Status {
 		case model.TripStatusCourierArriving,
 			model.TripStatusCourierAssigned:
-			courierGps, err := t.store.GetCourierLocation(context.Background(), *trp.CourierID)
-			if err != nil {
-				return nil, err
-			}
-
 			pickup.Location = &model.GpsInput{
 				Lat: location.ParsePostgisLocation(courierGps).Lat,
 				Lng: location.ParsePostgisLocation(courierGps).Lng,
@@ -502,8 +500,8 @@ func (t *TripRepository) GetTrip(tripID uuid.UUID) (*model.Trip, error) {
 			trp.Cost = cost
 		case model.TripStatusCourierEnRoute:
 			pickup.Location = &model.GpsInput{
-				Lat: location.ParsePostgisLocation(trip.ConfirmedPickup).Lat,
-				Lng: location.ParsePostgisLocation(trip.ConfirmedPickup).Lng,
+				Lat: location.ParsePostgisLocation(courierGps).Lat,
+				Lng: location.ParsePostgisLocation(courierGps).Lng,
 			}
 			dropoff.Location = &model.GpsInput{
 				Lat: trp.EndLocation.Lat,
@@ -690,7 +688,7 @@ func (t *TripRepository) computeRoute(pickup, dropoff location.Geocode) (*model.
 		tripRoute.Polyline = routeRes.Routes[0].Polyline.EncodedPolyline
 		tripRoute.Distance = routeRes.Routes[0].Distance
 
-		// Let the above fallthrough and shortcircuit here not to super-charge in dev
+		// Short-circuit google route api with cache here not to super-charge in dev
 		if isDev() {
 			go func() {
 				t.cache.Set(context.Background(), cacheKey, tripRoute, time.Hour*24)

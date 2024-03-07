@@ -48,16 +48,6 @@ type Recipient struct {
 	UpdatedAt time.Time      `json:"updated_at"`
 }
 
-type Route struct {
-	ID        uuid.UUID   `json:"id"`
-	Distance  string      `json:"distance"`
-	Polyline  interface{} `json:"polyline"`
-	Eta       time.Time   `json:"eta"`
-	State     string      `json:"state"`
-	CreatedAt time.Time   `json:"created_at"`
-	UpdatedAt time.Time   `json:"updated_at"`
-}
-
 type Session struct {
 	ID        uuid.UUID `json:"id"`
 	Ip        string    `json:"ip"`
@@ -101,13 +91,4 @@ type User struct {
 	Onboarding bool      `json:"onboarding"`
 	CreatedAt  time.Time `json:"created_at"`
 	UpdatedAt  time.Time `json:"updated_at"`
-}
-
-type Vehicle struct {
-	ID        uuid.UUID     `json:"id"`
-	Mass      float64       `json:"mass"`
-	ProductID uuid.UUID     `json:"product_id"`
-	CourierID uuid.NullUUID `json:"courier_id"`
-	CreatedAt time.Time     `json:"created_at"`
-	UpdatedAt time.Time     `json:"updated_at"`
 }
