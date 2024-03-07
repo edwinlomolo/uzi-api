@@ -351,7 +351,7 @@ const getNearbyAvailableCourierProducts = `-- name: GetNearbyAvailableCourierPro
 SELECT c.id, c.product_id, p.id, p.name, p.description, p.weight_class, p.icon, p.relevance, p.created_at, p.updated_at FROM couriers c
 JOIN products p
 ON ST_DWithin(c.location, $1::geography, $2)
-WHERE c.product_id = p.id AND c.status = 'ONLINE' AND c.verified = 'true'
+WHERE c.product_id = p.id AND c.verified = 'true'
 ORDER BY p.relevance ASC
 `
 

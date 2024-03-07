@@ -191,7 +191,9 @@ func (c *CourierRepository) isCourierTripping(courier *model.Courier, input mode
 	go func() {
 		defer close(done)
 		t, err := c.GetCourierTrip(courier.ID)
-		if err != nil && !errors.Is(err, ErrCourierTripNotFound) {
+		if err != nil && errors.Is(err, ErrCourierTripNotFound) {
+			return
+		} else if err != nil {
 			return
 		}
 
@@ -227,7 +229,6 @@ func (c *CourierRepository) GetCourierTrip(tripID uuid.UUID) (*model.Trip, error
 	tid := uuid.NullUUID{UUID: tripID, Valid: true}
 	trip, err := c.store.GetCourierTrip(context.Background(), tid)
 	if err == sql.ErrNoRows {
-		log.Errorf(ErrCourierTripNotFound.Error())
 		return nil, ErrCourierTripNotFound
 	} else if err != nil {
 		log.WithFields(logrus.Fields{
