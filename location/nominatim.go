@@ -1,14 +1,11 @@
 package location
 
 import (
-	"context"
 	"encoding/json"
 	"fmt"
 	"net/http"
 	"strconv"
-	"time"
 
-	"github.com/edwinlomolo/uzi-api/cache"
 	"github.com/edwinlomolo/uzi-api/gql/model"
 	"github.com/sirupsen/logrus"
 )
@@ -38,32 +35,17 @@ type nominatim interface {
 }
 
 type nominatimClient struct {
-	cache cache.Cache
 }
 
-func newNominatim(cache cache.Cache) nominatim {
-	return &nominatimClient{
-		cache,
-	}
+func newNominatim() nominatim {
+	return &nominatimClient{}
 }
 
 func (n nominatimClient) ReverseGeocode(
 	input model.GpsInput,
 ) (*Geocode, error) {
-	cacheKey := base64Key(input)
-
 	var nominatimRes nominatimresponse
 	geo := &Geocode{}
-
-	cValue, err := n.cache.Get(context.Background(), cacheKey, &Geocode{})
-	if err != nil {
-		return nil, err
-	}
-
-	if cValue != nil {
-		n := (cValue).(*Geocode)
-		return n, nil
-	}
 
 	url := fmt.Sprintf(
 		"%s/reverse?format=jsonv2&lat=%f&lon=%f",
@@ -115,13 +97,6 @@ func (n nominatimClient) ReverseGeocode(
 		Lat: lat,
 		Lng: lng,
 	}
-
-	done := make(chan struct{})
-	go func() {
-		defer close(done)
-		n.cache.Set(context.Background(), cacheKey, geo, time.Hour)
-	}()
-	<-done
 
 	return geo, nil
 }

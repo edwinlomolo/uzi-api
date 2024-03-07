@@ -60,7 +60,7 @@ func New(redis cache.Cache) LocationService {
 	}
 
 	return &locationClient{
-		newNominatim(redis),
+		newNominatim(),
 		places,
 		geocode,
 		config.Config.GoogleMaps,
