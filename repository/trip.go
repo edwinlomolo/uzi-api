@@ -295,7 +295,7 @@ func (t *TripRepository) MatchCourier(tripID uuid.UUID, pickup model.TripInput) 
 	// use a 5/10/15 minute timeout - trick impatiency cancellation from client(user)
 	timeoutCtx, cancel := context.WithTimeout(
 		context.Background(),
-		time.Minute*10,
+		time.Minute*5,
 	)
 
 	go func() {
@@ -518,7 +518,7 @@ func (t *TripRepository) GetTrip(tripID uuid.UUID) (*model.Trip, error) {
 			}
 			trp.Cost = cost
 
-			// Create cost while en-route. Is it okay to do this here
+			// Create cost while en-route. There has to be a better way to do costing?
 			go func() {
 				_, err := t.store.CreateTripCost(context.Background(), sqlc.CreateTripCostParams{
 					ID:   tripID,
