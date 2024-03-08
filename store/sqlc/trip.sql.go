@@ -44,43 +44,11 @@ func (q *Queries) AssignCourierToTrip(ctx context.Context, arg AssignCourierToTr
 	return i, err
 }
 
-const assignRouteToTrip = `-- name: AssignRouteToTrip :one
-UPDATE trips
-SET route_id = $1
-WHERE id = $2
-RETURNING id, start_location, end_location, confirmed_pickup, courier_id, user_id, route_id, product_id, cost, status, created_at, updated_at
-`
-
-type AssignRouteToTripParams struct {
-	RouteID uuid.NullUUID `json:"route_id"`
-	ID      uuid.UUID     `json:"id"`
-}
-
-func (q *Queries) AssignRouteToTrip(ctx context.Context, arg AssignRouteToTripParams) (Trip, error) {
-	row := q.db.QueryRowContext(ctx, assignRouteToTrip, arg.RouteID, arg.ID)
-	var i Trip
-	err := row.Scan(
-		&i.ID,
-		&i.StartLocation,
-		&i.EndLocation,
-		&i.ConfirmedPickup,
-		&i.CourierID,
-		&i.UserID,
-		&i.RouteID,
-		&i.ProductID,
-		&i.Cost,
-		&i.Status,
-		&i.CreatedAt,
-		&i.UpdatedAt,
-	)
-	return i, err
-}
-
 const assignTripToCourier = `-- name: AssignTripToCourier :one
 UPDATE trips
 SET courier_id = $1
 WHERE id = $2
-RETURNING id, start_location, end_location, confirmed_pickup, courier_id, user_id, route_id, product_id, cost, status, created_at, updated_at
+RETURNING id, start_location, end_location, confirmed_pickup, courier_id, user_id, product_id, cost, status, created_at, updated_at
 `
 
 type AssignTripToCourierParams struct {
@@ -98,7 +66,6 @@ func (q *Queries) AssignTripToCourier(ctx context.Context, arg AssignTripToCouri
 		&i.ConfirmedPickup,
 		&i.CourierID,
 		&i.UserID,
-		&i.RouteID,
 		&i.ProductID,
 		&i.Cost,
 		&i.Status,
@@ -156,7 +123,7 @@ INSERT INTO trips (
 ) VALUES (
   $1, $2, $3, $4, $5
 )
-RETURNING id, start_location, end_location, confirmed_pickup, courier_id, user_id, route_id, product_id, cost, status, created_at, updated_at
+RETURNING id, start_location, end_location, confirmed_pickup, courier_id, user_id, product_id, cost, status, created_at, updated_at
 `
 
 type CreateTripParams struct {
@@ -183,7 +150,6 @@ func (q *Queries) CreateTrip(ctx context.Context, arg CreateTripParams) (Trip, e
 		&i.ConfirmedPickup,
 		&i.CourierID,
 		&i.UserID,
-		&i.RouteID,
 		&i.ProductID,
 		&i.Cost,
 		&i.Status,
@@ -197,12 +163,12 @@ const createTripCost = `-- name: CreateTripCost :one
 UPDATE trips
 SET cost = $1
 WHERE id = $2
-RETURNING id, start_location, end_location, confirmed_pickup, courier_id, user_id, route_id, product_id, cost, status, created_at, updated_at
+RETURNING id, start_location, end_location, confirmed_pickup, courier_id, user_id, product_id, cost, status, created_at, updated_at
 `
 
 type CreateTripCostParams struct {
-	Cost sql.NullInt32 `json:"cost"`
-	ID   uuid.UUID     `json:"id"`
+	Cost int32     `json:"cost"`
+	ID   uuid.UUID `json:"id"`
 }
 
 func (q *Queries) CreateTripCost(ctx context.Context, arg CreateTripCostParams) (Trip, error) {
@@ -215,7 +181,6 @@ func (q *Queries) CreateTripCost(ctx context.Context, arg CreateTripCostParams) 
 		&i.ConfirmedPickup,
 		&i.CourierID,
 		&i.UserID,
-		&i.RouteID,
 		&i.ProductID,
 		&i.Cost,
 		&i.Status,
@@ -322,7 +287,7 @@ func (q *Queries) GetCourierNearPickupPoint(ctx context.Context, arg GetCourierN
 }
 
 const getCourierTrip = `-- name: GetCourierTrip :one
-SELECT id, start_location, end_location, confirmed_pickup, courier_id, user_id, route_id, product_id, cost, status, created_at, updated_at FROM trips
+SELECT id, start_location, end_location, confirmed_pickup, courier_id, user_id, product_id, cost, status, created_at, updated_at FROM trips
 WHERE courier_id = $1
 LIMIT 1
 `
@@ -337,7 +302,6 @@ func (q *Queries) GetCourierTrip(ctx context.Context, courierID uuid.NullUUID) (
 		&i.ConfirmedPickup,
 		&i.CourierID,
 		&i.UserID,
-		&i.RouteID,
 		&i.ProductID,
 		&i.Cost,
 		&i.Status,
@@ -417,7 +381,7 @@ type GetTripRow struct {
 	ID              uuid.UUID     `json:"id"`
 	Status          string        `json:"status"`
 	CourierID       uuid.NullUUID `json:"courier_id"`
-	Cost            sql.NullInt32 `json:"cost"`
+	Cost            int32         `json:"cost"`
 	ConfirmedPickup interface{}   `json:"confirmed_pickup"`
 	StartLocation   interface{}   `json:"start_location"`
 	EndLocation     interface{}   `json:"end_location"`
@@ -465,7 +429,7 @@ const setTripStatus = `-- name: SetTripStatus :one
 UPDATE trips
 SET status = $1
 WHERE id = $2
-RETURNING id, start_location, end_location, confirmed_pickup, courier_id, user_id, route_id, product_id, cost, status, created_at, updated_at
+RETURNING id, start_location, end_location, confirmed_pickup, courier_id, user_id, product_id, cost, status, created_at, updated_at
 `
 
 type SetTripStatusParams struct {
@@ -483,7 +447,6 @@ func (q *Queries) SetTripStatus(ctx context.Context, arg SetTripStatusParams) (T
 		&i.ConfirmedPickup,
 		&i.CourierID,
 		&i.UserID,
-		&i.RouteID,
 		&i.ProductID,
 		&i.Cost,
 		&i.Status,

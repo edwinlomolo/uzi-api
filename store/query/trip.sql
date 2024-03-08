@@ -29,12 +29,6 @@ SELECT id, status, courier_id, cost, ST_AsGeoJSON(confirmed_pickup) AS confirmed
 WHERE id = $1
 LIMIT 1;
 
--- name: AssignRouteToTrip :one
-UPDATE trips
-SET route_id = $1
-WHERE id = $2
-RETURNING *;
-
 -- name: AssignCourierToTrip :one
 UPDATE couriers
 SET trip_id = $1

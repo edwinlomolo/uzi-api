@@ -165,7 +165,7 @@ func (t *TripRepository) CreateTrip(args sqlc.CreateTripParams) (*model.Trip, er
 func (t *TripRepository) CreateTripCost(tripID uuid.UUID, cost int) error {
 	args := sqlc.CreateTripCostParams{
 		ID:   tripID,
-		Cost: sql.NullInt32{Int32: int32(cost), Valid: true},
+		Cost: int32(cost),
 	}
 	if _, err := t.store.CreateTripCost(
 		context.Background(),
@@ -465,7 +465,7 @@ func (t *TripRepository) GetTrip(tripID uuid.UUID) (*model.Trip, error) {
 		ID:          trip.ID,
 		Status:      model.TripStatus(trip.Status),
 		CourierID:   &trip.CourierID.UUID,
-		Cost:        int(trip.Cost.Int32),
+		Cost:        int(trip.Cost),
 		EndLocation: location.ParsePostgisLocation(trip.EndLocation),
 	}
 
@@ -522,7 +522,7 @@ func (t *TripRepository) GetTrip(tripID uuid.UUID) (*model.Trip, error) {
 			go func() {
 				_, err := t.store.CreateTripCost(context.Background(), sqlc.CreateTripCostParams{
 					ID:   tripID,
-					Cost: sql.NullInt32{Int32: int32(trp.Cost), Valid: true},
+					Cost: int32(trp.Cost),
 				})
 				log.WithFields(logrus.Fields{
 					"error":   err,
