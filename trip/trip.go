@@ -80,9 +80,7 @@ func (t *tripClient) UnassignTrip(courierID uuid.UUID) error {
 	return t.r.UnassignTrip(courierID)
 }
 
-func (t *tripClient) CreateTrip(
-	args sqlStore.CreateTripParams,
-) (*model.Trip, error) {
+func (t *tripClient) CreateTrip(args sqlStore.CreateTripParams) (*model.Trip, error) {
 	t.mu.Lock()
 	defer t.mu.Unlock()
 
