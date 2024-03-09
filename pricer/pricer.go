@@ -4,8 +4,6 @@ import (
 	"math"
 
 	"github.com/edwinlomolo/uzi-api/config"
-	"github.com/edwinlomolo/uzi-api/logger"
-	"github.com/sirupsen/logrus"
 )
 
 type Pricing interface {
@@ -13,12 +11,10 @@ type Pricing interface {
 	CalculateTripRevenue(tripCost int) int
 }
 
-type pricerClient struct {
-	log *logrus.Logger
-}
+type pricerClient struct{}
 
 func New() Pricing {
-	return &pricerClient{logger.GetLogger()}
+	return &pricerClient{}
 }
 
 func (p *pricerClient) CalculateTripCost(
