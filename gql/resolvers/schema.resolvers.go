@@ -19,8 +19,6 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-var log = logger.GetLogger()
-
 // CreateCourierDocument is the resolver for the createCourierDocument field.
 func (r *mutationResolver) CreateCourierDocument(ctx context.Context, input model.CourierUploadInput) (bool, error) {
 	courierID := getCourierIDFromResolverContext(ctx, r)
@@ -238,3 +236,11 @@ func (r *Resolver) Subscription() gql.SubscriptionResolver { return &subscriptio
 type mutationResolver struct{ *Resolver }
 type queryResolver struct{ *Resolver }
 type subscriptionResolver struct{ *Resolver }
+
+// !!! WARNING !!!
+// The code below was going to be deleted when updating resolvers. It has been copied here so you have
+// one last chance to move it out of harms way if you want. There are two reasons this happens:
+//   - When renaming or deleting a resolver the old code will be put in here. You can safely delete
+//     it when you're done.
+//   - You have helper methods in this file. Move them out to keep these resolver files clean.
+var log = logger.GetLogger()

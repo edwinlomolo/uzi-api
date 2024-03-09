@@ -127,6 +127,9 @@ func (t *TripRepository) AssignCourierToTrip(tripID, courierID uuid.UUID) error 
 		return assignTripErr
 	}
 
+	// Calculate trip cost
+	go t.CreateTripCost(tripID)
+
 	return nil
 }
 
@@ -162,7 +165,41 @@ func (t *TripRepository) CreateTrip(args sqlc.CreateTripParams) (*model.Trip, er
 	}, nil
 }
 
-func (t *TripRepository) CreateTripCost(tripID uuid.UUID, cost int) error {
+func (t *TripRepository) CreateTripCost(tripID uuid.UUID) error {
+	// Get trip details assuming whenever we are calling this a trip already exists
+	trip, err := t.store.GetTrip(context.Background(), tripID)
+	if err != nil {
+		log.WithFields(logrus.Fields{
+			"error":   err,
+			"trip_id": tripID,
+		}).Errorf("get trip details for cost calculation")
+		return err
+	}
+
+	product, err := t.store.GetCourierProductByID(context.Background(), trip.ProductID)
+	if err != nil {
+		log.WithFields(logrus.Fields{
+			"error":      err,
+			"product_id": trip.ProductID,
+		}).Errorf("create trip cost: get courier product")
+		return err
+	}
+
+	pickup := location.ParsePostgisLocation(trip.StartLocation)
+	dropoff := location.ParsePostgisLocation(trip.EndLocation)
+	routeRes, routeErr := t.computeRoute(
+		location.Geocode{
+			Location: *pickup,
+		},
+		location.Geocode{
+			Location: *dropoff,
+		},
+	)
+	if routeErr != nil {
+		return routeErr
+	}
+
+	cost := t.p.CalculateTripCost(int(product.WeightClass), routeRes.Distance, product.Name != "UziX")
 	args := sqlc.CreateTripCostParams{
 		ID:   tripID,
 		Cost: int32(cost),
@@ -402,32 +439,6 @@ func (t *TripRepository) GetTripRecipient(tripID uuid.UUID) (*model.Recipient, e
 	}, nil
 }
 
-func (t *TripRepository) getTripCost(trip model.Trip, distance int) (int, error) {
-	if trip.CourierID.String() == constants.ZERO_UUID {
-		return 0, nil
-	}
-
-	courier, err := t.GetTripCourier(*trip.CourierID)
-	if err != nil {
-		log.WithFields(logrus.Fields{
-			"error":    err,
-			"distance": distance,
-		}).Errorf("get trip courier for trip cost calculation")
-		return 0, err
-	}
-
-	product, productErr := t.getCourierProduct(courier.ProductID)
-	if productErr != nil {
-		log.WithFields(logrus.Fields{
-			"error":              productErr,
-			"courier_product_id": courier.ProductID,
-		}).Errorf("get trip courier product for trip cost calculation")
-		return 0, productErr
-	}
-
-	return t.p.CalculateTripCost(int(product.WeightClass), distance, product.Name != "UziX"), nil
-}
-
 func (t *TripRepository) getCourierProduct(productID uuid.UUID) (*model.Product, error) {
 	product, err := t.store.GetCourierProductByID(
 		context.Background(),
@@ -465,6 +476,7 @@ func (t *TripRepository) GetTrip(tripID uuid.UUID) (*model.Trip, error) {
 		ID:          trip.ID,
 		Status:      model.TripStatus(trip.Status),
 		CourierID:   &trip.CourierID.UUID,
+		ProductID:   trip.ProductID,
 		Cost:        int(trip.Cost),
 		EndLocation: location.ParsePostgisLocation(trip.EndLocation),
 	}
@@ -493,11 +505,6 @@ func (t *TripRepository) GetTrip(tripID uuid.UUID) (*model.Trip, error) {
 				return nil, err
 			}
 			trp.Route = tripRoute
-			cost, costErr := t.getTripCost(*trp, trp.Route.Distance)
-			if costErr != nil {
-				return nil, costErr
-			}
-			trp.Cost = cost
 		case model.TripStatusCourierEnRoute:
 			pickup.Location = &model.GpsInput{
 				Lat: location.ParsePostgisLocation(courierGps).Lat,
@@ -512,27 +519,6 @@ func (t *TripRepository) GetTrip(tripID uuid.UUID) (*model.Trip, error) {
 				return nil, err
 			}
 			trp.Route = tripRoute
-			cost, costErr := t.getTripCost(*trp, trp.Route.Distance)
-			if costErr != nil {
-				return nil, costErr
-			}
-			trp.Cost = cost
-
-			// Create cost while en-route. There has to be a better way to do costing?
-			go func() {
-				_, err := t.store.CreateTripCost(context.Background(), sqlc.CreateTripCostParams{
-					ID:   tripID,
-					Cost: int32(trp.Cost),
-				})
-				log.WithFields(logrus.Fields{
-					"error":   err,
-					"trip_id": tripID,
-					"cost":    trp.Cost,
-				}).Errorf("create trip cost")
-				if err != nil {
-					return
-				}
-			}()
 		}
 	}
 

@@ -6,6 +6,7 @@ type Trip {
   start_location: Gps
   end_location: Gps
   status: TripStatus!
+  product_id: UUID!
   cost: Int!
   route: TripRoute
   recipient: Recipient!

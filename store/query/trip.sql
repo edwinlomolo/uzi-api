@@ -25,7 +25,7 @@ couriers
 WHERE ST_DWithin(location, sqlc.arg(point)::geography, sqlc.arg(radius)) AND status = 'ONLINE' AND verified = 'true';
 
 -- name: GetTrip :one
-SELECT id, status, courier_id, cost, ST_AsGeoJSON(confirmed_pickup) AS confirmed_pickup, ST_AsGeoJSON(start_location) AS start_location, ST_AsGeoJSON(end_location) AS end_location FROM trips
+SELECT id, status, courier_id, cost, product_id, ST_AsGeoJSON(confirmed_pickup) AS confirmed_pickup, ST_AsGeoJSON(start_location) AS start_location, ST_AsGeoJSON(end_location) AS end_location FROM trips
 WHERE id = $1
 LIMIT 1;
 

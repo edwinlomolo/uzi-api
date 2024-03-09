@@ -20,7 +20,6 @@ type TripService interface {
 	AssignCourierToTrip(tripID, courierID uuid.UUID) error
 	UnassignTrip(courierID uuid.UUID) error
 	CreateTrip(sqlStore.CreateTripParams) (*model.Trip, error)
-	CreateTripCost(tripID uuid.UUID, cost int) error
 	SetTripStatus(tripID uuid.UUID, status model.TripStatus) error
 	MatchCourier(tripID uuid.UUID, pickup model.TripInput)
 	CreateTripRecipient(tripID uuid.UUID, input model.TripRecipientInput) error
@@ -85,13 +84,6 @@ func (t *tripClient) CreateTrip(args sqlStore.CreateTripParams) (*model.Trip, er
 	defer t.mu.Unlock()
 
 	return t.r.CreateTrip(args)
-}
-
-func (t *tripClient) CreateTripCost(tripID uuid.UUID, cost int) error {
-	t.mu.Lock()
-	defer t.mu.Unlock()
-
-	return t.r.CreateTripCost(tripID, cost)
 }
 
 func (t *tripClient) SetTripStatus(tripID uuid.UUID, status model.TripStatus) error {

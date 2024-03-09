@@ -121,6 +121,7 @@ type Trip struct {
 	StartLocation *Gps       `json:"start_location,omitempty"`
 	EndLocation   *Gps       `json:"end_location,omitempty"`
 	Status        TripStatus `json:"status"`
+	ProductID     uuid.UUID  `json:"product_id"`
 	Cost          int        `json:"cost"`
 	Route         *TripRoute `json:"route,omitempty"`
 	Recipient     *Recipient `json:"recipient"`

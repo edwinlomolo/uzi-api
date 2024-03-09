@@ -167,6 +167,7 @@ type ComplexityRoot struct {
 		CreatedAt     func(childComplexity int) int
 		EndLocation   func(childComplexity int) int
 		ID            func(childComplexity int) int
+		ProductID     func(childComplexity int) int
 		Recipient     func(childComplexity int) int
 		Route         func(childComplexity int) int
 		StartLocation func(childComplexity int) int
@@ -871,6 +872,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Trip.ID(childComplexity), true
+
+	case "Trip.product_id":
+		if e.complexity.Trip.ProductID == nil {
+			break
+		}
+
+		return e.complexity.Trip.ProductID(childComplexity), true
 
 	case "Trip.recipient":
 		if e.complexity.Trip.Recipient == nil {
@@ -1954,6 +1962,8 @@ func (ec *executionContext) fieldContext_Courier_trip(ctx context.Context, field
 				return ec.fieldContext_Trip_end_location(ctx, field)
 			case "status":
 				return ec.fieldContext_Trip_status(ctx, field)
+			case "product_id":
+				return ec.fieldContext_Trip_product_id(ctx, field)
 			case "cost":
 				return ec.fieldContext_Trip_cost(ctx, field)
 			case "route":
@@ -2732,6 +2742,8 @@ func (ec *executionContext) fieldContext_Mutation_createTrip(ctx context.Context
 				return ec.fieldContext_Trip_end_location(ctx, field)
 			case "status":
 				return ec.fieldContext_Trip_status(ctx, field)
+			case "product_id":
+				return ec.fieldContext_Trip_product_id(ctx, field)
 			case "cost":
 				return ec.fieldContext_Trip_cost(ctx, field)
 			case "route":
@@ -3729,6 +3741,8 @@ func (ec *executionContext) fieldContext_Query_getTripDetails(ctx context.Contex
 				return ec.fieldContext_Trip_end_location(ctx, field)
 			case "status":
 				return ec.fieldContext_Trip_status(ctx, field)
+			case "product_id":
+				return ec.fieldContext_Trip_product_id(ctx, field)
 			case "cost":
 				return ec.fieldContext_Trip_cost(ctx, field)
 			case "route":
@@ -4241,6 +4255,8 @@ func (ec *executionContext) fieldContext_Recipient_trip(ctx context.Context, fie
 				return ec.fieldContext_Trip_end_location(ctx, field)
 			case "status":
 				return ec.fieldContext_Trip_status(ctx, field)
+			case "product_id":
+				return ec.fieldContext_Trip_product_id(ctx, field)
 			case "cost":
 				return ec.fieldContext_Trip_cost(ctx, field)
 			case "route":
@@ -5482,6 +5498,50 @@ func (ec *executionContext) fieldContext_Trip_status(ctx context.Context, field 
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("field of type TripStatus does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Trip_product_id(ctx context.Context, field graphql.CollectedField, obj *model.Trip) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Trip_product_id(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.ProductID, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(uuid.UUID)
+	fc.Result = res
+	return ec.marshalNUUID2githubᚗcomᚋgoogleᚋuuidᚐUUID(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Trip_product_id(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Trip",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type UUID does not have child fields")
 		},
 	}
 	return fc, nil
@@ -9794,6 +9854,11 @@ func (ec *executionContext) _Trip(ctx context.Context, sel ast.SelectionSet, obj
 			out.Values[i] = ec._Trip_end_location(ctx, field, obj)
 		case "status":
 			out.Values[i] = ec._Trip_status(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "product_id":
+			out.Values[i] = ec._Trip_product_id(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&out.Invalids, 1)
 			}
