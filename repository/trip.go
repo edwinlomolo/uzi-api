@@ -204,6 +204,7 @@ func (t *TripRepository) CreateTripCost(tripID uuid.UUID) error {
 		ID:   tripID,
 		Cost: int32(cost),
 	}
+	t.mu.Lock()
 	if _, err := t.store.CreateTripCost(
 		context.Background(),
 		args,
@@ -216,11 +217,15 @@ func (t *TripRepository) CreateTripCost(tripID uuid.UUID) error {
 		}).Errorf(uziErr.Error())
 		return uziErr
 	}
+	t.mu.Unlock()
 
 	return nil
 }
 
 func (t *TripRepository) SetTripStatus(tripID uuid.UUID, status model.TripStatus) error {
+	t.mu.Lock()
+	defer t.mu.Unlock()
+
 	tripArgs := sqlc.SetTripStatusParams{
 		ID:     tripID,
 		Status: status.String(),
@@ -528,9 +533,7 @@ func (t *TripRepository) GetTrip(tripID uuid.UUID) (*model.Trip, error) {
 func (t *TripRepository) publishTripUpdate(tripID uuid.UUID, status model.TripStatus, channel string) error {
 	time.Sleep(5 * time.Second)
 
-	done := make(chan struct{})
 	go func() {
-		defer close(done)
 		update := model.TripUpdate{ID: tripID, Status: status}
 
 		t.SetTripStatus(tripID, status)
@@ -570,7 +573,6 @@ func (t *TripRepository) publishTripUpdate(tripID uuid.UUID, status model.TripSt
 			return
 		}
 	}()
-	<-done
 	return nil
 }
 
