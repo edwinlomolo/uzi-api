@@ -10,7 +10,6 @@ import (
 	"github.com/99designs/gqlgen/graphql/handler/lru"
 	"github.com/99designs/gqlgen/graphql/handler/transport"
 	"github.com/99designs/gqlgen/graphql/playground"
-	"github.com/edwinlomolo/uzi-api/aws"
 	"github.com/edwinlomolo/uzi-api/cache"
 	"github.com/edwinlomolo/uzi-api/config"
 	"github.com/edwinlomolo/uzi-api/gql"
@@ -20,6 +19,7 @@ import (
 	"github.com/edwinlomolo/uzi-api/logger"
 	"github.com/edwinlomolo/uzi-api/middleware"
 	"github.com/edwinlomolo/uzi-api/store"
+	"github.com/edwinlomolo/uzi-api/uploader"
 	"github.com/edwinlomolo/uzi-api/user"
 	"github.com/getsentry/sentry-go"
 	"github.com/go-chi/chi/v5"
@@ -27,8 +27,7 @@ import (
 	"github.com/rs/cors"
 )
 
-// TODO probably setup server client and user factory paradigm
-// to setup its dependencies and services with receiver methods
+// TODO I can set this up better
 func main() {
 	// Config
 	config.LoadConfig()
@@ -65,9 +64,8 @@ func main() {
 	// Services
 	ipinfoService := ipinfo.New(cache)
 	userService := user.New(queries, cache)
-	aws.New()
+	uploader.New()
 
-	// Graphql TODO refactor this to one setup func
 	srv := gqlHandler.New(gql.NewExecutableSchema(resolvers.New(queries, cache, userService)))
 	srv.AddTransport(&transport.POST{})
 	srv.AddTransport(&transport.Websocket{
@@ -84,7 +82,6 @@ func main() {
 		Cache: lru.New(1000),
 	})
 
-	// Routes TODO (look at first route setup comment)
 	r.Route("/v1", func(r chi.Router) {
 		r.With(middleware.Auth).Handle("/api", srv)
 		r.Post("/signin", handler.Signin(userService))
@@ -101,6 +98,5 @@ func main() {
 		Handler: c.Handler(r),
 	}
 
-	// Run server TODO refactor this to one setup func to start server
 	log.Fatalln(s.ListenAndServe())
 }
