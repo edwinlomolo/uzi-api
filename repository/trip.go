@@ -334,19 +334,12 @@ func (t *TripRepository) MatchCourier(tripID uuid.UUID, pickup model.TripInput) 
 		}).Errorf("cleanup trip pickup input")
 	}
 
-	// use a 5/10/15 minute timeout - trick impatiency cancellation from client(user)
-	timeoutCtx, cancel := context.WithTimeout(
-		context.Background(),
-		time.Minute,
-	)
-
 	go func() {
 		courierFound := false
-		defer cancel()
 
 		for {
 			select {
-			case <-timeoutCtx.Done():
+			case <-time.After(time.Minute):
 				if !courierFound {
 					t.ReportTripStatus(tripID, model.TripStatusCourierNotFound)
 				}
