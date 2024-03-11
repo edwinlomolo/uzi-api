@@ -34,11 +34,11 @@ func New(
 ) gql.Config {
 
 	c := gql.Config{Resolvers: &Resolver{
-		upload.New(queries, redis.Redis()),
+		upload.New(queries, redis.GetRedis()),
 		courier.New(queries, redis),
 		location.New(redis),
 		trip.New(queries, redis),
-		redis.Redis(),
+		redis.GetRedis(),
 		userService,
 	}}
 

@@ -48,7 +48,7 @@ func (t *TripRepository) Init(store *sqlc.Queries, cache cache.Cache) {
 	pr := &PricerRepository{}
 	pr.Init(store, cache)
 	t.store = store
-	t.redis = cache.Redis()
+	t.redis = cache.GetRedis()
 	t.location = location.New(cache)
 	t.cache = cache
 	t.p = pricer.New()

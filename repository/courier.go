@@ -26,7 +26,7 @@ type CourierRepository struct {
 
 func (c *CourierRepository) Init(store *sqlc.Queries, cache cache.Cache) {
 	c.store = store
-	c.redis = cache.Redis()
+	c.redis = cache.GetRedis()
 }
 
 func (c *CourierRepository) FindOrCreate(userID uuid.UUID) (*model.Courier, error) {

@@ -119,6 +119,6 @@ func (ipc *ipinfoCache) Set(
 func newCache(c redisCache.Cache) cache.Interface {
 	return &ipinfoCache{
 		logger.New(),
-		c.Redis(),
+		c.GetRedis(),
 	}
 }
