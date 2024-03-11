@@ -724,7 +724,7 @@ func (t *TripRepository) requestGoogleRoute(routeParams routerequest, routeRespo
 		return nil, reqErr
 	}
 	req.Header.Add("Content-Type", "application/json")
-	req.Header.Add("X-Goog-Api-Key", config.Config.GoogleMaps.GoogleRoutesApiKey)
+	req.Header.Add("X-Goog-Api-Key", config.Config.Google.GoogleRoutesApiKey)
 	req.Header.Add(
 		"X-Goog-FieldMask",
 		"routes.duration,routes.distanceMeters,routes.polyline.encodedPolyline,routes.staticDuration",

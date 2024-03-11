@@ -39,20 +39,20 @@ type Geocode struct {
 type locationClient struct {
 	nominatim       nominatim
 	places, geocode *maps.Client
-	config          config.GoogleMaps
+	config          config.Google
 	log             *logrus.Logger
 	cache           cache.Cache
 }
 
 func New(redis cache.Cache) LocationService {
-	places, placesErr := maps.NewClient(maps.WithAPIKey(config.Config.GoogleMaps.GooglePlacesApiKey))
+	places, placesErr := maps.NewClient(maps.WithAPIKey(config.Config.Google.GooglePlacesApiKey))
 	if placesErr != nil {
 		log.WithError(placesErr).Errorf("new places client")
 	} else {
 		log.Infoln("Places service...OK")
 	}
 
-	geocode, geocodeErr := maps.NewClient(maps.WithAPIKey(config.Config.GoogleMaps.GoogleGeocodeApiKey))
+	geocode, geocodeErr := maps.NewClient(maps.WithAPIKey(config.Config.Google.GoogleGeocodeApiKey))
 	if geocodeErr != nil {
 		log.WithError(geocodeErr).Errorf("new geocode client")
 	} else {
@@ -63,7 +63,7 @@ func New(redis cache.Cache) LocationService {
 		newNominatim(),
 		places,
 		geocode,
-		config.Config.GoogleMaps,
+		config.Config.Google,
 		log,
 		redis,
 	}
@@ -177,12 +177,9 @@ func (l *locationClient) GetPlaceDetails(
 		},
 	}
 
-	done := make(chan struct{})
 	go func() {
-		defer close(done)
 		l.cache.Set(context.Background(), placeDetails.PlaceID, placeDetails, time.Hour*24)
 	}()
-	<-done
 
 	return placeDetails, nil
 }

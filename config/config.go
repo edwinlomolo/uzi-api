@@ -13,14 +13,14 @@ import (
 var log = logrus.New()
 
 type Configuration struct {
-	Server     Server
-	Database   Database
-	Ipinfo     Ipinfo
-	Jwt        Jwt
-	Aws        Aws
-	GoogleMaps GoogleMaps
-	Pricer     Pricer
-	Sentry     Sentry
+	Server   Server
+	Database Database
+	Ipinfo   Ipinfo
+	Jwt      Jwt
+	Aws      Aws
+	Google   Google
+	Pricer   Pricer
+	Sentry   Sentry
 }
 
 // Env - load env
@@ -40,7 +40,7 @@ func LoadConfig() {
 	configuration.Ipinfo = ipinfoConfig()
 	configuration.Jwt = jwtConfig()
 	configuration.Aws = awsConfig()
-	configuration.GoogleMaps = googleMapsConfig()
+	configuration.Google = googleConfig()
 	configuration.Pricer = pricerConfig()
 	configuration.Sentry = sentryConfig()
 
@@ -143,14 +143,15 @@ func awsConfig() Aws {
 }
 
 // config - get google map config
-func googleMapsConfig() GoogleMaps {
-	var config GoogleMaps
+func googleConfig() Google {
+	var config Google
 
 	Env()
 
 	config.GooglePlacesApiKey = strings.TrimSpace(os.Getenv("MAPS_PLACES_API_KEY"))
 	config.GoogleGeocodeApiKey = strings.TrimSpace(os.Getenv("MAPS_GEOCODE_API_KEY"))
 	config.GoogleRoutesApiKey = strings.TrimSpace(os.Getenv("MAPS_ROUTES_API_KEY"))
+	config.GoogleCloudStorageApiKey = strings.TrimSpace(os.Getenv("GOOGLE_CLOUD_STORAGE_API_KEY"))
 
 	return config
 }
