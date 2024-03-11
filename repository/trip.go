@@ -337,12 +337,12 @@ func (t *TripRepository) MatchCourier(tripID uuid.UUID, pickup model.TripInput) 
 	// use a 5/10/15 minute timeout - trick impatiency cancellation from client(user)
 	timeoutCtx, cancel := context.WithTimeout(
 		context.Background(),
-		time.Minute*5,
+		time.Minute,
 	)
 
 	go func() {
-		defer cancel()
 		courierFound := false
+		defer cancel()
 
 		for {
 			select {
@@ -350,7 +350,6 @@ func (t *TripRepository) MatchCourier(tripID uuid.UUID, pickup model.TripInput) 
 				if !courierFound {
 					t.ReportTripStatus(tripID, model.TripStatusCourierNotFound)
 				}
-
 				return
 			default:
 				time.Sleep(500 * time.Millisecond)
@@ -530,10 +529,10 @@ func (t *TripRepository) GetTrip(tripID uuid.UUID) (*model.Trip, error) {
 	return trp, nil
 }
 
-func (t *TripRepository) publishTripUpdate(tripID uuid.UUID, status model.TripStatus, channel string) error {
-	time.Sleep(5 * time.Second)
-
+func (t *TripRepository) publishTripUpdate(tripID uuid.UUID, status model.TripStatus, channels []string) error {
+	done := make(chan struct{})
 	go func() {
+		defer close(done)
 		update := model.TripUpdate{ID: tripID, Status: status}
 
 		t.SetTripStatus(tripID, status)
@@ -567,12 +566,18 @@ func (t *TripRepository) publishTripUpdate(tripID uuid.UUID, status model.TripSt
 			return
 		}
 
-		pubTripErr := t.redis.Publish(context.Background(), channel, u).Err()
-		if pubTripErr != nil {
-			log.WithError(pubTripErr).Errorf("redis publish trip update")
-			return
+		for _, channel := range channels {
+			pubTripErr := t.redis.Publish(context.Background(), channel, u).Err()
+			if pubTripErr != nil {
+				log.WithError(pubTripErr).Errorf("redis publish trip update")
+				return
+			}
 		}
 	}()
+	<-done
+
+	time.Sleep(3 * time.Second)
+
 	return nil
 }
 
@@ -607,26 +612,28 @@ func (t *TripRepository) ReportTripStatus(tripID uuid.UUID, status model.TripSta
 
 		// Check courier hasn't been assigned yet
 		if trip.CourierID.String() == constants.ZERO_UUID {
-			go t.publishTripUpdate(tripID, model.TripStatusCancelled, getTripStatusChannel(status))
+			t.publishTripUpdate(tripID, model.TripStatusCancelled, getTripStatusChannel(status))
 		}
 	default:
-		go t.publishTripUpdate(tripID, status, getTripStatusChannel(status))
+		t.publishTripUpdate(tripID, status, getTripStatusChannel(status))
 	}
 
 	return nil
 }
 
-func getTripStatusChannel(status model.TripStatus) string {
+// determine communication channels
+func getTripStatusChannel(status model.TripStatus) []string {
 	switch status {
 	case model.TripStatusCourierArriving,
 		model.TripStatusCourierEnRoute,
 		model.TripStatusComplete:
-		return TRIP_UPDATES
-	case model.TripStatusCourierAssigned,
-		model.TripStatusCancelled:
-		return ASSIGN_TRIP
+		return []string{TRIP_UPDATES}
+	case model.TripStatusCourierAssigned:
+		return []string{ASSIGN_TRIP, TRIP_UPDATES}
+	case model.TripStatusCancelled:
+		return []string{ASSIGN_TRIP}
 	default:
-		return ""
+		return []string{}
 	}
 }
 
