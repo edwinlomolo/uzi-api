@@ -67,6 +67,9 @@ func main() {
 	uploader.New()
 
 	srv := gqlHandler.New(gql.NewExecutableSchema(resolvers.New(queries, cache, userService)))
+	srv.AddTransport(&transport.SSE{})
+	srv.AddTransport(&transport.GET{})
+	srv.AddTransport(&transport.POST{})
 	srv.AddTransport(&transport.Websocket{
 		KeepAlivePingInterval: 10 * time.Second,
 		Upgrader: websocket.Upgrader{
