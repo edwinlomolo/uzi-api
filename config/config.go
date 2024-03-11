@@ -151,7 +151,6 @@ func googleConfig() Google {
 	config.GooglePlacesApiKey = strings.TrimSpace(os.Getenv("MAPS_PLACES_API_KEY"))
 	config.GoogleGeocodeApiKey = strings.TrimSpace(os.Getenv("MAPS_GEOCODE_API_KEY"))
 	config.GoogleRoutesApiKey = strings.TrimSpace(os.Getenv("MAPS_ROUTES_API_KEY"))
-	config.GoogleCloudStorageApiKey = strings.TrimSpace(os.Getenv("GOOGLE_CLOUD_STORAGE_API_KEY"))
 	config.GoogleCloudStorageCourierDocumentsBucket = strings.TrimSpace(os.Getenv("GOOGLE_CLOUD_STORAGE_COURIER_DOCUMENTS_BUCKET"))
 	config.GoogleApplicationDevelopmentCredentials = strings.TrimSpace(os.Getenv("GOOGLE_CLOUD_ADC"))
 	config.GoogleCloudObjectUri = strings.TrimSpace(os.Getenv("GOOGLE_CLOUD_OBJECT_URI"))
