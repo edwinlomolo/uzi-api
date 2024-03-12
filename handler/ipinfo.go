@@ -8,12 +8,10 @@ import (
 	"github.com/edwinlomolo/uzi-api/services"
 )
 
-var (
-	log           = internal.GetLogger()
-	ipinfoService = services.GetIpinfoService()
-)
-
 func Ipinfo() http.HandlerFunc {
+	ipinfoService := services.GetIpinfoService()
+	log := internal.GetLogger()
+
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		ip := r.Context().Value("ip").(string)
 

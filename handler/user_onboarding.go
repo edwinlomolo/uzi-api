@@ -5,10 +5,15 @@ import (
 	"io"
 	"net/http"
 
+	"github.com/edwinlomolo/uzi-api/internal"
 	repo "github.com/edwinlomolo/uzi-api/repository"
+	"github.com/edwinlomolo/uzi-api/services"
 )
 
 func UserOnboarding() http.HandlerFunc {
+	userService := services.GetUserService()
+	log := internal.GetLogger()
+
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		var bodyReq repo.SigninInput
 		ip := r.Context().Value("ip").(string)

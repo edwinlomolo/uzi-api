@@ -15,6 +15,7 @@ import (
 	"github.com/edwinlomolo/uzi-api/config"
 	"github.com/edwinlomolo/uzi-api/gql/model"
 	"github.com/edwinlomolo/uzi-api/internal"
+	sqlStore "github.com/edwinlomolo/uzi-api/store"
 	"github.com/edwinlomolo/uzi-api/store/sqlc"
 	"github.com/google/uuid"
 	"github.com/redis/go-redis/v9"
@@ -38,16 +39,20 @@ type TripRepository struct {
 	cache    internal.Cache
 	p        internal.Pricing
 	mu       sync.Mutex
+	store    *sqlc.Queries
+	log      *logrus.Logger
 }
 
 func (t *TripRepository) Init() {
 	pr := &PricerRepository{}
 	pr.Init()
-	t.redis = cc.GetRedis()
+	t.redis = internal.GetCache().GetRedis()
 	t.location = internal.GetLocationService()
-	t.cache = cc
+	t.cache = internal.GetCache()
 	t.p = internal.GetPricer()
 	t.mu = sync.Mutex{}
+	t.store = sqlStore.GetDb()
+	t.log = internal.GetLogger()
 }
 
 func (t *TripRepository) FindAvailableCourier(pickup model.GpsInput) (*model.Courier, error) {
@@ -55,11 +60,11 @@ func (t *TripRepository) FindAvailableCourier(pickup model.GpsInput) (*model.Cou
 		Point:  fmt.Sprintf("SRID=4326;POINT(%.8f %.8f)", pickup.Lng, pickup.Lat),
 		Radius: 2000,
 	}
-	c, err := store.FindAvailableCourier(context.Background(), args)
+	c, err := t.store.FindAvailableCourier(context.Background(), args)
 	if err == sql.ErrNoRows {
 		return nil, nil
 	} else if err != nil {
-		log.WithError(err).Errorf("find available courier")
+		t.log.WithError(err).Errorf("find available courier")
 		return nil, err
 	}
 
@@ -74,7 +79,7 @@ func (t *TripRepository) FindAvailableCourier(pickup model.GpsInput) (*model.Cou
 func (t *TripRepository) AssignCourierToTrip(tripID, courierID uuid.UUID) error {
 	err := t.getCourierAssignedTrip(courierID)
 	if err != nil {
-		log.WithFields(logrus.Fields{
+		t.log.WithFields(logrus.Fields{
 			"courier_id": courierID,
 			"trip_id":    tripID,
 			"error":      err,
@@ -89,12 +94,12 @@ func (t *TripRepository) AssignCourierToTrip(tripID, courierID uuid.UUID) error 
 			Valid: true,
 		},
 	}
-	_, assignCourierErr := store.AssignCourierToTrip(
+	_, assignCourierErr := t.store.AssignCourierToTrip(
 		context.Background(),
 		args,
 	)
 	if assignCourierErr != nil {
-		log.WithFields(logrus.Fields{
+		t.log.WithFields(logrus.Fields{
 			"courier_id": courierID,
 			"trip_id":    args.TripID.UUID,
 			"error":      assignCourierErr,
@@ -109,12 +114,12 @@ func (t *TripRepository) AssignCourierToTrip(tripID, courierID uuid.UUID) error 
 			Valid: true,
 		},
 	}
-	_, assignTripErr := store.AssignTripToCourier(
+	_, assignTripErr := t.store.AssignTripToCourier(
 		context.Background(),
 		courierArgs,
 	)
 	if assignTripErr != nil {
-		log.WithFields(logrus.Fields{
+		t.log.WithFields(logrus.Fields{
 			"courier_id": courierArgs.CourierID.UUID,
 			"trip_id":    tripID,
 			"error":      assignTripErr,
@@ -129,11 +134,11 @@ func (t *TripRepository) AssignCourierToTrip(tripID, courierID uuid.UUID) error 
 }
 
 func (t *TripRepository) UnassignTrip(courierID uuid.UUID) error {
-	if _, err := store.UnassignCourierTrip(
+	if _, err := t.store.UnassignCourierTrip(
 		context.Background(),
 		courierID,
 	); err != nil {
-		log.WithFields(logrus.Fields{
+		t.log.WithFields(logrus.Fields{
 			"courier_id": courierID,
 			"error":      err,
 		}).Errorf("unassign trip")
@@ -144,10 +149,10 @@ func (t *TripRepository) UnassignTrip(courierID uuid.UUID) error {
 }
 
 func (t *TripRepository) CreateTrip(args sqlc.CreateTripParams) (*model.Trip, error) {
-	createTrip, err := store.CreateTrip(context.Background(), args)
+	createTrip, err := t.store.CreateTrip(context.Background(), args)
 	if err != nil {
 		uziErr := fmt.Errorf("%s:%v", "create trip", err)
-		log.WithFields(logrus.Fields{
+		t.log.WithFields(logrus.Fields{
 			"error":  err,
 			"params": args,
 		}).Errorf("create trip")
@@ -162,18 +167,18 @@ func (t *TripRepository) CreateTrip(args sqlc.CreateTripParams) (*model.Trip, er
 
 func (t *TripRepository) CreateTripCost(tripID uuid.UUID) error {
 	// Get trip details assuming whenever we are calling this a trip already exists
-	trip, err := store.GetTrip(context.Background(), tripID)
+	trip, err := t.store.GetTrip(context.Background(), tripID)
 	if err != nil {
-		log.WithFields(logrus.Fields{
+		t.log.WithFields(logrus.Fields{
 			"error":   err,
 			"trip_id": tripID,
 		}).Errorf("get trip details for cost calculation")
 		return err
 	}
 
-	product, err := store.GetCourierProductByID(context.Background(), trip.ProductID)
+	product, err := t.store.GetCourierProductByID(context.Background(), trip.ProductID)
 	if err != nil {
-		log.WithFields(logrus.Fields{
+		t.log.WithFields(logrus.Fields{
 			"error":      err,
 			"product_id": trip.ProductID,
 		}).Errorf("create trip cost: get courier product")
@@ -200,12 +205,12 @@ func (t *TripRepository) CreateTripCost(tripID uuid.UUID) error {
 		Cost: int32(cost),
 	}
 	t.mu.Lock()
-	if _, err := store.CreateTripCost(
+	if _, err := t.store.CreateTripCost(
 		context.Background(),
 		args,
 	); err != nil {
 		uziErr := fmt.Errorf("%s:%v", "trip cost", err)
-		log.WithFields(logrus.Fields{
+		t.log.WithFields(logrus.Fields{
 			"error":   err,
 			"trip_id": tripID,
 			"cost":    cost,
@@ -225,11 +230,11 @@ func (t *TripRepository) SetTripStatus(tripID uuid.UUID, status model.TripStatus
 		ID:     tripID,
 		Status: status.String(),
 	}
-	if _, err := store.SetTripStatus(
+	if _, err := t.store.SetTripStatus(
 		context.Background(),
 		tripArgs); err != nil {
 		uziErr := fmt.Errorf("%s:%v", "trip status", err)
-		log.WithFields(logrus.Fields{
+		t.log.WithFields(logrus.Fields{
 			"trip_id": tripID,
 			"status":  status.String(),
 			"error":   err,
@@ -251,14 +256,14 @@ func (t *TripRepository) GetCourierNearPickupPoint(pickup model.GpsInput) ([]*mo
 		),
 		Radius: 2000,
 	}
-	foundCouriers, err := store.GetCourierNearPickupPoint(
+	foundCouriers, err := t.store.GetCourierNearPickupPoint(
 		context.Background(),
 		args,
 	)
 	if err == sql.ErrNoRows {
 		return make([]*model.Courier, 0), nil
 	} else if err != nil {
-		log.WithError(err).Errorf("courier new pickup point")
+		t.log.WithError(err).Errorf("courier new pickup point")
 		return nil, err
 	}
 
@@ -276,7 +281,7 @@ func (t *TripRepository) GetCourierNearPickupPoint(pickup model.GpsInput) ([]*mo
 }
 
 func (t *TripRepository) getCourierAssignedTrip(courierID uuid.UUID) error {
-	_, err := store.GetCourierAssignedTrip(
+	_, err := t.store.GetCourierAssignedTrip(
 		context.Background(),
 		courierID,
 	)
@@ -323,7 +328,7 @@ func (t *TripRepository) ParsePickupDropoff(input model.TripInput) (*model.Geoco
 func (t *TripRepository) MatchCourier(tripID uuid.UUID, pickup model.TripInput) {
 	pkp, parseErr := t.ParsePickupDropoff(pickup)
 	if parseErr != nil {
-		log.WithFields(logrus.Fields{
+		t.log.WithFields(logrus.Fields{
 			"pickup": pickup,
 			"error":  parseErr,
 		}).Errorf("cleanup trip pickup input")
@@ -394,8 +399,8 @@ func (t *TripRepository) CreateTripRecipient(tripID uuid.UUID, input model.TripR
 			Valid: true,
 		},
 	}
-	if _, err := store.CreateRecipient(context.Background(), rArgs); err != nil {
-		log.WithFields(logrus.Fields{
+	if _, err := t.store.CreateRecipient(context.Background(), rArgs); err != nil {
+		t.log.WithFields(logrus.Fields{
 			"error":     err,
 			"recipient": rArgs,
 		}).Errorf("create trip recipient")
@@ -406,7 +411,7 @@ func (t *TripRepository) CreateTripRecipient(tripID uuid.UUID, input model.TripR
 }
 
 func (t *TripRepository) GetTripRecipient(tripID uuid.UUID) (*model.Recipient, error) {
-	r, err := store.GetTripRecipient(
+	r, err := t.store.GetTripRecipient(
 		context.Background(),
 		uuid.NullUUID{
 			UUID:  tripID,
@@ -414,7 +419,7 @@ func (t *TripRepository) GetTripRecipient(tripID uuid.UUID) (*model.Recipient, e
 		},
 	)
 	if err != nil {
-		log.WithFields(logrus.Fields{
+		t.log.WithFields(logrus.Fields{
 			"trip_id": tripID,
 			"error":   err,
 		}).Errorf("get trip recipient")
@@ -432,14 +437,14 @@ func (t *TripRepository) GetTripRecipient(tripID uuid.UUID) (*model.Recipient, e
 }
 
 func (t *TripRepository) getCourierProduct(productID uuid.UUID) (*model.Product, error) {
-	product, err := store.GetCourierProductByID(
+	product, err := t.store.GetCourierProductByID(
 		context.Background(),
 		productID,
 	)
 	if err == sql.ErrNoRows {
 		return nil, nil
 	} else if err != nil {
-		log.WithFields(logrus.Fields{
+		t.log.WithFields(logrus.Fields{
 			"product_id": productID,
 			"error":      err,
 		}).Errorf("get courier product")
@@ -455,9 +460,9 @@ func (t *TripRepository) getCourierProduct(productID uuid.UUID) (*model.Product,
 }
 
 func (t *TripRepository) GetTrip(tripID uuid.UUID) (*model.Trip, error) {
-	trip, err := store.GetTrip(context.Background(), tripID)
+	trip, err := t.store.GetTrip(context.Background(), tripID)
 	if err != nil {
-		log.WithFields(logrus.Fields{
+		t.log.WithFields(logrus.Fields{
 			"trip_id": tripID,
 			"error":   err,
 		}).Errorf("get trip")
@@ -477,7 +482,7 @@ func (t *TripRepository) GetTrip(tripID uuid.UUID) (*model.Trip, error) {
 	if trp.CourierID.String() != internal.ZERO_UUID {
 		pickup := model.TripInput{}
 		dropoff := model.TripInput{}
-		courierGps, err := store.GetCourierLocation(context.Background(), *trp.CourierID)
+		courierGps, err := t.store.GetCourierLocation(context.Background(), *trp.CourierID)
 		if err != nil {
 			return nil, err
 		}
@@ -550,14 +555,14 @@ func (t *TripRepository) publishTripUpdate(tripID uuid.UUID, status model.TripSt
 
 		u, marshalErr := json.Marshal(update)
 		if marshalErr != nil {
-			log.WithError(marshalErr).Errorf("marshal trip update")
+			t.log.WithError(marshalErr).Errorf("marshal trip update")
 			return
 		}
 
 		for _, channel := range channels {
 			pubTripErr := t.redis.Publish(context.Background(), channel, u).Err()
 			if pubTripErr != nil {
-				log.WithError(pubTripErr).Errorf("redis publish trip update")
+				t.log.WithError(pubTripErr).Errorf("redis publish trip update")
 				return
 			}
 		}
@@ -570,11 +575,11 @@ func (t *TripRepository) publishTripUpdate(tripID uuid.UUID, status model.TripSt
 }
 
 func (t *TripRepository) GetTripCourier(courierID uuid.UUID) (*model.Courier, error) {
-	courier, err := store.GetCourierByID(context.Background(), courierID)
+	courier, err := t.store.GetCourierByID(context.Background(), courierID)
 	if err == sql.ErrNoRows {
 		return nil, nil
 	} else if err != nil {
-		log.WithFields(logrus.Fields{
+		t.log.WithFields(logrus.Fields{
 			"courier_id": courierID,
 			"error":      err,
 		}).Errorf("get trip courier")
@@ -706,7 +711,7 @@ func (t *TripRepository) computeRoute(pickup, dropoff model.Geocode) (*model.Tri
 func (t *TripRepository) requestGoogleRoute(routeParams routerequest, routeResponse *routeresponse) (*routeresponse, error) {
 	reqPayload, payloadErr := json.Marshal(routeParams)
 	if payloadErr != nil {
-		log.WithFields(logrus.Fields{
+		t.log.WithFields(logrus.Fields{
 			"route_params": routeParams,
 			"error":        payloadErr,
 		}).Errorf("marshal route params")
@@ -715,7 +720,7 @@ func (t *TripRepository) requestGoogleRoute(routeParams routerequest, routeRespo
 
 	req, reqErr := http.NewRequest("POST", routeV2, bytes.NewBuffer(reqPayload))
 	if reqErr != nil {
-		log.WithError(reqErr).Errorf("compute route request")
+		t.log.WithError(reqErr).Errorf("compute route request")
 		return nil, reqErr
 	}
 	req.Header.Add("Content-Type", "application/json")
@@ -728,12 +733,12 @@ func (t *TripRepository) requestGoogleRoute(routeParams routerequest, routeRespo
 	c := &http.Client{}
 	res, resErr := c.Do(req)
 	if resErr != nil {
-		log.WithError(resErr).Errorf("call google compute route api")
+		t.log.WithError(resErr).Errorf("call google compute route api")
 		return nil, resErr
 	}
 
 	if err := json.NewDecoder(res.Body).Decode(&routeResponse); err != nil {
-		log.WithError(err).Errorf("unmarshal google compute route res")
+		t.log.WithError(err).Errorf("unmarshal google compute route res")
 		return nil, err
 	}
 
@@ -743,7 +748,7 @@ func (t *TripRepository) requestGoogleRoute(routeParams routerequest, routeRespo
 			routeResponse.Error.Status,
 			routeResponse.Error.Message,
 		)
-		log.WithFields(logrus.Fields{
+		t.log.WithFields(logrus.Fields{
 			"status":  routeResponse.Error.Status,
 			"message": routeResponse.Error.Message,
 		}).Errorf("google compute route res error")
@@ -793,11 +798,11 @@ func base64Key(key interface{}) string {
 func (t *TripRepository) getNearbyAvailableCourierProducts(params sqlc.GetNearbyAvailableCourierProductsParams) ([]*model.Product, error) {
 	var nearbyProducts []*model.Product
 
-	nearbys, err := store.GetNearbyAvailableCourierProducts(context.Background(), params)
+	nearbys, err := t.store.GetNearbyAvailableCourierProducts(context.Background(), params)
 	if err == sql.ErrNoRows {
 		return make([]*model.Product, 0), nil
 	} else if err != nil {
-		log.WithFields(logrus.Fields{
+		t.log.WithFields(logrus.Fields{
 			"error": err,
 			"args":  params,
 		}).Errorf("nearby courier products")

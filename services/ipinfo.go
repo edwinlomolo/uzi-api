@@ -24,6 +24,7 @@ type IpInfoService interface {
 
 type ipinfoClient struct {
 	config config.Ipinfo
+	log    *logrus.Logger
 	client *ipinfo.Client
 }
 
@@ -38,6 +39,7 @@ func NewIpinfoService() IpInfoService {
 
 	return &ipinfoClient{
 		config.Config.Ipinfo,
+		internal.GetLogger(),
 		client,
 	}
 }
@@ -51,7 +53,7 @@ func (ipc *ipinfoClient) GetIpinfo(
 ) (*ipinfo.Core, error) {
 	info, err := ipc.client.GetIPInfo(net.ParseIP(ip))
 	if err != nil {
-		log.WithFields(logrus.Fields{
+		ipc.log.WithFields(logrus.Fields{
 			"ip":    ip,
 			"error": err,
 		}).Errorf("get ip info")
@@ -63,6 +65,7 @@ func (ipc *ipinfoClient) GetIpinfo(
 
 type ipinfoCache struct {
 	redis *redis.Client
+	log   *logrus.Logger
 }
 
 func (ipc *ipinfoCache) Get(
@@ -75,7 +78,7 @@ func (ipc *ipinfoCache) Get(
 		key,
 	).Result()
 	if err != redis.Nil && err != nil {
-		log.WithFields(logrus.Fields{
+		ipc.log.WithFields(logrus.Fields{
 			"key":   key,
 			"error": err,
 		}).Errorf("get: ipinfo cache value")
@@ -106,7 +109,7 @@ func (ipc *ipinfoCache) Set(
 		key,
 		data,
 		time.Hour*24).Err(); err != nil {
-		log.WithFields(logrus.Fields{
+		ipc.log.WithFields(logrus.Fields{
 			"key":   key,
 			"value": value,
 			"error": err,
@@ -121,5 +124,6 @@ func newCache() cache.Interface {
 	uziC := internal.GetCache()
 	return &ipinfoCache{
 		uziC.GetRedis(),
+		internal.GetLogger(),
 	}
 }

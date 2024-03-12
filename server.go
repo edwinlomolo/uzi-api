@@ -57,10 +57,15 @@ func main() {
 	r.Use(middleware.Logger)
 
 	// Services
+	internal.NewPricer()
+	internal.NewUploader()
+	internal.NewUploader()
+	internal.NewLocationService()
 	services.NewIpinfoService()
 	services.NewUserService()
-	internal.NewLocationService()
 	services.NewUploadService()
+	services.NewCourierService()
+	services.NewTripService()
 
 	srv := gqlHandler.New(gql.NewExecutableSchema(resolvers.New()))
 	srv.AddTransport(&transport.GET{})

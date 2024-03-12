@@ -8,6 +8,8 @@ import (
 )
 
 func UploadDocument() http.HandlerFunc {
+	log := internal.GetLogger()
+
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		maxSize := int64(6000000)
 		upldr := internal.GetGCS()

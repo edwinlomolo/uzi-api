@@ -12,7 +12,6 @@ import (
 )
 
 var (
-	log      = internal.GetLogger()
 	tService TripService
 )
 
@@ -46,7 +45,7 @@ func NewTripService() {
 	tService = &tripClient{
 		t,
 		sync.Mutex{},
-		log,
+		internal.GetLogger(),
 	}
 }
 

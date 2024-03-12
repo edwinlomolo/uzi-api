@@ -4,12 +4,14 @@ import (
 	"context"
 
 	"github.com/99designs/gqlgen/graphql/handler/transport"
+	"github.com/edwinlomolo/uzi-api/internal"
 )
 
 func WsInit(
 	ctx context.Context,
 	initPayload transport.InitPayload,
 ) (context.Context, *transport.InitPayload, error) {
+	log := internal.GetLogger()
 	any, ok := initPayload["payload"].(map[string]interface{})
 	if !ok {
 		log.Warnln("payload not passed in request")

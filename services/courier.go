@@ -28,10 +28,10 @@ type courierClient struct {
 	r *repository.CourierRepository
 }
 
-func NewCourierServices() CourierService {
+func NewCourierService() {
 	cr := &repository.CourierRepository{}
 	cr.Init()
-	return &courierClient{cr}
+	cService = &courierClient{cr}
 }
 
 func GetCourierService() CourierService {

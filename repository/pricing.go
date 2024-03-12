@@ -6,27 +6,33 @@ import (
 
 	"github.com/edwinlomolo/uzi-api/gql/model"
 	"github.com/edwinlomolo/uzi-api/internal"
+	sqlStore "github.com/edwinlomolo/uzi-api/store"
+	"github.com/edwinlomolo/uzi-api/store/sqlc"
 	"github.com/google/uuid"
 	"github.com/sirupsen/logrus"
 )
 
 type PricerRepository struct {
 	pricer internal.Pricing
+	store  *sqlc.Queries
+	log    *logrus.Logger
 }
 
 func (p *PricerRepository) Init() {
 	p.pricer = internal.GetPricer()
+	p.store = sqlStore.GetDb()
+	p.log = internal.GetLogger()
 }
 
 func (p *PricerRepository) getCourierByID(courierID uuid.UUID) (*model.Courier, error) {
-	courier, err := store.GetCourierByID(
+	courier, err := p.store.GetCourierByID(
 		context.Background(),
 		courierID,
 	)
 	if err == sql.ErrNoRows {
 		return nil, nil
 	} else if err != nil {
-		log.WithFields(logrus.Fields{
+		p.log.WithFields(logrus.Fields{
 			"courier_id": courierID,
 			"error":      err,
 		}).Errorf("get courier by id")
@@ -40,14 +46,14 @@ func (p *PricerRepository) getCourierByID(courierID uuid.UUID) (*model.Courier, 
 }
 
 func (p *PricerRepository) getCourierProduct(productID uuid.UUID) (*model.Product, error) {
-	product, err := store.GetCourierProductByID(
+	product, err := p.store.GetCourierProductByID(
 		context.Background(),
 		productID,
 	)
 	if err == sql.ErrNoRows {
 		return nil, nil
 	} else if err != nil {
-		log.WithFields(logrus.Fields{
+		p.log.WithFields(logrus.Fields{
 			"product_id": productID,
 			"error":      err,
 		}).Errorf("get courier product")
@@ -68,7 +74,7 @@ func (p *PricerRepository) GetTripCost(trip model.Trip, distance int) (int, erro
 
 	courier, err := p.getCourierByID(*trip.CourierID)
 	if err != nil {
-		log.WithFields(logrus.Fields{
+		p.log.WithFields(logrus.Fields{
 			"error":    err,
 			"distance": distance,
 		}).Errorf("get trip courier for trip cost calculation")
@@ -77,7 +83,7 @@ func (p *PricerRepository) GetTripCost(trip model.Trip, distance int) (int, erro
 
 	product, productErr := p.getCourierProduct(courier.ProductID)
 	if productErr != nil {
-		log.WithFields(logrus.Fields{
+		p.log.WithFields(logrus.Fields{
 			"error":              productErr,
 			"courier_product_id": courier.ProductID,
 		}).Errorf("get trip courier product for trip cost calculation")

@@ -20,20 +20,18 @@ type Resolver struct {
 	services.CourierService
 	internal.LocationService
 	tripService services.TripService
-	redisClient *redis.Client
 	userService services.UserService
+	redisClient *redis.Client
 }
 
 func New() gql.Config {
-	redis := internal.GetCache()
-
 	c := gql.Config{Resolvers: &Resolver{
 		services.GetUploadService(),
 		services.GetCourierService(),
 		internal.GetLocationService(),
 		services.GetTripService(),
-		redis.GetRedis(),
 		services.GetUserService(),
+		internal.GetCache().GetRedis(),
 	}}
 
 	return c

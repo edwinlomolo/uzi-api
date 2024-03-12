@@ -6,12 +6,22 @@ import (
 	"fmt"
 
 	"github.com/edwinlomolo/uzi-api/gql/model"
+	"github.com/edwinlomolo/uzi-api/internal"
+	sqlStore "github.com/edwinlomolo/uzi-api/store"
 	"github.com/edwinlomolo/uzi-api/store/sqlc"
 	"github.com/google/uuid"
 	"github.com/sirupsen/logrus"
 )
 
-type UploadRepository struct{}
+type UploadRepository struct {
+	store *sqlc.Queries
+	log   *logrus.Logger
+}
+
+func (u *UploadRepository) Init() {
+	u.store = sqlStore.GetDb()
+	u.log = internal.GetLogger()
+}
 
 func (u *UploadRepository) CreateCourierUpload(reason, uri string, id uuid.UUID) error {
 	return u.createCourierUpload(reason, uri, id)
@@ -30,7 +40,7 @@ func (u *UploadRepository) createCourierUpload(reason, uri string, id uuid.UUID)
 		},
 	}
 
-	courierUpload, getErr := store.GetCourierUpload(context.Background(), courierArgs)
+	courierUpload, getErr := u.store.GetCourierUpload(context.Background(), courierArgs)
 	if getErr == sql.ErrNoRows {
 		createArgs := sqlc.CreateCourierUploadParams{
 			Type: reason,
@@ -42,9 +52,9 @@ func (u *UploadRepository) createCourierUpload(reason, uri string, id uuid.UUID)
 			Verification: model.UploadVerificationStatusVerifying.String(),
 		}
 
-		_, createErr := store.CreateCourierUpload(context.Background(), createArgs)
+		_, createErr := u.store.CreateCourierUpload(context.Background(), createArgs)
 		if createErr != nil {
-			log.WithFields(logrus.Fields{
+			u.log.WithFields(logrus.Fields{
 				"error":      createErr,
 				"type":       createArgs.Type,
 				"courier_id": createArgs.CourierID.UUID,
@@ -54,7 +64,7 @@ func (u *UploadRepository) createCourierUpload(reason, uri string, id uuid.UUID)
 
 		return nil
 	} else if getErr != nil {
-		log.WithFields(logrus.Fields{
+		u.log.WithFields(logrus.Fields{
 			"error":      getErr,
 			"courier_id": courierArgs.CourierID.UUID,
 			"type":       courierArgs.Type,
@@ -78,10 +88,10 @@ func (u *UploadRepository) updateUploadUri(uri string, ID uuid.UUID) error {
 		},
 	}
 
-	if _, updateErr := store.UpdateUpload(
+	if _, updateErr := u.store.UpdateUpload(
 		context.Background(),
 		updateParams); updateErr != nil {
-		log.WithFields(logrus.Fields{
+		u.log.WithFields(logrus.Fields{
 			"error":     updateErr,
 			"upload_id": ID,
 		}).Errorf("update upload")
@@ -102,8 +112,8 @@ func (u *UploadRepository) updateUploadVerificationStatus(
 			Valid:  true,
 		},
 	}
-	if _, updateErr := store.UpdateUpload(context.Background(), args); updateErr != nil {
-		log.WithFields(logrus.Fields{
+	if _, updateErr := u.store.UpdateUpload(context.Background(), args); updateErr != nil {
+		u.log.WithFields(logrus.Fields{
 			"error":     updateErr,
 			"upload_id": id,
 			"status":    status.String(),
@@ -123,7 +133,7 @@ func (u *UploadRepository) createUserUpload(reason, uri string, ID uuid.UUID) er
 		},
 	}
 
-	foundUpload, foundErr := store.GetUserUpload(context.Background(), getParams)
+	foundUpload, foundErr := u.store.GetUserUpload(context.Background(), getParams)
 	if foundErr == sql.ErrNoRows {
 		createParams := sqlc.CreateUserUploadParams{
 			Type: reason,
@@ -133,9 +143,9 @@ func (u *UploadRepository) createUserUpload(reason, uri string, ID uuid.UUID) er
 				Valid: true,
 			},
 		}
-		_, createErr := store.CreateUserUpload(context.Background(), createParams)
+		_, createErr := u.store.CreateUserUpload(context.Background(), createParams)
 		if createErr != nil {
-			log.WithFields(logrus.Fields{
+			u.log.WithFields(logrus.Fields{
 				"error":   createErr,
 				"type":    createParams.Type,
 				"user_id": createParams.UserID.UUID,
@@ -144,7 +154,7 @@ func (u *UploadRepository) createUserUpload(reason, uri string, ID uuid.UUID) er
 		}
 	} else if foundErr != nil {
 		uziErr := fmt.Errorf("%s:%v", "user upload", foundErr)
-		log.WithFields(logrus.Fields{
+		u.log.WithFields(logrus.Fields{
 			"error":   foundErr,
 			"type":    getParams.Type,
 			"user_id": getParams.UserID.UUID,
@@ -161,9 +171,9 @@ func (u *UploadRepository) GetCourierUploads(
 	var uploads []*model.Uploads
 
 	args := uuid.NullUUID{UUID: courierID, Valid: true}
-	uplds, uploadsErr := store.GetCourierUploads(context.Background(), args)
+	uplds, uploadsErr := u.store.GetCourierUploads(context.Background(), args)
 	if uploadsErr != nil {
-		log.WithFields(logrus.Fields{
+		u.log.WithFields(logrus.Fields{
 			"error":      uploadsErr,
 			"courier_id": courierID,
 		}).Errorf("get courier uploads")

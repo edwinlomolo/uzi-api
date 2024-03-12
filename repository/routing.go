@@ -5,20 +5,30 @@ import (
 	"database/sql"
 
 	"github.com/edwinlomolo/uzi-api/gql/model"
+	"github.com/edwinlomolo/uzi-api/internal"
+	sqlStore "github.com/edwinlomolo/uzi-api/store"
 	"github.com/edwinlomolo/uzi-api/store/sqlc"
 	"github.com/sirupsen/logrus"
 )
 
-type RouteRepository struct{}
+type RouteRepository struct {
+	store *sqlc.Queries
+	log   *logrus.Logger
+}
+
+func (r *RouteRepository) Init() {
+	r.store = sqlStore.GetDb()
+	r.log = internal.GetLogger()
+}
 
 func (r *RouteRepository) GetNearbyAvailableCourierProducts(params sqlc.GetNearbyAvailableCourierProductsParams) ([]*model.Product, error) {
 	var nearbyProducts []*model.Product
 
-	nearbys, err := store.GetNearbyAvailableCourierProducts(context.Background(), params)
+	nearbys, err := r.store.GetNearbyAvailableCourierProducts(context.Background(), params)
 	if err == sql.ErrNoRows {
 		return make([]*model.Product, 0), nil
 	} else if err != nil {
-		log.WithFields(logrus.Fields{
+		r.log.WithFields(logrus.Fields{
 			"error": err,
 			"args":  params,
 		}).Errorf("nearby courier products")
