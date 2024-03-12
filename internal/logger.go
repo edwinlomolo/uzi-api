@@ -1,4 +1,4 @@
-package logger
+package internal
 
 import (
 	"time"
@@ -11,7 +11,7 @@ import (
 
 var log = logrus.New()
 
-func New() *logrus.Logger {
+func NewLogger() *logrus.Logger {
 	// Sentry error reporting
 	if isStaging() || isProd() {
 		// Error level to report
@@ -29,7 +29,6 @@ func New() *logrus.Logger {
 		}
 
 		log.AddHook(hook)
-		logrus.Infoln("Sentry logging...OK")
 
 		defer hook.Flush(5 * time.Second)
 		logrus.RegisterExitHandler(func() { hook.Flush(5 * time.Second) })

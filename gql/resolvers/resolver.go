@@ -1,14 +1,9 @@
 package resolvers
 
 import (
-	"github.com/edwinlomolo/uzi-api/cache"
-	"github.com/edwinlomolo/uzi-api/courier"
 	"github.com/edwinlomolo/uzi-api/gql"
-	"github.com/edwinlomolo/uzi-api/location"
-	"github.com/edwinlomolo/uzi-api/store/sqlc"
-	"github.com/edwinlomolo/uzi-api/trip"
-	"github.com/edwinlomolo/uzi-api/upload"
-	"github.com/edwinlomolo/uzi-api/user"
+	"github.com/edwinlomolo/uzi-api/internal"
+	"github.com/edwinlomolo/uzi-api/services"
 	"github.com/redis/go-redis/v9"
 )
 
@@ -18,28 +13,27 @@ import (
 
 //go:generate go run github.com/99designs/gqlgen generate --verbose
 
+var log = internal.GetLogger()
+
 type Resolver struct {
-	upload.UploadService
-	courier.CourierService
-	location.LocationService
-	tripService trip.TripService
+	services.UploadService
+	services.CourierService
+	internal.LocationService
+	tripService services.TripService
 	redisClient *redis.Client
-	userService user.UserService
+	userService services.UserService
 }
 
-func New(
-	queries *sqlc.Queries,
-	redis cache.Cache,
-	userService user.UserService,
-) gql.Config {
+func New() gql.Config {
+	redis := internal.GetCache()
 
 	c := gql.Config{Resolvers: &Resolver{
-		upload.New(queries, redis.GetRedis()),
-		courier.New(queries, redis),
-		location.New(redis),
-		trip.New(queries, redis),
+		services.GetUploadService(),
+		services.GetCourierService(),
+		internal.GetLocationService(),
+		services.GetTripService(),
 		redis.GetRedis(),
-		userService,
+		services.GetUserService(),
 	}}
 
 	return c

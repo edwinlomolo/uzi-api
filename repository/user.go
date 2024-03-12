@@ -5,10 +5,10 @@ import (
 	"database/sql"
 	"errors"
 
-	"github.com/edwinlomolo/uzi-api/cache"
 	"github.com/edwinlomolo/uzi-api/config"
 	"github.com/edwinlomolo/uzi-api/gql/model"
-	"github.com/edwinlomolo/uzi-api/jwt"
+	"github.com/edwinlomolo/uzi-api/internal"
+	sqlStore "github.com/edwinlomolo/uzi-api/store"
 	"github.com/edwinlomolo/uzi-api/store/sqlc"
 	"github.com/google/uuid"
 	"github.com/sirupsen/logrus"
@@ -17,6 +17,7 @@ import (
 var (
 	userNotFound = errors.New("user not found")
 	noEmptyName  = errors.New("name can't be empty")
+	store        = sqlStore.GetDb()
 )
 
 type SigninInput struct {
@@ -26,13 +27,11 @@ type SigninInput struct {
 	Courier   bool   `json:"courier"`
 }
 type UserRepository struct {
-	store *sqlc.Queries
-	jwt   jwt.JwtService
+	jwt internal.JwtService
 }
 
-func (u *UserRepository) Init(store *sqlc.Queries, redis cache.Cache) {
-	u.store = store
-	u.jwt = jwt.New()
+func (u *UserRepository) Init() {
+	u.jwt = internal.NewJwtClient()
 }
 
 func (u *UserRepository) FindOrCreate(user SigninInput) (*model.User, error) {
@@ -49,7 +48,7 @@ func (u *UserRepository) FindOrCreate(user SigninInput) (*model.User, error) {
 func (u *UserRepository) FindOrCreateCourier(userID uuid.UUID) (*model.Courier, error) {
 	courier, err := u.getCourierByUserID(userID)
 	if err == nil && courier == nil {
-		newCourier, newErr := u.store.CreateCourier(
+		newCourier, newErr := store.CreateCourier(
 			context.Background(),
 			uuid.NullUUID{
 				UUID:  userID,
@@ -77,7 +76,7 @@ func (u *UserRepository) FindOrCreateCourier(userID uuid.UUID) (*model.Courier, 
 }
 
 func (u *UserRepository) getCourierByUserID(userID uuid.UUID) (*model.Courier, error) {
-	foundCourier, err := u.store.GetCourierByUserID(
+	foundCourier, err := store.GetCourierByUserID(
 		context.Background(),
 		uuid.NullUUID{
 			UUID:  userID,
@@ -105,7 +104,7 @@ func (u *UserRepository) createUser(user SigninInput) (*model.User, error) {
 		LastName:  user.LastName,
 		Phone:     user.Phone,
 	}
-	newUser, newUserErr := u.store.CreateUser(context.Background(), createArgs)
+	newUser, newUserErr := store.CreateUser(context.Background(), createArgs)
 	if newUserErr != nil {
 		log.WithFields(logrus.Fields{
 			"error": newUserErr,
@@ -129,7 +128,7 @@ func (u *UserRepository) createUser(user SigninInput) (*model.User, error) {
 }
 
 func (u *UserRepository) getUser(phone string) (*model.User, error) {
-	foundUser, getErr := u.store.FindByPhone(context.Background(), phone)
+	foundUser, getErr := store.FindByPhone(context.Background(), phone)
 	if getErr == sql.ErrNoRows {
 		return nil, nil
 	} else if getErr != nil {
@@ -153,7 +152,7 @@ func (u *UserRepository) GetUserByPhone(phone string) (*model.User, error) {
 }
 
 func (u *UserRepository) findUserByID(id uuid.UUID) (*model.User, error) {
-	foundUser, getErr := u.store.FindUserByID(context.Background(), id)
+	foundUser, getErr := store.FindUserByID(context.Background(), id)
 	if getErr == sql.ErrNoRows {
 		log.WithFields(logrus.Fields{
 			"user_id": id,
@@ -191,7 +190,7 @@ func (u *UserRepository) OnboardUser(user SigninInput) (*model.User, error) {
 		LastName:  user.LastName,
 		Phone:     user.Phone,
 	}
-	newUser, onboardErr := u.store.UpdateUserName(context.Background(), updateArgs)
+	newUser, onboardErr := store.UpdateUserName(context.Background(), updateArgs)
 	if onboardErr != nil {
 		log.WithFields(logrus.Fields{
 			"args":  updateArgs,
@@ -204,7 +203,7 @@ func (u *UserRepository) OnboardUser(user SigninInput) (*model.User, error) {
 		Phone:      user.Phone,
 		Onboarding: false,
 	}
-	if _, err := u.store.SetOnboardingStatus(context.Background(), statusArgs); err != nil {
+	if _, err := store.SetOnboardingStatus(context.Background(), statusArgs); err != nil {
 		log.WithFields(logrus.Fields{
 			"error": err,
 			"phone": user.Phone,
@@ -256,7 +255,7 @@ func (u *UserRepository) findOrCreateSession(
 }
 
 func (u *UserRepository) getSession(userID uuid.UUID) (*model.Session, error) {
-	foundSess, sessErr := u.store.GetSession(context.Background(), userID)
+	foundSess, sessErr := store.GetSession(context.Background(), userID)
 	if sessErr == sql.ErrNoRows {
 		return nil, nil
 	} else if sessErr != nil {
@@ -267,7 +266,7 @@ func (u *UserRepository) getSession(userID uuid.UUID) (*model.Session, error) {
 		return nil, sessErr
 	}
 
-	claims, err := jwt.NewPayload(
+	claims, err := internal.NewPayload(
 		foundSess.ID.String(),
 		foundSess.Ip,
 		foundSess.Phone,
@@ -282,7 +281,7 @@ func (u *UserRepository) getSession(userID uuid.UUID) (*model.Session, error) {
 		return nil, signJwtErr
 	}
 
-	isUserOnboarding, _ := u.store.IsUserOnboarding(context.Background(), foundSess.ID)
+	isUserOnboarding, _ := store.IsUserOnboarding(context.Background(), foundSess.ID)
 
 	isCourier, courierStatus, courierErr := u.getRelevantCourierData(foundSess.ID)
 	if courierErr != nil {
@@ -318,7 +317,7 @@ func (u *UserRepository) createNewSession(
 		UserAgent: userAgent,
 		Phone:     phone,
 	}
-	newSession, newSessErr := u.store.CreateSession(
+	newSession, newSessErr := store.CreateSession(
 		context.Background(),
 		sessParams,
 	)
@@ -331,7 +330,7 @@ func (u *UserRepository) createNewSession(
 		return nil, newSessErr
 	}
 
-	claims, err := jwt.NewPayload(userID.String(), ip, phone, config.Config.Jwt.Expires)
+	claims, err := internal.NewPayload(userID.String(), ip, phone, config.Config.Jwt.Expires)
 	if err != nil {
 		return nil, err
 	}
@@ -341,7 +340,7 @@ func (u *UserRepository) createNewSession(
 		return nil, signJwtErr
 	}
 
-	isUserOnboarding, _ := u.store.IsUserOnboarding(context.Background(), userID)
+	isUserOnboarding, _ := store.IsUserOnboarding(context.Background(), userID)
 
 	isCourier, courierStatus, courierErr := u.getRelevantCourierData(userID)
 	if courierErr != nil {
@@ -368,7 +367,7 @@ func (u *UserRepository) createNewSession(
 }
 
 func (u *UserRepository) getCourierStatus(userID uuid.UUID) (model.CourierStatus, error) {
-	status, err := u.store.GetCourierStatus(
+	status, err := store.GetCourierStatus(
 		context.Background(),
 		uuid.NullUUID{
 			UUID:  userID,
@@ -389,7 +388,7 @@ func (u *UserRepository) getCourierStatus(userID uuid.UUID) (model.CourierStatus
 }
 
 func (u *UserRepository) isCourier(userID uuid.UUID) (bool, error) {
-	isCourier, err := u.store.IsCourier(
+	isCourier, err := store.IsCourier(
 		context.Background(),
 		uuid.NullUUID{
 			UUID:  userID,

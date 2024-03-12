@@ -6,28 +6,28 @@ import (
 	"io"
 	"net/http"
 
-	"github.com/edwinlomolo/uzi-api/logger"
 	repo "github.com/edwinlomolo/uzi-api/repository"
-	"github.com/edwinlomolo/uzi-api/user"
+	"github.com/edwinlomolo/uzi-api/services"
 )
 
-func Signin(userService user.UserService) http.HandlerFunc {
+var userService = services.GetUserService()
+
+func Signin() http.HandlerFunc {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		var loginInput repo.SigninInput
-		logger := logger.New()
 		userIp := r.Context().Value("ip").(string)
 
 		body, bodyErr := io.ReadAll(r.Body)
 		if bodyErr != nil {
 			uziErr := fmt.Errorf("%s:%v", "reading body", bodyErr)
-			logger.Errorf(uziErr.Error())
+			log.Errorf(uziErr.Error())
 			http.Error(w, uziErr.Error(), http.StatusInternalServerError)
 			return
 		}
 
 		if marshalErr := json.Unmarshal(body, &loginInput); marshalErr != nil {
 			uziErr := fmt.Errorf("%s:%v", "unmarshal login req body", marshalErr)
-			logger.Errorf(uziErr.Error())
+			log.Errorf(uziErr.Error())
 			http.Error(w, marshalErr.Error(), http.StatusInternalServerError)
 			return
 		}
@@ -41,7 +41,7 @@ func Signin(userService user.UserService) http.HandlerFunc {
 		jsonRes, jsonErr := json.Marshal(findSession)
 		if jsonErr != nil {
 			uziErr := fmt.Errorf("%s:%v", "marshal session res", jsonErr)
-			logger.Errorf(uziErr.Error())
+			log.Errorf(uziErr.Error())
 			http.Error(w, uziErr.Error(), http.StatusInternalServerError)
 			return
 		}

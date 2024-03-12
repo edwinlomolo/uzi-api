@@ -1,4 +1,4 @@
-package uploader
+package internal
 
 import (
 	"context"
@@ -9,13 +9,11 @@ import (
 
 	"cloud.google.com/go/storage"
 	"github.com/edwinlomolo/uzi-api/config"
-	"github.com/edwinlomolo/uzi-api/logger"
 	"google.golang.org/api/option"
 )
 
 var (
 	gcs GCS
-	log = logger.GetLogger()
 )
 
 type GCS interface {
@@ -27,7 +25,7 @@ type gcsClient struct {
 	courierBucket string
 }
 
-func New() {
+func NewUploader() {
 	credentials, err := base64.StdEncoding.DecodeString(config.Config.Google.GoogleApplicationDevelopmentCredentials)
 	if err != nil {
 		log.WithError(err).Fatalln("reading google ADC")
@@ -35,8 +33,6 @@ func New() {
 	storage, err := storage.NewClient(context.Background(), option.WithCredentialsJSON(credentials))
 	if err != nil {
 		log.WithError(err).Fatalln("new google cloud storage client")
-	} else if err == nil {
-		log.Infoln("Google cloud storage...OK")
 	}
 
 	gcs = &gcsClient{storage, config.Config.Google.GoogleCloudStorageCourierDocumentsBucket}

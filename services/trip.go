@@ -1,17 +1,19 @@
-package trip
+package services
 
 import (
 	"sync"
 
-	"github.com/edwinlomolo/uzi-api/cache"
 	"github.com/edwinlomolo/uzi-api/gql/model"
-	"github.com/edwinlomolo/uzi-api/location"
-	"github.com/edwinlomolo/uzi-api/logger"
+	"github.com/edwinlomolo/uzi-api/internal"
 	r "github.com/edwinlomolo/uzi-api/repository"
-	"github.com/edwinlomolo/uzi-api/store/sqlc"
 	sqlStore "github.com/edwinlomolo/uzi-api/store/sqlc"
 	"github.com/google/uuid"
 	"github.com/sirupsen/logrus"
+)
+
+var (
+	log      = internal.GetLogger()
+	tService TripService
 )
 
 type TripService interface {
@@ -29,7 +31,7 @@ type TripService interface {
 	GetTripCourier(courierID uuid.UUID) (*model.Courier, error)
 	ReportTripStatus(tripID uuid.UUID, status model.TripStatus) error
 	ComputeTripRoute(input model.TripRouteInput) (*model.TripRoute, error)
-	ParsePickupDropoff(input model.TripInput) (*location.Geocode, error)
+	ParsePickupDropoff(input model.TripInput) (*model.Geocode, error)
 }
 
 type tripClient struct {
@@ -38,23 +40,25 @@ type tripClient struct {
 	log *logrus.Logger
 }
 
-func New(store *sqlc.Queries, redis cache.Cache) TripService {
-	log := logger.GetLogger()
+func NewTripService() {
 	t := &r.TripRepository{}
-	t.Init(store, redis)
-	log.Infoln("Trip service...OK")
-	return &tripClient{
+	t.Init()
+	tService = &tripClient{
 		t,
 		sync.Mutex{},
 		log,
 	}
 }
 
+func GetTripService() TripService {
+	return tService
+}
+
 func (t *tripClient) ComputeTripRoute(input model.TripRouteInput) (*model.TripRoute, error) {
 	return t.r.ComputeTripRoute(input)
 }
 
-func (t *tripClient) ParsePickupDropoff(input model.TripInput) (*location.Geocode, error) {
+func (t *tripClient) ParsePickupDropoff(input model.TripInput) (*model.Geocode, error) {
 	return t.r.ParsePickupDropoff(input)
 }
 

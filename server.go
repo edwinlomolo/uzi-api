@@ -10,17 +10,14 @@ import (
 	"github.com/99designs/gqlgen/graphql/handler/lru"
 	"github.com/99designs/gqlgen/graphql/handler/transport"
 	"github.com/99designs/gqlgen/graphql/playground"
-	"github.com/edwinlomolo/uzi-api/cache"
 	"github.com/edwinlomolo/uzi-api/config"
 	"github.com/edwinlomolo/uzi-api/gql"
 	"github.com/edwinlomolo/uzi-api/gql/resolvers"
 	"github.com/edwinlomolo/uzi-api/handler"
-	"github.com/edwinlomolo/uzi-api/ipinfo"
-	"github.com/edwinlomolo/uzi-api/logger"
+	"github.com/edwinlomolo/uzi-api/internal"
 	"github.com/edwinlomolo/uzi-api/middleware"
+	"github.com/edwinlomolo/uzi-api/services"
 	"github.com/edwinlomolo/uzi-api/store"
-	"github.com/edwinlomolo/uzi-api/uploader"
-	"github.com/edwinlomolo/uzi-api/user"
 	"github.com/getsentry/sentry-go"
 	"github.com/go-chi/chi/v5"
 	"github.com/gorilla/websocket"
@@ -33,7 +30,11 @@ func main() {
 	config.LoadConfig()
 
 	// Logger
-	log := logger.New()
+	log := internal.NewLogger()
+	// Database queries
+	store.InitializeStorage()
+	// Redis cache client
+	internal.NewCache()
 
 	if err := sentry.Init(sentry.ClientOptions{
 		Dsn:              config.Config.Sentry.Dsn,
@@ -55,18 +56,13 @@ func main() {
 	r.Use(middleware.Sentry)
 	r.Use(middleware.Logger)
 
-	// Database queries
-	queries, _ := store.InitializeStorage()
-
-	// Redis cache client
-	cache := cache.New()
-
 	// Services
-	ipinfoService := ipinfo.New(cache)
-	userService := user.New(queries, cache)
-	uploader.New()
+	services.NewIpinfoService()
+	services.NewUserService()
+	internal.NewLocationService()
+	services.NewUploadService()
 
-	srv := gqlHandler.New(gql.NewExecutableSchema(resolvers.New(queries, cache, userService)))
+	srv := gqlHandler.New(gql.NewExecutableSchema(resolvers.New()))
 	srv.AddTransport(&transport.GET{})
 	srv.AddTransport(&transport.POST{})
 	srv.AddTransport(&transport.Websocket{
@@ -83,12 +79,13 @@ func main() {
 		Cache: lru.New(1000),
 	})
 
+	// More server routing
 	r.Route("/v1", func(r chi.Router) {
 		r.With(middleware.Auth).Handle("/api", srv)
-		r.Post("/signin", handler.Signin(userService))
-		r.Post("/user/onboard", handler.UserOnboarding(userService))
+		r.Post("/signin", handler.Signin())
+		r.Post("/user/onboard", handler.UserOnboarding())
 		r.Post("/courier/upload/document", handler.UploadDocument())
-		r.Get("/ipinfo", handler.Ipinfo(ipinfoService))
+		r.Get("/ipinfo", handler.Ipinfo())
 	})
 	r.Get("/", playground.Handler("GraphQL playground", "/v1/api"))
 	r.Handle("/subscription", srv)

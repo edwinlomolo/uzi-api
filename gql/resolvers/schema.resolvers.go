@@ -11,8 +11,6 @@ import (
 
 	"github.com/edwinlomolo/uzi-api/gql"
 	"github.com/edwinlomolo/uzi-api/gql/model"
-	"github.com/edwinlomolo/uzi-api/location"
-	"github.com/edwinlomolo/uzi-api/logger"
 	t "github.com/edwinlomolo/uzi-api/repository"
 	"github.com/edwinlomolo/uzi-api/store/sqlc"
 	"github.com/google/uuid"
@@ -21,7 +19,7 @@ import (
 
 // CreateCourierDocument is the resolver for the createCourierDocument field.
 func (r *mutationResolver) CreateCourierDocument(ctx context.Context, input model.CourierUploadInput) (bool, error) {
-	courierID := getCourierIDFromResolverContext(ctx, r)
+	courierID := getCourierIDFromResolverContext(ctx)
 
 	err := r.CreateCourierUpload(input.Type.String(), input.URI, courierID)
 	if err != nil {
@@ -120,7 +118,7 @@ func (r *queryResolver) Hello(ctx context.Context) (string, error) {
 
 // GetCourierDocuments is the resolver for the getCourierDocuments field.
 func (r *queryResolver) GetCourierDocuments(ctx context.Context) ([]*model.Uploads, error) {
-	courierID := getCourierIDFromResolverContext(ctx, r)
+	courierID := getCourierIDFromResolverContext(ctx)
 
 	uploads, err := r.GetCourierUploads(courierID)
 	if err != nil {
@@ -136,7 +134,7 @@ func (r *queryResolver) SearchPlace(ctx context.Context, textQuery string) ([]*m
 }
 
 // ReverseGeocode is the resolver for the reverseGeocode field.
-func (r *queryResolver) ReverseGeocode(ctx context.Context, place model.GpsInput) (*location.Geocode, error) {
+func (r *queryResolver) ReverseGeocode(ctx context.Context, place model.GpsInput) (*model.Geocode, error) {
 	return r.GeocodeLatLng(place)
 }
 
@@ -236,11 +234,3 @@ func (r *Resolver) Subscription() gql.SubscriptionResolver { return &subscriptio
 type mutationResolver struct{ *Resolver }
 type queryResolver struct{ *Resolver }
 type subscriptionResolver struct{ *Resolver }
-
-// !!! WARNING !!!
-// The code below was going to be deleted when updating resolvers. It has been copied here so you have
-// one last chance to move it out of harms way if you want. There are two reasons this happens:
-//   - When renaming or deleting a resolver the old code will be put in here. You can safely delete
-//     it when you're done.
-//   - You have helper methods in this file. Move them out to keep these resolver files clean.
-var log = logger.GetLogger()

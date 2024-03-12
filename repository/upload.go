@@ -11,13 +11,7 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-type UploadRepository struct {
-	store *sqlc.Queries
-}
-
-func (u *UploadRepository) Init(store *sqlc.Queries) {
-	u.store = store
-}
+type UploadRepository struct{}
 
 func (u *UploadRepository) CreateCourierUpload(reason, uri string, id uuid.UUID) error {
 	return u.createCourierUpload(reason, uri, id)
@@ -36,7 +30,7 @@ func (u *UploadRepository) createCourierUpload(reason, uri string, id uuid.UUID)
 		},
 	}
 
-	courierUpload, getErr := u.store.GetCourierUpload(context.Background(), courierArgs)
+	courierUpload, getErr := store.GetCourierUpload(context.Background(), courierArgs)
 	if getErr == sql.ErrNoRows {
 		createArgs := sqlc.CreateCourierUploadParams{
 			Type: reason,
@@ -48,7 +42,7 @@ func (u *UploadRepository) createCourierUpload(reason, uri string, id uuid.UUID)
 			Verification: model.UploadVerificationStatusVerifying.String(),
 		}
 
-		_, createErr := u.store.CreateCourierUpload(context.Background(), createArgs)
+		_, createErr := store.CreateCourierUpload(context.Background(), createArgs)
 		if createErr != nil {
 			log.WithFields(logrus.Fields{
 				"error":      createErr,
@@ -84,7 +78,7 @@ func (u *UploadRepository) updateUploadUri(uri string, ID uuid.UUID) error {
 		},
 	}
 
-	if _, updateErr := u.store.UpdateUpload(
+	if _, updateErr := store.UpdateUpload(
 		context.Background(),
 		updateParams); updateErr != nil {
 		log.WithFields(logrus.Fields{
@@ -108,7 +102,7 @@ func (u *UploadRepository) updateUploadVerificationStatus(
 			Valid:  true,
 		},
 	}
-	if _, updateErr := u.store.UpdateUpload(context.Background(), args); updateErr != nil {
+	if _, updateErr := store.UpdateUpload(context.Background(), args); updateErr != nil {
 		log.WithFields(logrus.Fields{
 			"error":     updateErr,
 			"upload_id": id,
@@ -129,7 +123,7 @@ func (u *UploadRepository) createUserUpload(reason, uri string, ID uuid.UUID) er
 		},
 	}
 
-	foundUpload, foundErr := u.store.GetUserUpload(context.Background(), getParams)
+	foundUpload, foundErr := store.GetUserUpload(context.Background(), getParams)
 	if foundErr == sql.ErrNoRows {
 		createParams := sqlc.CreateUserUploadParams{
 			Type: reason,
@@ -139,7 +133,7 @@ func (u *UploadRepository) createUserUpload(reason, uri string, ID uuid.UUID) er
 				Valid: true,
 			},
 		}
-		_, createErr := u.store.CreateUserUpload(context.Background(), createParams)
+		_, createErr := store.CreateUserUpload(context.Background(), createParams)
 		if createErr != nil {
 			log.WithFields(logrus.Fields{
 				"error":   createErr,
@@ -167,7 +161,7 @@ func (u *UploadRepository) GetCourierUploads(
 	var uploads []*model.Uploads
 
 	args := uuid.NullUUID{UUID: courierID, Valid: true}
-	uplds, uploadsErr := u.store.GetCourierUploads(context.Background(), args)
+	uplds, uploadsErr := store.GetCourierUploads(context.Background(), args)
 	if uploadsErr != nil {
 		log.WithFields(logrus.Fields{
 			"error":      uploadsErr,

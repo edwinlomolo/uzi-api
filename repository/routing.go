@@ -9,18 +9,12 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-type RouteRepository struct {
-	store *sqlc.Queries
-}
-
-func (r *RouteRepository) Init(store *sqlc.Queries) {
-	r.store = store
-}
+type RouteRepository struct{}
 
 func (r *RouteRepository) GetNearbyAvailableCourierProducts(params sqlc.GetNearbyAvailableCourierProductsParams) ([]*model.Product, error) {
 	var nearbyProducts []*model.Product
 
-	nearbys, err := r.store.GetNearbyAvailableCourierProducts(context.Background(), params)
+	nearbys, err := store.GetNearbyAvailableCourierProducts(context.Background(), params)
 	if err == sql.ErrNoRows {
 		return make([]*model.Product, 0), nil
 	} else if err != nil {

@@ -1,39 +1,26 @@
-package location
+package internal
 
 import (
 	"context"
-	"encoding/base64"
-	"encoding/json"
 	"fmt"
 	"time"
 
-	"github.com/edwinlomolo/uzi-api/cache"
 	"github.com/edwinlomolo/uzi-api/config"
 	"github.com/edwinlomolo/uzi-api/gql/model"
-	"github.com/edwinlomolo/uzi-api/logger"
 	"github.com/sirupsen/logrus"
 	"googlemaps.github.io/maps"
 )
 
 const nominatimApi = "https://nominatim.openstreetmap.org"
 
-var log = logger.GetLogger()
-
-type point struct {
-	Type        string    `json:"type"`
-	Coordinates []float64 `json:"coordinates"`
-}
+var (
+	lctn LocationService
+)
 
 type LocationService interface {
-	GeocodeLatLng(input model.GpsInput) (*Geocode, error)
+	GeocodeLatLng(input model.GpsInput) (*model.Geocode, error)
 	AutocompletePlace(query string) ([]*model.Place, error)
-	GetPlaceDetails(placeID string) (*Geocode, error)
-}
-
-type Geocode struct {
-	PlaceID          string
-	FormattedAddress string
-	Location         model.Gps
+	GetPlaceDetails(placeID string) (*model.Geocode, error)
 }
 
 type locationClient struct {
@@ -41,32 +28,30 @@ type locationClient struct {
 	places, geocode *maps.Client
 	config          config.Google
 	log             *logrus.Logger
-	cache           cache.Cache
 }
 
-func New(redis cache.Cache) LocationService {
+func NewLocationService() {
 	places, placesErr := maps.NewClient(maps.WithAPIKey(config.Config.Google.GooglePlacesApiKey))
 	if placesErr != nil {
 		log.WithError(placesErr).Errorf("new places client")
-	} else {
-		log.Infoln("Places service...OK")
 	}
 
 	geocode, geocodeErr := maps.NewClient(maps.WithAPIKey(config.Config.Google.GoogleGeocodeApiKey))
 	if geocodeErr != nil {
 		log.WithError(geocodeErr).Errorf("new geocode client")
-	} else {
-		log.Infoln("Geocode service...OK")
 	}
 
-	return &locationClient{
+	lctn = &locationClient{
 		newNominatim(),
 		places,
 		geocode,
 		config.Config.Google,
 		log,
-		redis,
 	}
+}
+
+func GetLocationService() LocationService {
+	return lctn
 }
 
 func (l *locationClient) AutocompletePlace(
@@ -74,7 +59,7 @@ func (l *locationClient) AutocompletePlace(
 ) ([]*model.Place, error) {
 	var pls []*model.Place
 	cacheKey := base64Key(searchQuery)
-	placesCache, placesCacheErr := l.cache.Get(context.Background(), cacheKey, &[]*model.Place{})
+	placesCache, placesCacheErr := c.Get(context.Background(), cacheKey, &[]*model.Place{})
 	if placesCacheErr != nil {
 		return nil, placesCacheErr
 	}
@@ -115,7 +100,7 @@ func (l *locationClient) AutocompletePlace(
 	done := make(chan struct{})
 	go func() {
 		defer close(done)
-		l.cache.Set(context.Background(), cacheKey, pls, time.Hour*24)
+		c.Set(context.Background(), cacheKey, pls, time.Hour*24)
 	}()
 	<-done
 
@@ -124,17 +109,17 @@ func (l *locationClient) AutocompletePlace(
 
 func (l *locationClient) GeocodeLatLng(
 	input model.GpsInput,
-) (*Geocode, error) {
-	var geo *Geocode
+) (*model.Geocode, error) {
+	var geo *model.Geocode
 	cacheKey := base64Key(input)
 
-	geocodeCache, geocodeCacheErr := l.cache.Get(context.Background(), cacheKey, geo)
+	geocodeCache, geocodeCacheErr := c.Get(context.Background(), cacheKey, geo)
 	if geocodeCacheErr != nil {
 		return nil, geocodeCacheErr
 	}
 
 	if geocodeCache != nil {
-		v := (geocodeCache).(**Geocode)
+		v := (geocodeCache).(**model.Geocode)
 		return *v, nil
 	}
 
@@ -143,15 +128,15 @@ func (l *locationClient) GeocodeLatLng(
 
 func (l *locationClient) GetPlaceDetails(
 	placeID string,
-) (*Geocode, error) {
-	var placeDetails *Geocode
-	placeCache, placeCacheErr := l.cache.Get(context.Background(), placeID, &Geocode{})
+) (*model.Geocode, error) {
+	var placeDetails *model.Geocode
+	placeCache, placeCacheErr := c.Get(context.Background(), placeID, &model.Geocode{})
 	if placeCacheErr != nil {
 		return nil, placeCacheErr
 	}
 
 	if placeCache != nil {
-		p := (placeCache).(*Geocode)
+		p := (placeCache).(*model.Geocode)
 		return p, nil
 	}
 
@@ -170,7 +155,7 @@ func (l *locationClient) GetPlaceDetails(
 		return nil, uziErr
 	}
 
-	placeDetails = &Geocode{
+	placeDetails = &model.Geocode{
 		Location: model.Gps{
 			Lat: res.Geometry.Location.Lat,
 			Lng: res.Geometry.Location.Lng,
@@ -178,35 +163,8 @@ func (l *locationClient) GetPlaceDetails(
 	}
 
 	go func() {
-		l.cache.Set(context.Background(), placeDetails.PlaceID, placeDetails, time.Hour*24)
+		c.Set(context.Background(), placeDetails.PlaceID, placeDetails, time.Hour*24)
 	}()
 
 	return placeDetails, nil
-}
-
-func base64Key(key interface{}) string {
-	keyString, err := json.Marshal(key)
-	if err != nil {
-		panic(err)
-	}
-	encoded := base64.StdEncoding.EncodeToString([]byte(keyString))
-
-	return encoded
-}
-
-func ParsePostgisLocation(p interface{}) *model.Gps {
-	var location *point
-
-	if p != nil {
-		json.Unmarshal([]byte((p).(string)), &location)
-
-		lat := &location.Coordinates[1]
-		lng := &location.Coordinates[0]
-		return &model.Gps{
-			Lat: *lat,
-			Lng: *lng,
-		}
-	} else {
-		return nil
-	}
 }

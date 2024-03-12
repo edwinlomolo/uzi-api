@@ -5,26 +5,23 @@ import (
 	"io"
 	"net/http"
 
-	"github.com/edwinlomolo/uzi-api/logger"
 	repo "github.com/edwinlomolo/uzi-api/repository"
-	"github.com/edwinlomolo/uzi-api/user"
 )
 
-func UserOnboarding(userService user.UserService) http.HandlerFunc {
+func UserOnboarding() http.HandlerFunc {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		var bodyReq repo.SigninInput
-		logger := logger.New()
 		ip := r.Context().Value("ip").(string)
 
 		body, bodyErr := io.ReadAll(r.Body)
 		if bodyErr != nil {
-			logger.WithError(bodyErr).Errorf("reading req body")
+			log.WithError(bodyErr).Errorf("reading req body")
 			http.Error(w, bodyErr.Error(), http.StatusBadRequest)
 			return
 		}
 
 		if err := json.Unmarshal(body, &bodyReq); err != nil {
-			logger.WithError(err).Errorf("unmarshal body req")
+			log.WithError(err).Errorf("unmarshal body req")
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
@@ -42,7 +39,7 @@ func UserOnboarding(userService user.UserService) http.HandlerFunc {
 
 		res, resErr := json.Marshal(session)
 		if resErr != nil {
-			logger.WithError(resErr).Errorf("marshal session res")
+			log.WithError(resErr).Errorf("marshal session res")
 			http.Error(w, resErr.Error(), http.StatusInternalServerError)
 			return
 		}

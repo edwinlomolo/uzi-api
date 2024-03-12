@@ -88,7 +88,7 @@ models:
     model:
       - github.com/99designs/gqlgen/graphql.UUID
   Geocode:
-    model: github.com/edwinlomolo/uzi-api/location.Geocode
+    model: github.com/edwinlomolo/uzi-api/gql/model.Geocode
   Courier:
     fields:
       product:

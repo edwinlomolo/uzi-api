@@ -1,16 +1,17 @@
-package courier
+package services
 
 import (
 	"errors"
 
-	"github.com/edwinlomolo/uzi-api/cache"
 	"github.com/edwinlomolo/uzi-api/gql/model"
-	r "github.com/edwinlomolo/uzi-api/repository"
-	"github.com/edwinlomolo/uzi-api/store/sqlc"
+	"github.com/edwinlomolo/uzi-api/repository"
 	"github.com/google/uuid"
 )
 
-var ErrNoCourierErr = errors.New("no courier found")
+var (
+	ErrNoCourierErr = errors.New("no courier found")
+	cService        CourierService
+)
 
 type CourierService interface {
 	FindOrCreate(userID uuid.UUID) (*model.Courier, error)
@@ -24,13 +25,17 @@ type CourierService interface {
 }
 
 type courierClient struct {
-	r *r.CourierRepository
+	r *repository.CourierRepository
 }
 
-func New(store *sqlc.Queries, redis cache.Cache) CourierService {
-	cr := &r.CourierRepository{}
-	cr.Init(store, redis)
+func NewCourierServices() CourierService {
+	cr := &repository.CourierRepository{}
+	cr.Init()
 	return &courierClient{cr}
+}
+
+func GetCourierService() CourierService {
+	return cService
 }
 
 func (c *courierClient) FindOrCreate(userID uuid.UUID) (*model.Courier, error) {

@@ -1,9 +1,13 @@
-package pricer
+package internal
 
 import (
 	"math"
 
 	"github.com/edwinlomolo/uzi-api/config"
+)
+
+var (
+	pService Pricing
 )
 
 type Pricing interface {
@@ -13,8 +17,12 @@ type Pricing interface {
 
 type pricerClient struct{}
 
-func New() Pricing {
-	return &pricerClient{}
+func NewPricer() {
+	pService = &pricerClient{}
+}
+
+func GetPricer() Pricing {
+	return pService
 }
 
 func (p *pricerClient) CalculateTripCost(

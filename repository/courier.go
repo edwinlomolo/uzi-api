@@ -7,32 +7,31 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/edwinlomolo/uzi-api/cache"
 	"github.com/edwinlomolo/uzi-api/gql/model"
-	"github.com/edwinlomolo/uzi-api/location"
-	"github.com/edwinlomolo/uzi-api/logger"
+	"github.com/edwinlomolo/uzi-api/internal"
 	"github.com/edwinlomolo/uzi-api/store/sqlc"
 	"github.com/google/uuid"
 	"github.com/redis/go-redis/v9"
 	"github.com/sirupsen/logrus"
 )
 
-var log = logger.GetLogger()
+var (
+	log = internal.GetLogger()
+	cc  = internal.GetCache()
+)
 
 type CourierRepository struct {
-	store *sqlc.Queries
 	redis *redis.Client
 }
 
-func (c *CourierRepository) Init(store *sqlc.Queries, cache cache.Cache) {
-	c.store = store
-	c.redis = cache.GetRedis()
+func (c *CourierRepository) Init() {
+	c.redis = cc.GetRedis()
 }
 
 func (c *CourierRepository) FindOrCreate(userID uuid.UUID) (*model.Courier, error) {
 	courier, err := c.getCourierByUserID(userID)
 	if err == nil && courier == nil {
-		newCourier, newErr := c.store.CreateCourier(
+		newCourier, newErr := store.CreateCourier(
 			context.Background(),
 			uuid.NullUUID{
 				UUID:  userID,
@@ -60,7 +59,7 @@ func (c *CourierRepository) FindOrCreate(userID uuid.UUID) (*model.Courier, erro
 }
 
 func (c *CourierRepository) IsCourier(userID uuid.UUID) (bool, error) {
-	isCourier, err := c.store.IsCourier(
+	isCourier, err := store.IsCourier(
 		context.Background(),
 		uuid.NullUUID{
 			UUID:  userID,
@@ -81,7 +80,7 @@ func (c *CourierRepository) IsCourier(userID uuid.UUID) (bool, error) {
 }
 
 func (c *CourierRepository) GetCourierStatus(userID uuid.UUID) (model.CourierStatus, error) {
-	status, err := c.store.GetCourierStatus(
+	status, err := store.GetCourierStatus(
 		context.Background(),
 		uuid.NullUUID{
 			UUID:  userID,
@@ -102,7 +101,7 @@ func (c *CourierRepository) GetCourierStatus(userID uuid.UUID) (model.CourierSta
 }
 
 func (c *CourierRepository) getCourierByUserID(userID uuid.UUID) (*model.Courier, error) {
-	foundCourier, err := c.store.GetCourierByUserID(
+	foundCourier, err := store.GetCourierByUserID(
 		context.Background(),
 		uuid.NullUUID{
 			UUID:  userID,
@@ -124,7 +123,7 @@ func (c *CourierRepository) getCourierByUserID(userID uuid.UUID) (*model.Courier
 		UserID:    foundCourier.UserID.UUID,
 		Avatar:    c.getAvatar(foundCourier.ID),
 		ProductID: foundCourier.ProductID.UUID,
-		Location:  location.ParsePostgisLocation(foundCourier.Location),
+		Location:  model.ParsePostgisLocation(foundCourier.Location),
 	}, nil
 }
 
@@ -133,7 +132,7 @@ func (c *CourierRepository) getAvatar(courierID uuid.UUID) *model.Uploads {
 		UUID:  courierID,
 		Valid: true,
 	}
-	avatar, err := c.store.GetCourierAvatar(context.Background(), ID)
+	avatar, err := store.GetCourierAvatar(context.Background(), ID)
 	if err == sql.ErrNoRows {
 		return nil
 	} else if err != nil {
@@ -170,7 +169,7 @@ func (c *CourierRepository) TrackCourierLocation(userID uuid.UUID, input model.G
 			input.Lng, input.Lat,
 		),
 	}
-	if _, updateErr := c.store.TrackCourierLocation(
+	if _, updateErr := store.TrackCourierLocation(
 		context.Background(),
 		args); updateErr != nil {
 		log.WithFields(logrus.Fields{
@@ -227,7 +226,7 @@ func (c *CourierRepository) isCourierTripping(courier *model.Courier, input mode
 
 func (c *CourierRepository) GetCourierTrip(tripID uuid.UUID) (*model.Trip, error) {
 	tid := uuid.NullUUID{UUID: tripID, Valid: true}
-	trip, err := c.store.GetCourierTrip(context.Background(), tid)
+	trip, err := store.GetCourierTrip(context.Background(), tid)
 	if err == sql.ErrNoRows {
 		return nil, ErrCourierTripNotFound
 	} else if err != nil {
@@ -249,7 +248,7 @@ func (c *CourierRepository) UpdateCourierStatus(userID uuid.UUID, status model.C
 		Status: status.String(),
 		UserID: uuid.NullUUID{UUID: userID, Valid: true},
 	}
-	if _, setErr := c.store.SetCourierStatus(
+	if _, setErr := store.SetCourierStatus(
 		context.Background(),
 		args); setErr != nil {
 		log.WithFields(logrus.Fields{
@@ -263,7 +262,7 @@ func (c *CourierRepository) UpdateCourierStatus(userID uuid.UUID, status model.C
 }
 
 func (c *CourierRepository) GetCourierProduct(productID uuid.UUID) (*model.Product, error) {
-	product, err := c.store.GetCourierProductByID(
+	product, err := store.GetCourierProductByID(
 		context.Background(),
 		productID,
 	)
@@ -286,7 +285,7 @@ func (c *CourierRepository) GetCourierProduct(productID uuid.UUID) (*model.Produ
 }
 
 func (c *CourierRepository) GetCourierByID(courierID uuid.UUID) (*model.Courier, error) {
-	courier, err := c.store.GetCourierByID(
+	courier, err := store.GetCourierByID(
 		context.Background(),
 		courierID,
 	)
@@ -305,7 +304,7 @@ func (c *CourierRepository) GetCourierByID(courierID uuid.UUID) (*model.Courier,
 		TripID:    &courier.TripID.UUID,
 		UserID:    courier.UserID.UUID,
 		ProductID: courier.ProductID.UUID,
-		Location:  location.ParsePostgisLocation(courier.Location),
+		Location:  model.ParsePostgisLocation(courier.Location),
 		Avatar:    c.getAvatar(courierID),
 	}, nil
 }

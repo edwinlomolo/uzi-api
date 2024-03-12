@@ -1,11 +1,13 @@
-package user
+package services
 
 import (
-	"github.com/edwinlomolo/uzi-api/cache"
 	"github.com/edwinlomolo/uzi-api/gql/model"
 	r "github.com/edwinlomolo/uzi-api/repository"
-	"github.com/edwinlomolo/uzi-api/store/sqlc"
 	"github.com/google/uuid"
+)
+
+var (
+	uService UserService
 )
 
 type UserService interface {
@@ -20,10 +22,14 @@ type userClient struct {
 	r r.UserRepository
 }
 
-func New(store *sqlc.Queries, redis cache.Cache) UserService {
+func NewUserService() {
 	ur := r.UserRepository{}
-	ur.Init(store, redis)
-	return &userClient{ur}
+	ur.Init()
+	uService = &userClient{ur}
+}
+
+func GetUserService() UserService {
+	return uService
 }
 
 func (u *userClient) SignIn(

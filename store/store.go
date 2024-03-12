@@ -5,21 +5,23 @@ import (
 	"fmt"
 
 	"github.com/edwinlomolo/uzi-api/config"
-	"github.com/edwinlomolo/uzi-api/logger"
-	"github.com/edwinlomolo/uzi-api/store/sqlc"
+	"github.com/edwinlomolo/uzi-api/internal"
 	sqlStore "github.com/edwinlomolo/uzi-api/store/sqlc"
 	"github.com/golang-migrate/migrate/v4"
 	"github.com/golang-migrate/migrate/v4/database/postgres"
 	_ "github.com/golang-migrate/migrate/v4/source/file"
 )
 
-var log = logger.GetLogger()
+var (
+	log = internal.GetLogger()
+	dB  *sqlStore.Queries
+)
 
-func InitializeStorage() (*sqlc.Queries, error) {
+func InitializeStorage() error {
 	db, err := sql.Open(config.Config.Database.Rdbms.Env.Driver, config.Config.Database.Rdbms.Uri)
 	if err != nil {
 		log.WithError(err).Errorf("open database connection")
-		return nil, err
+		return err
 	}
 
 	db.Exec(fmt.Sprintf("CREATE EXTENSION IF NOT EXISTS %q;", "uuid-ossp"))
@@ -28,8 +30,8 @@ func InitializeStorage() (*sqlc.Queries, error) {
 	db.Exec("CREATE EXTENSION IF NOT EXISTS postgis_topology; --OPTIONAL")
 
 	if err := db.Ping(); err != nil {
-		log.WithError(err).Errorf("ping database connection")
-		return nil, err
+		log.WithError(err).Fatalln("ping database connection")
+		return err
 	} else if err == nil {
 		log.Infoln("Database connection...OK")
 	}
@@ -39,7 +41,13 @@ func InitializeStorage() (*sqlc.Queries, error) {
 		log.Infoln("Database migration...DONE")
 	}
 
-	return sqlStore.New(db), nil
+	dB = sqlStore.New(db)
+
+	return nil
+}
+
+func GetDb() *sqlStore.Queries {
+	return dB
 }
 
 // runDbMigration - setup database tables

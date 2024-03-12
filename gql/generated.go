@@ -17,7 +17,6 @@ import (
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/99designs/gqlgen/graphql/introspection"
 	"github.com/edwinlomolo/uzi-api/gql/model"
-	"github.com/edwinlomolo/uzi-api/location"
 	"github.com/google/uuid"
 	gqlparser "github.com/vektah/gqlparser/v2"
 	"github.com/vektah/gqlparser/v2/ast"
@@ -230,7 +229,7 @@ type QueryResolver interface {
 	Hello(ctx context.Context) (string, error)
 	GetCourierDocuments(ctx context.Context) ([]*model.Uploads, error)
 	SearchPlace(ctx context.Context, textQuery string) ([]*model.Place, error)
-	ReverseGeocode(ctx context.Context, place model.GpsInput) (*location.Geocode, error)
+	ReverseGeocode(ctx context.Context, place model.GpsInput) (*model.Geocode, error)
 	ComputeTripRoute(ctx context.Context, input model.TripRouteInput) (*model.TripRoute, error)
 	GetCourierNearPickupPoint(ctx context.Context, point model.GpsInput) ([]*model.Courier, error)
 	GetTripDetails(ctx context.Context, tripID uuid.UUID) (*model.Trip, error)
@@ -2298,7 +2297,7 @@ func (ec *executionContext) fieldContext_Courier_updated_at(ctx context.Context,
 	return fc, nil
 }
 
-func (ec *executionContext) _Geocode_placeId(ctx context.Context, field graphql.CollectedField, obj *location.Geocode) (ret graphql.Marshaler) {
+func (ec *executionContext) _Geocode_placeId(ctx context.Context, field graphql.CollectedField, obj *model.Geocode) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Geocode_placeId(ctx, field)
 	if err != nil {
 		return graphql.Null
@@ -2342,7 +2341,7 @@ func (ec *executionContext) fieldContext_Geocode_placeId(ctx context.Context, fi
 	return fc, nil
 }
 
-func (ec *executionContext) _Geocode_formattedAddress(ctx context.Context, field graphql.CollectedField, obj *location.Geocode) (ret graphql.Marshaler) {
+func (ec *executionContext) _Geocode_formattedAddress(ctx context.Context, field graphql.CollectedField, obj *model.Geocode) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Geocode_formattedAddress(ctx, field)
 	if err != nil {
 		return graphql.Null
@@ -2386,7 +2385,7 @@ func (ec *executionContext) fieldContext_Geocode_formattedAddress(ctx context.Co
 	return fc, nil
 }
 
-func (ec *executionContext) _Geocode_location(ctx context.Context, field graphql.CollectedField, obj *location.Geocode) (ret graphql.Marshaler) {
+func (ec *executionContext) _Geocode_location(ctx context.Context, field graphql.CollectedField, obj *model.Geocode) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Geocode_location(ctx, field)
 	if err != nil {
 		return graphql.Null
@@ -3497,9 +3496,9 @@ func (ec *executionContext) _Query_reverseGeocode(ctx context.Context, field gra
 	if resTmp == nil {
 		return graphql.Null
 	}
-	res := resTmp.(*location.Geocode)
+	res := resTmp.(*model.Geocode)
 	fc.Result = res
-	return ec.marshalOGeocode2ᚖgithubᚗcomᚋedwinlomoloᚋuziᚑapiᚋlocationᚐGeocode(ctx, field.Selections, res)
+	return ec.marshalOGeocode2ᚖgithubᚗcomᚋedwinlomoloᚋuziᚑapiᚋgqlᚋmodelᚐGeocode(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Query_reverseGeocode(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -9053,7 +9052,7 @@ func (ec *executionContext) _Courier(ctx context.Context, sel ast.SelectionSet, 
 
 var geocodeImplementors = []string{"Geocode"}
 
-func (ec *executionContext) _Geocode(ctx context.Context, sel ast.SelectionSet, obj *location.Geocode) graphql.Marshaler {
+func (ec *executionContext) _Geocode(ctx context.Context, sel ast.SelectionSet, obj *model.Geocode) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, geocodeImplementors)
 
 	out := graphql.NewFieldSet(fields)
@@ -11255,7 +11254,7 @@ func (ec *executionContext) marshalOCourierStatus2ᚖgithubᚗcomᚋedwinlomolo�
 	return v
 }
 
-func (ec *executionContext) marshalOGeocode2ᚖgithubᚗcomᚋedwinlomoloᚋuziᚑapiᚋlocationᚐGeocode(ctx context.Context, sel ast.SelectionSet, v *location.Geocode) graphql.Marshaler {
+func (ec *executionContext) marshalOGeocode2ᚖgithubᚗcomᚋedwinlomoloᚋuziᚑapiᚋgqlᚋmodelᚐGeocode(ctx context.Context, sel ast.SelectionSet, v *model.Geocode) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}

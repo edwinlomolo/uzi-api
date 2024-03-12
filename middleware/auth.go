@@ -6,14 +6,13 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/edwinlomolo/uzi-api/jwt"
-	"github.com/edwinlomolo/uzi-api/logger"
+	"github.com/edwinlomolo/uzi-api/internal"
 	jsonwebtoken "github.com/golang-jwt/jwt/v5"
 )
 
 var (
 	ErrInvalidHeader = errors.New("invalid token header")
-	log              = logger.GetLogger()
+	log              = internal.GetLogger()
 )
 
 func Auth(h http.Handler) http.Handler {
@@ -31,7 +30,7 @@ func Auth(h http.Handler) http.Handler {
 				return
 			}
 
-			if claims, ok := jwtToken.Claims.(*jwt.Payload); ok && jwtToken.Valid {
+			if claims, ok := jwtToken.Claims.(*internal.Payload); ok && jwtToken.Valid {
 				userID = claims.ID
 				ip = claims.IP
 			}
@@ -46,7 +45,7 @@ func validateAuthorizationHeader(
 	r *http.Request,
 ) (*jsonwebtoken.Token, error) {
 	var tokenString string
-	jwtService := jwt.New()
+	jwtService := internal.NewJwtClient()
 
 	authorizationHeader := strings.SplitN(r.Header.Get("Authorization"), " ", 2)
 	if len(authorizationHeader) != 2 || authorizationHeader[0] != "Bearer" {

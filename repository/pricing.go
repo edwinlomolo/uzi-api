@@ -4,27 +4,22 @@ import (
 	"context"
 	"database/sql"
 
-	"github.com/edwinlomolo/uzi-api/cache"
-	"github.com/edwinlomolo/uzi-api/constants"
 	"github.com/edwinlomolo/uzi-api/gql/model"
-	"github.com/edwinlomolo/uzi-api/pricer"
-	"github.com/edwinlomolo/uzi-api/store/sqlc"
+	"github.com/edwinlomolo/uzi-api/internal"
 	"github.com/google/uuid"
 	"github.com/sirupsen/logrus"
 )
 
 type PricerRepository struct {
-	store  *sqlc.Queries
-	pricer pricer.Pricing
+	pricer internal.Pricing
 }
 
-func (p *PricerRepository) Init(store *sqlc.Queries, redis cache.Cache) {
-	p.store = store
-	p.pricer = pricer.New()
+func (p *PricerRepository) Init() {
+	p.pricer = internal.GetPricer()
 }
 
 func (p *PricerRepository) getCourierByID(courierID uuid.UUID) (*model.Courier, error) {
-	courier, err := p.store.GetCourierByID(
+	courier, err := store.GetCourierByID(
 		context.Background(),
 		courierID,
 	)
@@ -45,7 +40,7 @@ func (p *PricerRepository) getCourierByID(courierID uuid.UUID) (*model.Courier, 
 }
 
 func (p *PricerRepository) getCourierProduct(productID uuid.UUID) (*model.Product, error) {
-	product, err := p.store.GetCourierProductByID(
+	product, err := store.GetCourierProductByID(
 		context.Background(),
 		productID,
 	)
@@ -67,7 +62,7 @@ func (p *PricerRepository) getCourierProduct(productID uuid.UUID) (*model.Produc
 }
 
 func (p *PricerRepository) GetTripCost(trip model.Trip, distance int) (int, error) {
-	if trip.CourierID.String() == constants.ZERO_UUID {
+	if trip.CourierID.String() == internal.ZERO_UUID {
 		return 0, nil
 	}
 

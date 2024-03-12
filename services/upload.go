@@ -1,11 +1,13 @@
-package upload
+package services
 
 import (
 	"github.com/edwinlomolo/uzi-api/gql/model"
 	r "github.com/edwinlomolo/uzi-api/repository"
-	"github.com/edwinlomolo/uzi-api/store/sqlc"
 	"github.com/google/uuid"
-	"github.com/redis/go-redis/v9"
+)
+
+var (
+	upldService UploadService
 )
 
 type UploadService interface {
@@ -18,10 +20,13 @@ type uploadClient struct {
 	r r.UploadRepository
 }
 
-func New(store *sqlc.Queries, redis *redis.Client) UploadService {
+func NewUploadService() {
 	ur := r.UploadRepository{}
-	ur.Init(store)
-	return &uploadClient{ur}
+	upldService = &uploadClient{ur}
+}
+
+func GetUploadService() UploadService {
+	return upldService
 }
 
 func (u *uploadClient) CreateCourierUpload(reason, uri string, id uuid.UUID) error {

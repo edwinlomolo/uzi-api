@@ -4,13 +4,16 @@ import (
 	"encoding/json"
 	"net/http"
 
-	"github.com/edwinlomolo/uzi-api/ipinfo"
-	"github.com/edwinlomolo/uzi-api/logger"
+	"github.com/edwinlomolo/uzi-api/internal"
+	"github.com/edwinlomolo/uzi-api/services"
 )
 
-var log = logger.GetLogger()
+var (
+	log           = internal.GetLogger()
+	ipinfoService = services.GetIpinfoService()
+)
 
-func Ipinfo(ipinfoService ipinfo.IpInfoService) http.HandlerFunc {
+func Ipinfo() http.HandlerFunc {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		ip := r.Context().Value("ip").(string)
 

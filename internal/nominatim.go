@@ -1,4 +1,4 @@
-package location
+package internal
 
 import (
 	"encoding/json"
@@ -31,11 +31,10 @@ type address struct {
 }
 
 type nominatim interface {
-	ReverseGeocode(model.GpsInput) (*Geocode, error)
+	ReverseGeocode(model.GpsInput) (*model.Geocode, error)
 }
 
-type nominatimClient struct {
-}
+type nominatimClient struct{}
 
 func newNominatim() nominatim {
 	return &nominatimClient{}
@@ -43,9 +42,9 @@ func newNominatim() nominatim {
 
 func (n nominatimClient) ReverseGeocode(
 	input model.GpsInput,
-) (*Geocode, error) {
+) (*model.Geocode, error) {
 	var nominatimRes nominatimresponse
-	geo := &Geocode{}
+	geo := &model.Geocode{}
 
 	url := fmt.Sprintf(
 		"%s/reverse?format=jsonv2&lat=%f&lon=%f",

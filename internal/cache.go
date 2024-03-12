@@ -1,19 +1,22 @@
-package cache
+package internal
 
 import (
 	"context"
+	"encoding/base64"
 	"encoding/json"
 	"time"
 
 	"github.com/edwinlomolo/uzi-api/config"
-	"github.com/edwinlomolo/uzi-api/logger"
 	"github.com/redis/go-redis/v9"
 	"github.com/sirupsen/logrus"
 )
 
+var (
+	c Cache
+)
+
 type cacheClient struct {
 	cache *redis.Client
-	log   *logrus.Logger
 }
 
 type Cache interface {
@@ -22,20 +25,24 @@ type Cache interface {
 	GetRedis() *redis.Client
 }
 
-func New() Cache {
-	log := logger.GetLogger()
+func NewCache() {
 	opts, err := redis.ParseURL(config.Config.Database.Redis.Url)
 	if err != nil {
 		log.WithError(err).Errorf("new cache client")
-	} else {
-		log.Infoln("Redis cache...OK")
 	}
 
 	rdb := redis.NewClient(opts)
-	return &cacheClient{
-		rdb,
-		log,
+	if err := rdb.Ping(context.Background()).Err(); err != nil {
+		log.WithError(err).Fatalln("ping redis")
 	}
+
+	c = &cacheClient{
+		rdb,
+	}
+}
+
+func GetCache() Cache {
+	return c
 }
 
 func (c *cacheClient) GetRedis() *redis.Client {
@@ -47,7 +54,7 @@ func (c *cacheClient) Get(ctx context.Context, key string, returnValue interface
 	if err == redis.Nil {
 		return nil, nil
 	} else if err != nil {
-		c.log.WithFields(logrus.Fields{
+		log.WithFields(logrus.Fields{
 			"key":   key,
 			"error": err,
 		}).Errorf("get: reading cache value")
@@ -57,7 +64,7 @@ func (c *cacheClient) Get(ctx context.Context, key string, returnValue interface
 	err = json.Unmarshal([]byte(result), returnValue)
 	if err != nil {
 		c.cache.Del(ctx, key).Err()
-		c.log.WithError(err).Errorf("get: unmarshal cache result")
+		log.WithError(err).Errorf("get: unmarshal cache result")
 		return nil, err
 	}
 
@@ -67,7 +74,7 @@ func (c *cacheClient) Get(ctx context.Context, key string, returnValue interface
 func (c *cacheClient) Set(ctx context.Context, key string, value interface{}, expiration time.Duration) error {
 	valueMarshal, err := json.Marshal(value)
 	if err != nil {
-		c.log.WithFields(logrus.Fields{
+		log.WithFields(logrus.Fields{
 			"key":   key,
 			"value": value,
 			"error": err,
@@ -76,4 +83,14 @@ func (c *cacheClient) Set(ctx context.Context, key string, value interface{}, ex
 	}
 
 	return c.cache.Set(ctx, key, valueMarshal, expiration).Err()
+}
+
+func base64Key(key interface{}) string {
+	keyString, err := json.Marshal(key)
+	if err != nil {
+		panic(err)
+	}
+	encoded := base64.StdEncoding.EncodeToString([]byte(keyString))
+
+	return encoded
 }
