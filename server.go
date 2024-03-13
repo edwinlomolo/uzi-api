@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 	"time"
@@ -36,6 +37,7 @@ func main() {
 	// Redis cache client
 	internal.NewCache()
 
+	// Sentry logging setup
 	if err := sentry.Init(sentry.ClientOptions{
 		Dsn:              config.Config.Sentry.Dsn,
 		EnableTracing:    true,
@@ -43,18 +45,6 @@ func main() {
 	}); err != nil {
 		log.WithError(err).Errorf("sentry http middleware")
 	}
-
-	// Server Routing
-	r := chi.NewRouter()
-	c := cors.New(cors.Options{
-		AllowedOrigins:   []string{"*"},
-		AllowCredentials: true,
-		Debug:            false,
-	})
-	// Middleware
-	r.Use(middleware.GetIp)
-	r.Use(middleware.Sentry)
-	r.Use(middleware.Logger)
 
 	// Services
 	internal.NewPricer()
@@ -68,14 +58,19 @@ func main() {
 	services.NewTripService()
 
 	srv := gqlHandler.New(gql.NewExecutableSchema(resolvers.New()))
-	srv.AddTransport(&transport.GET{})
-	srv.AddTransport(&transport.POST{})
+	srv.AddTransport(transport.Options{})
+	srv.AddTransport(transport.GET{})
+	srv.AddTransport(transport.POST{})
 	srv.AddTransport(&transport.Websocket{
 		KeepAlivePingInterval: 10 * time.Second,
 		Upgrader: websocket.Upgrader{
 			CheckOrigin: func(r *http.Request) bool {
 				return true
 			},
+		},
+		// TODO testing for dev only
+		ErrorFunc: func(ctx context.Context, err error) {
+			log.WithError(err).Errorf("websocket error")
 		},
 	})
 	srv.SetQueryCache(lru.New(1000))
@@ -84,15 +79,25 @@ func main() {
 		Cache: lru.New(1000),
 	})
 
-	// More server routing
-	r.Route("/v1", func(r chi.Router) {
-		r.With(middleware.Auth).Handle("/api", srv)
+	// Server Routing
+	r := chi.NewRouter()
+	c := cors.New(cors.Options{
+		AllowedOrigins:   []string{"*"},
+		AllowCredentials: true,
+	})
+	// Middleware
+	r.Use(middleware.GetIp)
+	r.Use(middleware.Sentry)
+	r.Use(middleware.Logger)
+
+	r.Route("/api", func(r chi.Router) {
+		r.With(middleware.Auth).Handle("/graphql", srv)
 		r.Post("/signin", handler.Signin())
 		r.Post("/user/onboard", handler.UserOnboarding())
 		r.Post("/courier/upload/document", handler.UploadDocument())
 		r.Get("/ipinfo", handler.Ipinfo())
 	})
-	r.Get("/", playground.Handler("GraphQL playground", "/v1/api"))
+	r.Get("/", playground.Handler("GraphQL playground", "/api/graphql"))
 	r.Handle("/subscription", srv)
 
 	// Server
