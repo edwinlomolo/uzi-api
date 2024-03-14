@@ -74,9 +74,8 @@ func main() {
 		// TODO testing graph subscription with api clients I'm getting abnormalclosure error???
 		MissingPongOk: true,
 		ErrorFunc: func(ctx context.Context, err error) {
-			if websocket.IsCloseError(err, websocket.CloseAbnormalClosure) {
-				log.WithError(err).Errorf("websocket abnormal closure")
-			} else if !strings.Contains(err.Error(), websocket.ErrCloseSent.Error()) {
+			if websocket.IsCloseError(err, websocket.CloseAbnormalClosure) ||
+				!strings.Contains(err.Error(), websocket.ErrCloseSent.Error()) {
 				log.WithError(err).Errorf("websocket error")
 			}
 		},
