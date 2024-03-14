@@ -67,7 +67,11 @@ func main() {
 			CheckOrigin: func(r *http.Request) bool {
 				return true
 			},
+			ReadBufferSize:  1024,
+			WriteBufferSize: 1024,
 		},
+		// TODO testing graph subscription with api clients I'm getting abnormalclosure error???
+		MissingPongOk: true,
 		// TODO testing for dev only
 		ErrorFunc: func(ctx context.Context, err error) {
 			log.WithError(err).Errorf("websocket error")
