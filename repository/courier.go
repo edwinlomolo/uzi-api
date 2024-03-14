@@ -3,8 +3,6 @@ package repository
 import (
 	"context"
 	"database/sql"
-	"encoding/json"
-	"errors"
 	"fmt"
 
 	"github.com/edwinlomolo/uzi-api/gql/model"
@@ -12,18 +10,15 @@ import (
 	sqlStore "github.com/edwinlomolo/uzi-api/store"
 	"github.com/edwinlomolo/uzi-api/store/sqlc"
 	"github.com/google/uuid"
-	"github.com/redis/go-redis/v9"
 	"github.com/sirupsen/logrus"
 )
 
 type CourierRepository struct {
-	redis *redis.Client
 	store *sqlc.Queries
 	log   *logrus.Logger
 }
 
 func (c *CourierRepository) Init() {
-	c.redis = internal.GetCache().GetRedis()
 	c.log = internal.GetLogger()
 	c.store = sqlStore.GetDb()
 }
@@ -154,11 +149,6 @@ func (c *CourierRepository) GetCourierByUserID(userID uuid.UUID) (*model.Courier
 }
 
 func (c *CourierRepository) TrackCourierLocation(userID uuid.UUID, input model.GpsInput) error {
-	courier, err := c.getCourierByUserID(userID)
-	if err != nil {
-		return err
-	}
-
 	args := sqlc.TrackCourierLocationParams{
 		UserID: uuid.NullUUID{
 			UUID:  userID,
@@ -169,9 +159,7 @@ func (c *CourierRepository) TrackCourierLocation(userID uuid.UUID, input model.G
 			input.Lng, input.Lat,
 		),
 	}
-	if _, updateErr := c.store.TrackCourierLocation(
-		context.Background(),
-		args); updateErr != nil {
+	if _, updateErr := c.store.TrackCourierLocation(context.Background(), args); updateErr != nil {
 		c.log.WithFields(logrus.Fields{
 			"courier_user_id": userID,
 			"error":           updateErr,
@@ -179,49 +167,7 @@ func (c *CourierRepository) TrackCourierLocation(userID uuid.UUID, input model.G
 		return updateErr
 	}
 
-	// Check if courier is on a trip?
-	c.isCourierTripping(courier, input)
-
 	return nil
-}
-
-func (c *CourierRepository) isCourierTripping(courier *model.Courier, input model.GpsInput) {
-	done := make(chan struct{})
-	go func() {
-		defer close(done)
-		t, err := c.GetCourierTrip(courier.ID)
-		if err != nil && errors.Is(err, ErrCourierTripNotFound) {
-			return
-		} else if err != nil {
-			return
-		}
-
-		if t != nil && (t.Status == model.TripStatusCourierEnRoute || t.Status == model.TripStatusCourierArriving) {
-			tripUpdate := model.TripUpdate{
-				ID:     t.ID,
-				Status: model.TripStatus(t.Status),
-				Location: &model.Gps{
-					Lat: input.Lat,
-					Lng: input.Lng,
-				},
-			}
-			u, marshalErr := json.Marshal(tripUpdate)
-			if marshalErr != nil {
-				c.log.WithError(marshalErr).Errorf("marshal courier arriving/enroute trip update")
-				return
-			}
-			tripUpdateErr := c.redis.Publish(context.Background(), internal.TRIP_UPDATES_CHANNEL, u).Err()
-			if tripUpdateErr != nil {
-				c.log.WithFields(logrus.Fields{
-					"status":  t.Status,
-					"trip_id": t.ID,
-					"error":   tripUpdateErr,
-				}).Errorf("publish courier arriving/enroute trip update")
-				return
-			}
-		}
-	}()
-	<-done
 }
 
 func (c *CourierRepository) GetCourierTrip(tripID uuid.UUID) (*model.Trip, error) {

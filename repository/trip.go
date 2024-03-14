@@ -17,8 +17,8 @@ import (
 )
 
 var (
-	ErrCourierAlreadyAssigned = errors.New("courier has active trip")
-	ErrCourierTripNotFound    = errors.New("courier trip not found")
+	ErrCourierAlreadyAssigned = errors.New("trip repository: courier has active trip")
+	ErrCourierTripNotFound    = errors.New("trip repository: courier trip not found")
 )
 
 type TripRepository struct {
