@@ -210,7 +210,7 @@ func (c *CourierRepository) isCourierTripping(courier *model.Courier, input mode
 				c.log.WithError(marshalErr).Errorf("marshal courier arriving/enroute trip update")
 				return
 			}
-			tripUpdateErr := c.redis.Publish(context.Background(), TRIP_UPDATES, u).Err()
+			tripUpdateErr := c.redis.Publish(context.Background(), internal.TRIP_UPDATES_CHANNEL, u).Err()
 			if tripUpdateErr != nil {
 				c.log.WithFields(logrus.Fields{
 					"status":  t.Status,

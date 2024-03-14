@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"strings"
 	"time"
 
 	gqlHandler "github.com/99designs/gqlgen/graphql/handler"
@@ -72,9 +73,12 @@ func main() {
 		},
 		// TODO testing graph subscription with api clients I'm getting abnormalclosure error???
 		MissingPongOk: true,
-		// TODO testing for dev only
 		ErrorFunc: func(ctx context.Context, err error) {
-			log.WithError(err).Errorf("websocket error")
+			if websocket.IsCloseError(err, websocket.CloseAbnormalClosure) {
+				log.WithError(err).Errorf("websocket abnormal closure")
+			} else if !strings.Contains(err.Error(), websocket.ErrCloseSent.Error()) {
+				log.WithError(err).Errorf("websocket error")
+			}
 		},
 	})
 	srv.SetQueryCache(lru.New(1000))

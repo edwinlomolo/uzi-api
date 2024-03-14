@@ -13,7 +13,7 @@ import (
 
 // Trip is the resolver for the trip field.
 func (r *recipientResolver) Trip(ctx context.Context, obj *model.Recipient) (*model.Trip, error) {
-	return r.tripService.GetTrip(obj.TripID)
+	return r.tripService.GetTripDetails(obj.TripID)
 }
 
 // Courier is the resolver for the courier field.

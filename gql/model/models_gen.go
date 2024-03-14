@@ -114,19 +114,20 @@ type Subscription struct {
 }
 
 type Trip struct {
-	ID            uuid.UUID  `json:"id"`
-	CourierID     *uuid.UUID `json:"courier_id,omitempty"`
-	Courier       *Courier   `json:"courier,omitempty"`
-	UserID        uuid.UUID  `json:"user_id"`
-	StartLocation *Gps       `json:"start_location,omitempty"`
-	EndLocation   *Gps       `json:"end_location,omitempty"`
-	Status        TripStatus `json:"status"`
-	ProductID     uuid.UUID  `json:"product_id"`
-	Cost          int        `json:"cost"`
-	Route         *TripRoute `json:"route,omitempty"`
-	Recipient     *Recipient `json:"recipient"`
-	CreatedAt     *time.Time `json:"created_at,omitempty"`
-	UpdatedAt     *time.Time `json:"updated_at,omitempty"`
+	ID              uuid.UUID  `json:"id"`
+	CourierID       *uuid.UUID `json:"courier_id,omitempty"`
+	Courier         *Courier   `json:"courier,omitempty"`
+	UserID          uuid.UUID  `json:"user_id"`
+	StartLocation   *Gps       `json:"start_location,omitempty"`
+	EndLocation     *Gps       `json:"end_location,omitempty"`
+	ConfirmedPickup *Gps       `json:"confirmed_pickup,omitempty"`
+	Status          TripStatus `json:"status"`
+	ProductID       uuid.UUID  `json:"product_id"`
+	Cost            int        `json:"cost"`
+	Route           *TripRoute `json:"route,omitempty"`
+	Recipient       *Recipient `json:"recipient"`
+	CreatedAt       *time.Time `json:"created_at,omitempty"`
+	UpdatedAt       *time.Time `json:"updated_at,omitempty"`
 }
 
 type TripInput struct {

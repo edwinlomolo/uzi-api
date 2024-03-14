@@ -18,7 +18,7 @@ func (r *courierResolver) User(ctx context.Context, obj *model.Courier) (*model.
 
 // Trip is the resolver for the trip field.
 func (r *courierResolver) Trip(ctx context.Context, obj *model.Courier) (*model.Trip, error) {
-	return r.tripService.GetTrip(obj.ID)
+	return r.tripService.GetTripDetails(obj.ID)
 }
 
 // Product is the resolver for the product field.

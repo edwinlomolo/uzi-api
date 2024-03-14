@@ -11,7 +11,7 @@ import (
 
 	"github.com/edwinlomolo/uzi-api/gql"
 	"github.com/edwinlomolo/uzi-api/gql/model"
-	t "github.com/edwinlomolo/uzi-api/repository"
+	"github.com/edwinlomolo/uzi-api/internal"
 	"github.com/edwinlomolo/uzi-api/store/sqlc"
 	"github.com/google/uuid"
 	"github.com/sirupsen/logrus"
@@ -150,12 +150,12 @@ func (r *queryResolver) GetCourierNearPickupPoint(ctx context.Context, point mod
 
 // GetTripDetails is the resolver for the getTripDetails field.
 func (r *queryResolver) GetTripDetails(ctx context.Context, tripID uuid.UUID) (*model.Trip, error) {
-	return r.tripService.GetTrip(tripID)
+	return r.tripService.GetTripDetails(tripID)
 }
 
 // TripUpdates is the resolver for the tripUpdates field.
 func (r *subscriptionResolver) TripUpdates(ctx context.Context, tripID uuid.UUID) (<-chan *model.TripUpdate, error) {
-	pubsub := r.redisClient.Subscribe(context.Background(), t.TRIP_UPDATES)
+	pubsub := r.redisClient.Subscribe(context.Background(), internal.TRIP_UPDATES_CHANNEL)
 
 	ch := make(chan *model.TripUpdate)
 
@@ -192,7 +192,7 @@ func (r *subscriptionResolver) AssignTrip(ctx context.Context, userID uuid.UUID)
 		return nil, err
 	}
 
-	pubsub := r.redisClient.Subscribe(context.Background(), t.ASSIGN_TRIP)
+	pubsub := r.redisClient.Subscribe(context.Background(), internal.ASSIGN_TRIP_CHANNEL)
 
 	ch := make(chan *model.TripUpdate)
 

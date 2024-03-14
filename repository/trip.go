@@ -1,18 +1,12 @@
 package repository
 
 import (
-	"bytes"
 	"context"
 	"database/sql"
-	"encoding/base64"
-	"encoding/json"
 	"errors"
 	"fmt"
-	"net/http"
 	"sync"
-	"time"
 
-	"github.com/edwinlomolo/uzi-api/config"
 	"github.com/edwinlomolo/uzi-api/gql/model"
 	"github.com/edwinlomolo/uzi-api/internal"
 	sqlStore "github.com/edwinlomolo/uzi-api/store"
@@ -20,12 +14,6 @@ import (
 	"github.com/google/uuid"
 	"github.com/redis/go-redis/v9"
 	"github.com/sirupsen/logrus"
-)
-
-const (
-	TRIP_UPDATES = "trip_updates"
-	ASSIGN_TRIP  = "assign_trip"
-	routeV2      = "https://routes.googleapis.com/directions/v2:computeRoutes"
 )
 
 var (
@@ -37,8 +25,8 @@ type TripRepository struct {
 	redis    *redis.Client
 	location internal.LocationService
 	cache    internal.Cache
-	p        internal.Pricing
 	mu       sync.Mutex
+	p        internal.Pricing
 	store    *sqlc.Queries
 	log      *logrus.Logger
 }
@@ -49,8 +37,8 @@ func (t *TripRepository) Init() {
 	t.redis = internal.GetCache().GetRedis()
 	t.location = internal.GetLocationService()
 	t.cache = internal.GetCache()
-	t.p = internal.GetPricer()
 	t.mu = sync.Mutex{}
+	t.p = internal.GetPricer()
 	t.store = sqlStore.GetDb()
 	t.log = internal.GetLogger()
 }
@@ -127,9 +115,6 @@ func (t *TripRepository) AssignCourierToTrip(tripID, courierID uuid.UUID) error 
 		return assignTripErr
 	}
 
-	// Calculate trip cost
-	go t.CreateTripCost(tripID)
-
 	return nil
 }
 
@@ -165,59 +150,36 @@ func (t *TripRepository) CreateTrip(args sqlc.CreateTripParams) (*model.Trip, er
 	}, nil
 }
 
-func (t *TripRepository) CreateTripCost(tripID uuid.UUID) error {
-	// Get trip details assuming whenever we are calling this a trip already exists
-	trip, err := t.store.GetTrip(context.Background(), tripID)
-	if err != nil {
-		t.log.WithFields(logrus.Fields{
-			"error":   err,
-			"trip_id": tripID,
-		}).Errorf("get trip details for cost calculation")
-		return err
-	}
-
-	product, err := t.store.GetCourierProductByID(context.Background(), trip.ProductID)
+func (t *TripRepository) GetTripProduct(tripID uuid.UUID) (*model.Product, error) {
+	// TODO rename this store query man doesn't make sense
+	product, err := t.store.GetCourierProductByID(context.Background(), tripID)
 	if err != nil {
 		t.log.WithFields(logrus.Fields{
 			"error":      err,
-			"product_id": trip.ProductID,
-		}).Errorf("create trip cost: get courier product")
-		return err
+			"product_id": tripID,
+		}).Errorf("trip repository: get trip product")
+		return nil, err
 	}
 
-	pickup := model.ParsePostgisLocation(trip.StartLocation)
-	dropoff := model.ParsePostgisLocation(trip.EndLocation)
-	routeRes, routeErr := t.computeRoute(
-		model.Geocode{
-			Location: *pickup,
-		},
-		model.Geocode{
-			Location: *dropoff,
-		},
-	)
-	if routeErr != nil {
-		return routeErr
-	}
+	return &model.Product{
+		ID:          product.ID,
+		Name:        product.Name,
+		WeightClass: int(product.WeightClass),
+	}, nil
+}
 
-	cost := t.p.CalculateTripCost(int(product.WeightClass), routeRes.Distance, product.Name != "UziX")
+func (t *TripRepository) CreateTripCost(tripID uuid.UUID, cost int) error {
 	args := sqlc.CreateTripCostParams{
 		ID:   tripID,
 		Cost: int32(cost),
 	}
-	t.mu.Lock()
-	if _, err := t.store.CreateTripCost(
-		context.Background(),
-		args,
-	); err != nil {
-		uziErr := fmt.Errorf("%s:%v", "trip cost", err)
+	if _, err := t.store.CreateTripCost(context.Background(), args); err != nil {
 		t.log.WithFields(logrus.Fields{
-			"error":   err,
 			"trip_id": tripID,
 			"cost":    cost,
-		}).Errorf(uziErr.Error())
-		return uziErr
+		}).WithError(err).Errorf("trip repository: create trip cost")
+		return err
 	}
-	t.mu.Unlock()
 
 	return nil
 }
@@ -237,8 +199,7 @@ func (t *TripRepository) SetTripStatus(tripID uuid.UUID, status model.TripStatus
 		t.log.WithFields(logrus.Fields{
 			"trip_id": tripID,
 			"status":  status.String(),
-			"error":   err,
-		}).Errorf("trip status")
+		}).WithError(err).Errorf("trip status")
 		return uziErr
 	}
 
@@ -323,62 +284,6 @@ func (t *TripRepository) ParsePickupDropoff(input model.TripInput) (*model.Geoco
 		},
 	}, nil
 
-}
-
-func (t *TripRepository) MatchCourier(tripID uuid.UUID, pickup model.TripInput) {
-	pkp, parseErr := t.ParsePickupDropoff(pickup)
-	if parseErr != nil {
-		t.log.WithFields(logrus.Fields{
-			"pickup": pickup,
-			"error":  parseErr,
-		}).Errorf("cleanup trip pickup input")
-	}
-
-	go func() {
-		courierFound := false
-
-		for {
-			select {
-			case <-time.After(time.Minute):
-				if !courierFound {
-					t.ReportTripStatus(tripID, model.TripStatusCourierNotFound)
-				}
-				return
-			default:
-				time.Sleep(500 * time.Millisecond)
-
-				trip, err := t.GetTrip(tripID)
-				if err != nil {
-					return
-				}
-
-				if trip.Status == model.TripStatusCancelled {
-					return
-				}
-
-				courier, err := t.FindAvailableCourier(model.GpsInput{
-					Lat: pkp.Location.Lat,
-					Lng: pkp.Location.Lng,
-				})
-				if err != nil {
-					return
-				}
-
-				if courier != nil && !courierFound {
-					courierFound = true
-					t.ReportTripStatus(trip.ID, model.TripStatusCourierFound)
-
-					assignErr := t.AssignCourierToTrip(trip.ID, courier.ID)
-					if assignErr == nil {
-						t.ReportTripStatus(tripID, model.TripStatusCourierAssigned)
-						return
-					} else if assignErr != nil {
-						return
-					}
-				}
-			}
-		}
-	}()
 }
 
 func (t *TripRepository) CreateTripRecipient(tripID uuid.UUID, input model.TripRecipientInput) error {
@@ -469,109 +374,27 @@ func (t *TripRepository) GetTrip(tripID uuid.UUID) (*model.Trip, error) {
 		return nil, err
 	}
 
-	trp := &model.Trip{
-		ID:          trip.ID,
-		Status:      model.TripStatus(trip.Status),
-		CourierID:   &trip.CourierID.UUID,
-		ProductID:   trip.ProductID,
-		Cost:        int(trip.Cost),
-		EndLocation: model.ParsePostgisLocation(trip.EndLocation),
-	}
-
-	// Return trip route also
-	if trp.CourierID.String() != internal.ZERO_UUID {
-		pickup := model.TripInput{}
-		dropoff := model.TripInput{}
-		courierGps, err := t.store.GetCourierLocation(context.Background(), *trp.CourierID)
-		if err != nil {
-			return nil, err
-		}
-		switch trp.Status {
-		case model.TripStatusCourierArriving,
-			model.TripStatusCourierAssigned:
-			pickup.Location = &model.GpsInput{
-				Lat: model.ParsePostgisLocation(courierGps).Lat,
-				Lng: model.ParsePostgisLocation(courierGps).Lng,
-			}
-			dropoff.Location = &model.GpsInput{
-				Lat: model.ParsePostgisLocation(trip.ConfirmedPickup).Lat,
-				Lng: model.ParsePostgisLocation(trip.ConfirmedPickup).Lng,
-			}
-			tripRoute, err := t.ComputeTripRoute(model.TripRouteInput{Pickup: &pickup, Dropoff: &dropoff})
-			if err != nil {
-				return nil, err
-			}
-			trp.Route = tripRoute
-		case model.TripStatusCourierEnRoute:
-			pickup.Location = &model.GpsInput{
-				Lat: model.ParsePostgisLocation(courierGps).Lat,
-				Lng: model.ParsePostgisLocation(courierGps).Lng,
-			}
-			dropoff.Location = &model.GpsInput{
-				Lat: trp.EndLocation.Lat,
-				Lng: trp.EndLocation.Lng,
-			}
-			tripRoute, err := t.ComputeTripRoute(model.TripRouteInput{Pickup: &pickup, Dropoff: &dropoff})
-			if err != nil {
-				return nil, err
-			}
-			trp.Route = tripRoute
-		}
-	}
-
-	return trp, nil
+	return &model.Trip{
+		ID:              trip.ID,
+		Status:          model.TripStatus(trip.Status),
+		CourierID:       &trip.CourierID.UUID,
+		ProductID:       trip.ProductID,
+		Cost:            int(trip.Cost),
+		EndLocation:     model.ParsePostgisLocation(trip.EndLocation),
+		ConfirmedPickup: model.ParsePostgisLocation(trip.ConfirmedPickup),
+	}, nil
 }
 
-func (t *TripRepository) publishTripUpdate(tripID uuid.UUID, status model.TripStatus, channels []string) error {
-	done := make(chan struct{})
-	go func() {
-		defer close(done)
-		update := model.TripUpdate{ID: tripID, Status: status}
+func (t *TripRepository) GetCourierLocation(courierID uuid.UUID) (*model.Gps, error) {
+	courierGps, err := t.store.GetCourierLocation(context.Background(), courierID)
+	if err != nil {
+		t.log.WithFields(logrus.Fields{
+			"courier_id": courierID,
+		}).WithError(err).Errorf("trip repository: get courier location")
+		return nil, err
+	}
 
-		t.SetTripStatus(tripID, status)
-
-		switch status {
-		case model.TripStatusCourierArriving,
-			model.TripStatusCourierEnRoute,
-			model.TripStatusCourierAssigned,
-			model.TripStatusCancelled:
-			getTrip, err := t.GetTrip(tripID)
-			if err != nil {
-				return
-			}
-
-			tripCourier, courierErr := t.GetTripCourier(*getTrip.CourierID)
-			if courierErr != nil {
-				return
-			}
-
-			switch status {
-			case model.TripStatusCourierArriving, model.TripStatusCourierEnRoute:
-				update.Location = &model.Gps{Lat: tripCourier.Location.Lat, Lng: tripCourier.Location.Lng}
-			case model.TripStatusCourierAssigned:
-				update.CourierID = getTrip.CourierID
-			}
-		}
-
-		u, marshalErr := json.Marshal(update)
-		if marshalErr != nil {
-			t.log.WithError(marshalErr).Errorf("marshal trip update")
-			return
-		}
-
-		for _, channel := range channels {
-			pubTripErr := t.redis.Publish(context.Background(), channel, u).Err()
-			if pubTripErr != nil {
-				t.log.WithError(pubTripErr).Errorf("redis publish trip update")
-				return
-			}
-		}
-	}()
-	<-done
-
-	time.Sleep(3 * time.Second)
-
-	return nil
+	return model.ParsePostgisLocation(courierGps), nil
 }
 
 func (t *TripRepository) GetTripCourier(courierID uuid.UUID) (*model.Courier, error) {
@@ -592,207 +415,6 @@ func (t *TripRepository) GetTripCourier(courierID uuid.UUID) (*model.Courier, er
 		UserID:   courier.UserID.UUID,
 		Location: model.ParsePostgisLocation(courier.Location),
 	}, nil
-}
-
-func (t *TripRepository) ReportTripStatus(tripID uuid.UUID, status model.TripStatus) error {
-	// Are we cancelling trip?
-	switch status {
-	case model.TripStatusCancelled:
-		trip, err := t.GetTrip(tripID)
-		if err != nil {
-			return err
-		}
-
-		// Check courier hasn't been assigned yet
-		if trip.CourierID.String() == internal.ZERO_UUID {
-			t.publishTripUpdate(tripID, model.TripStatusCancelled, getTripStatusChannel(status))
-		}
-	default:
-		t.publishTripUpdate(tripID, status, getTripStatusChannel(status))
-	}
-
-	return nil
-}
-
-// determine communication channels
-func getTripStatusChannel(status model.TripStatus) []string {
-	switch status {
-	case model.TripStatusCourierArriving,
-		model.TripStatusCourierEnRoute,
-		model.TripStatusComplete:
-		return []string{TRIP_UPDATES}
-	case model.TripStatusCourierAssigned:
-		return []string{ASSIGN_TRIP, TRIP_UPDATES}
-	case model.TripStatusCancelled:
-		return []string{ASSIGN_TRIP}
-	default:
-		return []string{}
-	}
-}
-
-func (t *TripRepository) ComputeTripRoute(input model.TripRouteInput) (*model.TripRoute, error) {
-	pickup, pickupErr := t.ParsePickupDropoff(*input.Pickup)
-	if pickupErr != nil {
-		return nil, pickupErr
-	}
-
-	dropoff, dropoffErr := t.ParsePickupDropoff(*input.Dropoff)
-	if dropoffErr != nil {
-		return nil, dropoffErr
-	}
-
-	return t.computeRoute(*pickup, *dropoff)
-}
-
-func (t *TripRepository) computeRoute(pickup, dropoff model.Geocode) (*model.TripRoute, error) {
-	routeResponse := &routeresponse{}
-
-	tripRoute := &model.TripRoute{}
-
-	routeParams := createRouteRequest(
-		latlng{
-			Lat: pickup.Location.Lat,
-			Lng: pickup.Location.Lng,
-		},
-		latlng{
-			Lat: dropoff.Location.Lat,
-			Lng: dropoff.Location.Lng,
-		},
-	)
-
-	cacheKey := base64Key(routeParams)
-
-	tripInfo, tripInfoErr := t.cache.Get(context.Background(), cacheKey, tripRoute)
-	if tripInfoErr != nil {
-		return nil, tripInfoErr
-	}
-
-	if tripInfo == nil {
-		routeRes, routeResErr := t.requestGoogleRoute(routeParams, routeResponse)
-		if routeResErr != nil {
-			return nil, routeResErr
-		}
-
-		tripRoute.Polyline = routeRes.Routes[0].Polyline.EncodedPolyline
-		tripRoute.Distance = routeRes.Routes[0].Distance
-
-		// Short-circuit google route api with cache here not to super-charge in dev
-		if isDev() {
-			go func() {
-				t.cache.Set(context.Background(), cacheKey, tripRoute, time.Hour*24)
-			}()
-		}
-	} else {
-		route := (tripInfo).(*model.TripRoute)
-		tripRoute.Polyline = route.Polyline
-		tripRoute.Distance = route.Distance
-	}
-
-	nearbyParams := sqlc.GetNearbyAvailableCourierProductsParams{
-		Point: fmt.Sprintf(
-			"SRID=4326;POINT(%.8f %.8f)",
-			pickup.Location.Lng,
-			pickup.Location.Lat,
-		),
-		Radius: 2000,
-	}
-	nearbyProducts, nearbyErr := t.GetNearbyAvailableProducts(
-		nearbyParams,
-		tripRoute.Distance,
-	)
-	if nearbyErr != nil {
-		return nil, nearbyErr
-	}
-	tripRoute.AvailableProducts = nearbyProducts
-
-	return tripRoute, nil
-}
-
-func (t *TripRepository) requestGoogleRoute(routeParams routerequest, routeResponse *routeresponse) (*routeresponse, error) {
-	reqPayload, payloadErr := json.Marshal(routeParams)
-	if payloadErr != nil {
-		t.log.WithFields(logrus.Fields{
-			"route_params": routeParams,
-			"error":        payloadErr,
-		}).Errorf("marshal route params")
-		return nil, payloadErr
-	}
-
-	req, reqErr := http.NewRequest("POST", routeV2, bytes.NewBuffer(reqPayload))
-	if reqErr != nil {
-		t.log.WithError(reqErr).Errorf("compute route request")
-		return nil, reqErr
-	}
-	req.Header.Add("Content-Type", "application/json")
-	req.Header.Add("X-Goog-Api-Key", config.Config.Google.GoogleRoutesApiKey)
-	req.Header.Add(
-		"X-Goog-FieldMask",
-		"routes.duration,routes.distanceMeters,routes.polyline.encodedPolyline,routes.staticDuration",
-	)
-
-	c := &http.Client{}
-	res, resErr := c.Do(req)
-	if resErr != nil {
-		t.log.WithError(resErr).Errorf("call google compute route api")
-		return nil, resErr
-	}
-
-	if err := json.NewDecoder(res.Body).Decode(&routeResponse); err != nil {
-		t.log.WithError(err).Errorf("unmarshal google compute route res")
-		return nil, err
-	}
-
-	if routeResponse.Error.Code > 0 {
-		resErr := fmt.Errorf(
-			"%s:%v",
-			routeResponse.Error.Status,
-			routeResponse.Error.Message,
-		)
-		t.log.WithFields(logrus.Fields{
-			"status":  routeResponse.Error.Status,
-			"message": routeResponse.Error.Message,
-		}).Errorf("google compute route res error")
-		return nil, resErr
-	}
-
-	return routeResponse, nil
-}
-
-func createRouteRequest(pickup, dropoff latlng) routerequest {
-	return routerequest{
-		origin: origin{
-			routepoint: routepoint{
-				Location: pickup,
-			},
-		},
-		destination: destination{
-			routepoint: routepoint{
-				Location: dropoff,
-			},
-		},
-		TravelMode:             "DRIVE",
-		ComputeAlternateRoutes: false,
-		RoutePreference:        "TRAFFIC_AWARE_OPTIMAL",
-		RouteModifiers: routemodifiers{
-			AvoidTolls:    false,
-			AvoidHighways: false,
-			AvoidFerries:  false,
-		},
-		PolylineQuality: "HIGH_QUALITY",
-		Language:        "en-US",
-		Units:           "IMPERIAL",
-		RegionCode:      "KE",
-	}
-}
-
-func base64Key(key interface{}) string {
-	keyString, err := json.Marshal(key)
-	if err != nil {
-		panic(err)
-	}
-	encoded := base64.StdEncoding.EncodeToString([]byte(keyString))
-
-	return encoded
 }
 
 func (t *TripRepository) getNearbyAvailableCourierProducts(params sqlc.GetNearbyAvailableCourierProductsParams) ([]*model.Product, error) {
@@ -841,8 +463,4 @@ func (t *TripRepository) GetNearbyAvailableProducts(params sqlc.GetNearbyAvailab
 	}
 
 	return nearbys, nil
-}
-
-func isDev() bool {
-	return config.Config.Server.Env == "development"
 }
