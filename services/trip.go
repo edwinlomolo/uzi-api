@@ -362,13 +362,11 @@ func (t *tripClient) MatchCourier(tripID uuid.UUID, pickup model.TripInput) {
 		for {
 			select {
 			case <-timeout.Done():
-				t.log.Infoln("elapsed")
 				if !courierFound {
 					t.ReportTripStatus(tripID, model.TripStatusCourierNotFound)
 				}
 				return
 			default:
-				t.log.Infoln("starting")
 				time.Sleep(500 * time.Millisecond)
 
 				trip, err := t.r.GetTrip(tripID)
@@ -389,7 +387,6 @@ func (t *tripClient) MatchCourier(tripID uuid.UUID, pickup model.TripInput) {
 				}
 
 				if courier != nil && !courierFound {
-					t.log.Infoln("assigned")
 					courierFound = true
 					t.ReportTripStatus(trip.ID, model.TripStatusCourierFound)
 
