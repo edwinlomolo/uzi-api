@@ -33,7 +33,10 @@ func (r *mutationResolver) CreateCourierDocument(ctx context.Context, input mode
 func (r *mutationResolver) TrackCourierGps(ctx context.Context, input model.GpsInput) (bool, error) {
 	userID := stringToUUID(ctx.Value("userID").(string))
 
-	go r.TrackCourierLocation(userID, input)
+	if err := r.TrackCourierLocation(userID, input); err != nil {
+		return false, err
+	}
+
 	return true, nil
 }
 

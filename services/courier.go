@@ -66,8 +66,53 @@ func (c *courierClient) GetCourierByUserID(userID uuid.UUID) (*model.Courier, er
 }
 
 func (c *courierClient) TrackCourierLocation(userID uuid.UUID, input model.GpsInput) error {
-	go c.isCourierTripping(userID, input)
-	return c.r.TrackCourierLocation(userID, input)
+	if err := c.r.TrackCourierLocation(userID, input); err != nil {
+		return err
+	}
+
+	done := make(chan struct{})
+	go func() {
+		defer close(done)
+		courier, err := c.r.GetCourierByUserID(userID)
+		if err != nil {
+			return
+		}
+
+		t, err := c.r.GetCourierTrip(courier.ID)
+		if err != nil && errors.Is(err, ErrCourierTripNotFound) {
+			c.log.WithError(ErrCourierTripNotFound).Errorf("is courier tripping")
+			return
+		} else if err != nil {
+			return
+		}
+
+		if t != nil && (t.Status == model.TripStatusCourierEnRoute || t.Status == model.TripStatusCourierArriving) {
+			tripUpdate := model.TripUpdate{
+				ID:     t.ID,
+				Status: model.TripStatus(t.Status),
+				Location: &model.Gps{
+					Lat: input.Lat,
+					Lng: input.Lng,
+				},
+			}
+			u, marshalErr := json.Marshal(tripUpdate)
+			if marshalErr != nil {
+				c.log.WithError(marshalErr).Errorf("courier service: marshal courier arriving/enroute trip update")
+				return
+			}
+			tripUpdateErr := c.cache.GetRedis().Publish(context.Background(), internal.TRIP_UPDATES_CHANNEL, u).Err()
+			if tripUpdateErr != nil {
+				c.log.WithFields(logrus.Fields{
+					"status":  t.Status,
+					"trip_id": t.ID,
+				}).WithError(tripUpdateErr).Errorf("courier service: publish courier arriving/enroute trip update")
+				return
+			}
+		}
+	}()
+	<-done
+
+	return nil
 }
 
 func (c *courierClient) UpdateCourierStatus(userID uuid.UUID, status model.CourierStatus) (bool, error) {
@@ -80,43 +125,4 @@ func (c *courierClient) GetCourierProduct(productID uuid.UUID) (*model.Product, 
 
 func (c *courierClient) GetCourierByID(courierID uuid.UUID) (*model.Courier, error) {
 	return c.r.GetCourierByID(courierID)
-}
-
-func (c *courierClient) isCourierTripping(userID uuid.UUID, location model.GpsInput) error {
-	courier, err := c.GetCourierByUserID(userID)
-	if err != nil {
-		return err
-	}
-
-	t, err := c.r.GetCourierTrip(courier.ID)
-	if err != nil && errors.Is(err, ErrCourierTripNotFound) {
-		return ErrCourierTripNotFound
-	} else if err != nil {
-		return err
-	}
-
-	if t != nil && (t.Status == model.TripStatusCourierEnRoute || t.Status == model.TripStatusCourierArriving) {
-		tripUpdate := model.TripUpdate{
-			ID:     t.ID,
-			Status: model.TripStatus(t.Status),
-			Location: &model.Gps{
-				Lat: location.Lat,
-				Lng: location.Lng,
-			},
-		}
-		u, marshalErr := json.Marshal(tripUpdate)
-		if marshalErr != nil {
-			c.log.WithError(marshalErr).Errorf("courier service: marshal courier arriving/enroute trip update")
-			return marshalErr
-		}
-		tripUpdateErr := c.cache.GetRedis().Publish(context.Background(), internal.TRIP_UPDATES_CHANNEL, u).Err()
-		if tripUpdateErr != nil {
-			c.log.WithFields(logrus.Fields{
-				"status":  t.Status,
-				"trip_id": t.ID,
-			}).WithError(tripUpdateErr).Errorf("courier service: publish courier arriving/enroute trip update")
-			return tripUpdateErr
-		}
-	}
-	return nil
 }

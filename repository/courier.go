@@ -162,8 +162,7 @@ func (c *CourierRepository) TrackCourierLocation(userID uuid.UUID, input model.G
 	if _, updateErr := c.store.TrackCourierLocation(context.Background(), args); updateErr != nil {
 		c.log.WithFields(logrus.Fields{
 			"courier_user_id": userID,
-			"error":           updateErr,
-		}).Errorf("track courier location")
+		}).WithError(updateErr).Errorf("track courier location")
 		return updateErr
 	}
 
