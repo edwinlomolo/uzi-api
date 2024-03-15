@@ -28,7 +28,7 @@ type ipinfoClient struct {
 	client *ipinfo.Client
 }
 
-func NewIpinfoService() IpInfoService {
+func NewIpinfoService() {
 	cache := newCache()
 	c := ipinfo.NewCache(cache)
 	client := ipinfo.NewClient(
@@ -37,7 +37,7 @@ func NewIpinfoService() IpInfoService {
 		config.Config.Ipinfo.ApiKey,
 	)
 
-	return &ipinfoClient{
+	iService = &ipinfoClient{
 		config.Config.Ipinfo,
 		internal.GetLogger(),
 		client,
