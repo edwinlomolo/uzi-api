@@ -349,8 +349,7 @@ func (t *tripClient) MatchCourier(tripID uuid.UUID, pickup model.TripInput) {
 	if parseErr != nil {
 		t.log.WithFields(logrus.Fields{
 			"pickup": pickup,
-			"error":  parseErr,
-		}).Errorf("cleanup trip pickup input")
+		}).WithError(parseErr).Errorf("cleanup trip pickup input")
 	}
 
 	ctx := context.Background()

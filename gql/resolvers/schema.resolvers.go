@@ -14,7 +14,6 @@ import (
 	"github.com/edwinlomolo/uzi-api/internal"
 	"github.com/edwinlomolo/uzi-api/store/sqlc"
 	"github.com/google/uuid"
-	"github.com/sirupsen/logrus"
 )
 
 // CreateCourierDocument is the resolver for the createCourierDocument field.
@@ -163,17 +162,7 @@ func (r *subscriptionResolver) TripUpdates(ctx context.Context, tripID uuid.UUID
 	ch := make(chan *model.TripUpdate)
 
 	go func() {
-		for {
-			msg, err := pubsub.ReceiveMessage(context.Background())
-			if err != nil {
-				log.WithFields(logrus.Fields{
-					"error":   err,
-					"trip_id": tripID,
-				}).Errorf("receive trip update")
-				close(ch)
-				return
-			}
-
+		for msg := range pubsub.Channel() {
 			var update *model.TripUpdate
 			if err := json.Unmarshal([]byte(msg.Payload), &update); err != nil {
 				log.WithError(err).Errorf("unmarshal redis trip update payload")
@@ -200,17 +189,7 @@ func (r *subscriptionResolver) AssignTrip(ctx context.Context, userID uuid.UUID)
 	ch := make(chan *model.TripUpdate)
 
 	go func() {
-		for {
-			msg, err := pubsub.ReceiveMessage(context.Background())
-			if err != nil {
-				log.WithFields(logrus.Fields{
-					"error":   err,
-					"user_id": userID,
-				}).Errorf("trip assignment update")
-				close(ch)
-				return
-			}
-
+		for msg := range pubsub.Channel() {
 			var update *model.TripUpdate
 			if err := json.Unmarshal([]byte(msg.Payload), &update); err != nil {
 				log.WithError(err).Errorf("unmarshal redis trip assignment update payload")
