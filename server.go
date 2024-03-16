@@ -75,7 +75,8 @@ func main() {
 		MissingPongOk: true,
 		ErrorFunc: func(ctx context.Context, err error) {
 			if websocket.IsCloseError(err, websocket.CloseAbnormalClosure) ||
-				!strings.Contains(err.Error(), websocket.ErrCloseSent.Error()) {
+				!strings.Contains(err.Error(), websocket.ErrCloseSent.Error()) &&
+					!(config.Config.Server.Env == "development") {
 				log.WithError(err).Errorf("websocket error")
 			}
 		},
