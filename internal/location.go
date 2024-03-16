@@ -82,8 +82,7 @@ func (l *locationClient) AutocompletePlace(
 	if err != nil {
 		l.log.WithFields(logrus.Fields{
 			"search_query": searchQuery,
-			"error":        err,
-		}).Errorf("place autocomplete")
+		}).WithError(err).Errorf("place autocomplete")
 		return nil, err
 	}
 
