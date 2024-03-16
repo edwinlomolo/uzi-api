@@ -369,8 +369,7 @@ func (t *TripRepository) GetTrip(tripID uuid.UUID) (*model.Trip, error) {
 	if err != nil {
 		t.log.WithFields(logrus.Fields{
 			"trip_id": tripID,
-			"error":   err,
-		}).Errorf("get trip")
+		}).WithError(err).Errorf("get trip")
 		return nil, err
 	}
 
