@@ -360,6 +360,7 @@ func (t *TripRepository) GetTrip(tripID uuid.UUID) (*model.Trip, error) {
 		CourierID:       &trip.CourierID.UUID,
 		ProductID:       trip.ProductID,
 		Cost:            int(trip.Cost),
+		StartLocation:   model.ParsePostgisLocation(trip.StartLocation),
 		EndLocation:     model.ParsePostgisLocation(trip.EndLocation),
 		ConfirmedPickup: model.ParsePostgisLocation(trip.ConfirmedPickup),
 	}, nil

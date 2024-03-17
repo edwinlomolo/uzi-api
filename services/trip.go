@@ -255,14 +255,13 @@ func (t *tripClient) CreateTripRecipient(
 }
 
 func (t *tripClient) createTripCost(tripID uuid.UUID) error {
-	defer t.log.Infoln("finished")
 	trip, err := t.r.GetTrip(tripID)
 	if err != nil {
 		return err
 	}
 
-	pickup := model.ParsePostgisLocation(trip.StartLocation)
-	dropoff := model.ParsePostgisLocation(trip.EndLocation)
+	pickup := trip.StartLocation
+	dropoff := trip.EndLocation
 	routeRes, routeErr := t.computeRoute(
 		model.Geocode{
 			Location: *pickup,
@@ -281,7 +280,6 @@ func (t *tripClient) createTripCost(tripID uuid.UUID) error {
 	}
 
 	cost := t.p.CalculateTripCost(product.WeightClass, routeRes.Distance, product.Name != "UziX")
-	t.log.Infoln(cost)
 
 	return t.r.CreateTripCost(tripID, cost)
 }
@@ -391,7 +389,7 @@ func (t *tripClient) MatchCourier(tripID uuid.UUID, pickup model.TripInput) {
 					courierFound = true
 					t.ReportTripStatus(trip.ID, model.TripStatusCourierFound)
 
-					assignErr := t.r.AssignCourierToTrip(trip.ID, courier.ID)
+					assignErr := t.AssignCourierToTrip(trip.ID, courier.ID)
 					if assignErr == nil {
 						t.ReportTripStatus(tripID, model.TripStatusCourierAssigned)
 						return
