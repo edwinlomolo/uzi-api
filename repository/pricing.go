@@ -46,7 +46,7 @@ func (p *PricerRepository) getCourierByID(courierID uuid.UUID) (*model.Courier, 
 }
 
 func (p *PricerRepository) getCourierProduct(productID uuid.UUID) (*model.Product, error) {
-	product, err := p.store.GetCourierProductByID(
+	product, err := p.store.GetProductByID(
 		context.Background(),
 		productID,
 	)

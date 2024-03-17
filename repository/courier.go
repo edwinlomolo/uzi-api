@@ -207,7 +207,7 @@ func (c *CourierRepository) UpdateCourierStatus(userID uuid.UUID, status model.C
 }
 
 func (c *CourierRepository) GetCourierProduct(productID uuid.UUID) (*model.Product, error) {
-	product, err := c.store.GetCourierProductByID(
+	product, err := c.store.GetProductByID(
 		context.Background(),
 		productID,
 	)
