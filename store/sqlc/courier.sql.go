@@ -108,31 +108,6 @@ func (q *Queries) GetCourierLocation(ctx context.Context, id uuid.UUID) (interfa
 	return location, err
 }
 
-const getCourierProductByID = `-- name: GetCourierProductByID :one
-SELECT id, icon, name, weight_class FROM products
-WHERE id = $1
-LIMIT 1
-`
-
-type GetCourierProductByIDRow struct {
-	ID          uuid.UUID `json:"id"`
-	Icon        string    `json:"icon"`
-	Name        string    `json:"name"`
-	WeightClass int32     `json:"weight_class"`
-}
-
-func (q *Queries) GetCourierProductByID(ctx context.Context, id uuid.UUID) (GetCourierProductByIDRow, error) {
-	row := q.db.QueryRowContext(ctx, getCourierProductByID, id)
-	var i GetCourierProductByIDRow
-	err := row.Scan(
-		&i.ID,
-		&i.Icon,
-		&i.Name,
-		&i.WeightClass,
-	)
-	return i, err
-}
-
 const getCourierStatus = `-- name: GetCourierStatus :one
 SELECT status FROM
 couriers
@@ -145,6 +120,31 @@ func (q *Queries) GetCourierStatus(ctx context.Context, userID uuid.NullUUID) (s
 	var status string
 	err := row.Scan(&status)
 	return status, err
+}
+
+const getProductByID = `-- name: GetProductByID :one
+SELECT id, icon, name, weight_class FROM products
+WHERE id = $1
+LIMIT 1
+`
+
+type GetProductByIDRow struct {
+	ID          uuid.UUID `json:"id"`
+	Icon        string    `json:"icon"`
+	Name        string    `json:"name"`
+	WeightClass int32     `json:"weight_class"`
+}
+
+func (q *Queries) GetProductByID(ctx context.Context, id uuid.UUID) (GetProductByIDRow, error) {
+	row := q.db.QueryRowContext(ctx, getProductByID, id)
+	var i GetProductByIDRow
+	err := row.Scan(
+		&i.ID,
+		&i.Icon,
+		&i.Name,
+		&i.WeightClass,
+	)
+	return i, err
 }
 
 const isCourier = `-- name: IsCourier :one

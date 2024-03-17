@@ -150,19 +150,23 @@ func (t *TripRepository) CreateTrip(args sqlc.CreateTripParams) (*model.Trip, er
 	}, nil
 }
 
-func (t *TripRepository) GetTripProduct(tripID uuid.UUID) (*model.Product, error) {
-	// TODO rename this store query man doesn't make sense
-	product, err := t.store.GetCourierProductByID(context.Background(), tripID)
-	if err != nil {
+func (t *TripRepository) GetTripProduct(productID uuid.UUID) (*model.Product, error) {
+	product, err := t.store.GetProductByID(
+		context.Background(),
+		productID,
+	)
+	if err == sql.ErrNoRows {
+		return nil, nil
+	} else if err != nil {
 		t.log.WithFields(logrus.Fields{
-			"error":      err,
-			"product_id": tripID,
-		}).Errorf("trip repository: get trip product")
+			"product_id": productID,
+		}).WithError(err).Errorf("get courier product")
 		return nil, err
 	}
 
 	return &model.Product{
 		ID:          product.ID,
+		IconURL:     product.Icon,
 		Name:        product.Name,
 		WeightClass: int(product.WeightClass),
 	}, nil
@@ -338,29 +342,6 @@ func (t *TripRepository) GetTripRecipient(tripID uuid.UUID) (*model.Recipient, e
 		BuildingName: &r.Building.String,
 		UnitName:     &r.Unit.String,
 		TripID:       r.TripID.UUID,
-	}, nil
-}
-
-func (t *TripRepository) getCourierProduct(productID uuid.UUID) (*model.Product, error) {
-	product, err := t.store.GetCourierProductByID(
-		context.Background(),
-		productID,
-	)
-	if err == sql.ErrNoRows {
-		return nil, nil
-	} else if err != nil {
-		t.log.WithFields(logrus.Fields{
-			"product_id": productID,
-			"error":      err,
-		}).Errorf("get courier product")
-		return nil, err
-	}
-
-	return &model.Product{
-		ID:          product.ID,
-		IconURL:     product.Icon,
-		Name:        product.Name,
-		WeightClass: int(product.WeightClass),
 	}, nil
 }
 

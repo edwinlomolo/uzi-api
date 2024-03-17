@@ -255,6 +255,7 @@ func (t *tripClient) CreateTripRecipient(
 }
 
 func (t *tripClient) createTripCost(tripID uuid.UUID) error {
+	defer t.log.Infoln("finished")
 	trip, err := t.r.GetTrip(tripID)
 	if err != nil {
 		return err
@@ -274,12 +275,13 @@ func (t *tripClient) createTripCost(tripID uuid.UUID) error {
 		return routeErr
 	}
 
-	product, err := t.r.GetTripProduct(tripID)
+	product, err := t.r.GetTripProduct(trip.ProductID)
 	if err != nil {
 		return err
 	}
 
 	cost := t.p.CalculateTripCost(product.WeightClass, routeRes.Distance, product.Name != "UziX")
+	t.log.Infoln(cost)
 
 	return t.r.CreateTripCost(tripID, cost)
 }

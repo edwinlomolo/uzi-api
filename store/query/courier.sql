@@ -42,7 +42,7 @@ SET location = sqlc.arg(location)
 WHERE user_id = $1
 RETURNING *;
 
--- name: GetCourierProductByID :one
+-- name: GetProductByID :one
 SELECT id, icon, name, weight_class FROM products
 WHERE id = $1
 LIMIT 1;
