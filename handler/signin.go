@@ -2,7 +2,6 @@ package handler
 
 import (
 	"encoding/json"
-	"fmt"
 	"io"
 	"net/http"
 
@@ -21,15 +20,13 @@ func Signin() http.HandlerFunc {
 
 		body, bodyErr := io.ReadAll(r.Body)
 		if bodyErr != nil {
-			uziErr := fmt.Errorf("%s:%v", "reading body", bodyErr)
-			log.Errorf(uziErr.Error())
-			http.Error(w, uziErr.Error(), http.StatusInternalServerError)
+			log.WithError(bodyErr).Errorf("handler: reading signin body")
+			http.Error(w, bodyErr.Error(), http.StatusInternalServerError)
 			return
 		}
 
 		if marshalErr := json.Unmarshal(body, &loginInput); marshalErr != nil {
-			uziErr := fmt.Errorf("%s:%v", "unmarshal login req body", marshalErr)
-			log.Errorf(uziErr.Error())
+			log.WithError(marshalErr).Errorf("handler: unmarshal signin body")
 			http.Error(w, marshalErr.Error(), http.StatusInternalServerError)
 			return
 		}
@@ -42,9 +39,8 @@ func Signin() http.HandlerFunc {
 
 		jsonRes, jsonErr := json.Marshal(findSession)
 		if jsonErr != nil {
-			uziErr := fmt.Errorf("%s:%v", "marshal session res", jsonErr)
-			log.Errorf(uziErr.Error())
-			http.Error(w, uziErr.Error(), http.StatusInternalServerError)
+			log.WithError(jsonErr).Errorf("handler: marshal signin res")
+			http.Error(w, jsonErr.Error(), http.StatusInternalServerError)
 			return
 		}
 
