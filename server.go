@@ -38,13 +38,20 @@ func main() {
 	// Redis cache client
 	internal.NewCache()
 
+	isProd := func() bool {
+		return config.Config.Server.Env == "production" ||
+			config.Config.Server.Env == "staging"
+	}
+
 	// Sentry logging setup
-	if err := sentry.Init(sentry.ClientOptions{
-		Dsn:              config.Config.Sentry.Dsn,
-		EnableTracing:    true,
-		TracesSampleRate: 1.0,
-	}); err != nil {
-		log.WithError(err).Errorf("sentry http middleware")
+	if isProd() {
+		if err := sentry.Init(sentry.ClientOptions{
+			Dsn:              config.Config.Sentry.Dsn,
+			EnableTracing:    true,
+			TracesSampleRate: 1.0,
+		}); err != nil {
+			log.WithError(err).Errorf("sentry http middleware")
+		}
 	}
 
 	// Services

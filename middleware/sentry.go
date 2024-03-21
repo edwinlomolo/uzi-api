@@ -10,7 +10,7 @@ import (
 func Sentry(next http.Handler) http.Handler {
 	return http.HandlerFunc(
 		func(w http.ResponseWriter, r *http.Request) {
-			if isStaging() || isProd() {
+			if isProd() {
 				sentryHttp.New(sentryHttp.Options{}).Handle(next).ServeHTTP(w, r)
 			} else {
 				next.ServeHTTP(w, r)
@@ -18,10 +18,7 @@ func Sentry(next http.Handler) http.Handler {
 		})
 }
 
-func isStaging() bool {
-	return config.Config.Server.Env == "staging"
-}
-
 func isProd() bool {
-	return config.Config.Server.Env == "production"
+	return config.Config.Server.Env == "production" ||
+		config.Config.Server.Env == "staging"
 }

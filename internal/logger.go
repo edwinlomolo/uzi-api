@@ -13,7 +13,7 @@ var log = logrus.New()
 
 func NewLogger() *logrus.Logger {
 	// Sentry error reporting
-	if isStaging() || isProd() {
+	if isProd() {
 		// Error level to report
 		levels := []logrus.Level{
 			logrus.PanicLevel,
@@ -41,10 +41,7 @@ func GetLogger() *logrus.Logger {
 	return log
 }
 
-func isStaging() bool {
-	return config.Config.Server.Env == "staging"
-}
-
 func isProd() bool {
-	return config.Config.Server.Env == "production"
+	return config.Config.Server.Env == "production" ||
+		config.Config.Server.Env == "staging"
 }
