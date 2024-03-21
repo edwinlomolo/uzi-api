@@ -2,10 +2,10 @@ name: Fly Deploy
 on:
   push:
     branches:
-      - main
+      - develop
 jobs:
   deploy:
-    name: Deploy app
+    name: Deploy api
     runs-on: ubuntu-latest
     concurrency: deploy-group    # optional: ensure only one action runs at a time
     steps:
