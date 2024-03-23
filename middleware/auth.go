@@ -49,7 +49,7 @@ func validateAuthorizationHeader(
 
 	authorizationHeader := strings.SplitN(r.Header.Get("Authorization"), " ", 2)
 	if len(authorizationHeader) != 2 || authorizationHeader[0] != "Bearer" {
-		log.Errorf(ErrInvalidHeader.Error())
+		log.Warnln(ErrInvalidHeader.Error())
 		return nil, ErrInvalidHeader
 	}
 
