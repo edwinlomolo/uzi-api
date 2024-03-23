@@ -22,6 +22,7 @@ import (
 	"github.com/edwinlomolo/uzi-api/store"
 	"github.com/getsentry/sentry-go"
 	"github.com/go-chi/chi/v5"
+	chiMiddleware "github.com/go-chi/chi/v5/middleware"
 	"github.com/gorilla/websocket"
 	"github.com/rs/cors"
 )
@@ -101,7 +102,8 @@ func main() {
 		AllowCredentials: true,
 	})
 	// Middleware
-	r.Use(middleware.GetIp)
+	r.Use(chiMiddleware.RealIP)
+	r.Use(middleware.AddContext)
 	r.Use(middleware.Sentry)
 	r.Use(middleware.Logger)
 
