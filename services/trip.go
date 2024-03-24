@@ -153,14 +153,13 @@ func (t *tripClient) googleRoutesApi(routeParams routerequest, routeResponse *ro
 	if payloadErr != nil {
 		t.log.WithFields(logrus.Fields{
 			"route_params": routeParams,
-			"error":        payloadErr,
-		}).Errorf("marshal route params")
+		}).WithError(payloadErr).Errorf("marshal route params")
 		return nil, payloadErr
 	}
 
 	req, reqErr := http.NewRequest("POST", internal.ComputeRouteApi, bytes.NewBuffer(reqPayload))
 	if reqErr != nil {
-		t.log.WithError(reqErr).Errorf("compute route request")
+		t.log.WithError(reqErr).Errorf("google route: compute route request")
 		return nil, reqErr
 	}
 	req.Header.Add("Content-Type", "application/json")
@@ -178,7 +177,7 @@ func (t *tripClient) googleRoutesApi(routeParams routerequest, routeResponse *ro
 	}
 
 	if err := json.NewDecoder(res.Body).Decode(&routeResponse); err != nil {
-		t.log.WithError(err).Errorf("trip service: unmarshal google route")
+		t.log.WithError(err).Errorf("google route: unmarshal google route")
 		return nil, err
 	}
 
@@ -188,10 +187,7 @@ func (t *tripClient) googleRoutesApi(routeParams routerequest, routeResponse *ro
 			routeResponse.Error.Status,
 			routeResponse.Error.Message,
 		)
-		t.log.WithFields(logrus.Fields{
-			"status":  routeResponse.Error.Status,
-			"message": routeResponse.Error.Message,
-		}).Errorf("google compute route res error")
+		t.log.WithError(resErr).Errorf("google route: compute route response")
 		return nil, resErr
 	}
 
@@ -472,14 +468,14 @@ func (t *tripClient) publishTripUpdate(tripID uuid.UUID, status model.TripStatus
 
 		u, marshalErr := json.Marshal(update)
 		if marshalErr != nil {
-			t.log.WithError(marshalErr).Errorf("marshal trip update")
+			t.log.WithError(marshalErr).Errorf("publish trip: marshal trip update")
 			return
 		}
 
 		for _, channel := range channels {
 			pubTripErr := t.cache.GetRedis().Publish(context.Background(), channel, u).Err()
 			if pubTripErr != nil {
-				t.log.WithError(pubTripErr).Errorf("redis publish trip update")
+				t.log.WithError(pubTripErr).Errorf("publish trip: update")
 				return
 			}
 		}
