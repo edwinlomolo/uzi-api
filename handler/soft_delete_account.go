@@ -38,17 +38,7 @@ func SoftDeleteAccount() http.HandlerFunc {
 			return
 		}
 
-		res, err := json.Marshal(struct {
-			Message string `json:"message"`
-		}{Message: "Success"})
-		if err != nil {
-			log.WithError(err).Errorf("hanler: marshaling soft delete response")
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return
-		}
-
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusOK)
-		w.Write(res)
 	})
 }
