@@ -38,7 +38,7 @@ func (u *UserRepository) Init() {
 }
 
 func (u *UserRepository) FindOrCreate(user SigninInput) (*model.User, error) {
-	foundUser, foundUserErr := u.getUser(user.Phone)
+	foundUser, foundUserErr := u.getUserByPhone(user.Phone)
 	if foundUser == nil && foundUserErr == nil {
 		return u.createUser(user)
 	} else if foundUserErr != nil {
@@ -130,7 +130,7 @@ func (u *UserRepository) createUser(user SigninInput) (*model.User, error) {
 	}, nil
 }
 
-func (u *UserRepository) getUser(phone string) (*model.User, error) {
+func (u *UserRepository) getUserByPhone(phone string) (*model.User, error) {
 	foundUser, getErr := u.store.FindByPhone(context.Background(), phone)
 	if getErr == sql.ErrNoRows {
 		return nil, nil
@@ -151,7 +151,7 @@ func (u *UserRepository) getUser(phone string) (*model.User, error) {
 }
 
 func (u *UserRepository) GetUserByPhone(phone string) (*model.User, error) {
-	return u.getUser(phone)
+	return u.getUserByPhone(phone)
 }
 
 func (u *UserRepository) findUserByID(id uuid.UUID) (*model.User, error) {
@@ -291,7 +291,7 @@ func (u *UserRepository) getSession(userID uuid.UUID) (*model.Session, error) {
 		return nil, courierErr
 	}
 
-	user, userErr := u.GetUserByPhone(foundSess.Phone)
+	user, userErr := u.getUserByPhone(foundSess.Phone)
 	if userErr != nil {
 		return nil, userErr
 	}
@@ -350,7 +350,7 @@ func (u *UserRepository) createNewSession(
 		return nil, courierErr
 	}
 
-	user, userErr := u.GetUserByPhone(phone)
+	user, userErr := u.getUserByPhone(phone)
 	if userErr != nil {
 		return nil, userErr
 	}

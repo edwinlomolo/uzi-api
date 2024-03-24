@@ -113,6 +113,7 @@ func main() {
 		r.Post("/user/onboard", handler.UserOnboarding())
 		r.Post("/courier/upload/document", handler.UploadDocument())
 		r.Get("/ipinfo", handler.Ipinfo())
+		r.Post("/account/delete", handler.SoftDeleteAccount())
 	})
 	r.Get("/", playground.Handler("GraphQL playground", "/api/graphql"))
 	r.Handle("/subscription", srv)

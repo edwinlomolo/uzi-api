@@ -16,6 +16,7 @@ type UserService interface {
 	GetUserByPhone(phone string) (*model.User, error)
 	FindUserByID(id uuid.UUID) (*model.User, error)
 	SignIn(signin r.SigninInput, ip, userAgent string) (*model.Session, error)
+	SoftDelete(phone string) error
 }
 
 type userClient struct {
@@ -54,4 +55,8 @@ func (u *userClient) FindUserByID(id uuid.UUID) (*model.User, error) {
 
 func (u *userClient) OnboardUser(user r.SigninInput) (*model.User, error) {
 	return u.r.OnboardUser(user)
+}
+
+func (u *userClient) SoftDelete(phone string) error {
+	return nil
 }
