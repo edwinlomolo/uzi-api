@@ -5,7 +5,7 @@ import (
 	"net/http"
 )
 
-func AddContext(next http.Handler) http.Handler {
+func EnrichRequestContext(next http.Handler) http.Handler {
 	return http.HandlerFunc(
 		func(w http.ResponseWriter, r *http.Request) {
 			ctx := r.Context()

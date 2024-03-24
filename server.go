@@ -103,7 +103,7 @@ func main() {
 	})
 	// Middleware
 	r.Use(chiMiddleware.RealIP)
-	r.Use(middleware.AddContext)
+	r.Use(middleware.EnrichRequestContext)
 	r.Use(middleware.Sentry)
 	r.Use(middleware.Logger)
 
