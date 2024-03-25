@@ -1,16 +1,17 @@
-package services
+package controllers
 
 import (
 	"github.com/edwinlomolo/uzi-api/gql/model"
 	r "github.com/edwinlomolo/uzi-api/repository"
+	"github.com/edwinlomolo/uzi-api/store/sqlc"
 	"github.com/google/uuid"
 )
 
 var (
-	uService UserService
+	uService UserController
 )
 
-type UserService interface {
+type UserController interface {
 	FindOrCreate(user r.SigninInput) (*model.User, error)
 	OnboardUser(user r.SigninInput) (*model.User, error)
 	GetUserByPhone(phone string) (*model.User, error)
@@ -23,13 +24,13 @@ type userClient struct {
 	r r.UserRepository
 }
 
-func NewUserService() {
+func NewUserController(q *sqlc.Queries) {
 	ur := r.UserRepository{}
-	ur.Init()
+	ur.Init(q)
 	uService = &userClient{ur}
 }
 
-func GetUserService() UserService {
+func GetUserController() UserController {
 	return uService
 }
 

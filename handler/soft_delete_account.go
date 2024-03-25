@@ -5,12 +5,12 @@ import (
 	"errors"
 	"net/http"
 
+	"github.com/edwinlomolo/uzi-api/controllers"
 	"github.com/edwinlomolo/uzi-api/internal"
-	"github.com/edwinlomolo/uzi-api/services"
 )
 
 func SoftDeleteAccount() http.HandlerFunc {
-	userS := services.GetUserService()
+	userS := controllers.GetUserController()
 	log := internal.GetLogger()
 	deleteRequest := struct {
 		Phone string `json:"phone"`

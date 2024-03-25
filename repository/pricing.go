@@ -6,7 +6,6 @@ import (
 
 	"github.com/edwinlomolo/uzi-api/gql/model"
 	"github.com/edwinlomolo/uzi-api/internal"
-	sqlStore "github.com/edwinlomolo/uzi-api/store"
 	"github.com/edwinlomolo/uzi-api/store/sqlc"
 	"github.com/google/uuid"
 	"github.com/sirupsen/logrus"
@@ -18,9 +17,9 @@ type PricerRepository struct {
 	log    *logrus.Logger
 }
 
-func (p *PricerRepository) Init() {
+func (p *PricerRepository) Init(q *sqlc.Queries) {
 	p.pricer = internal.GetPricer()
-	p.store = sqlStore.GetDb()
+	p.store = q
 	p.log = internal.GetLogger()
 }
 

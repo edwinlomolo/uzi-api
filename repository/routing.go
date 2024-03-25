@@ -6,7 +6,6 @@ import (
 
 	"github.com/edwinlomolo/uzi-api/gql/model"
 	"github.com/edwinlomolo/uzi-api/internal"
-	sqlStore "github.com/edwinlomolo/uzi-api/store"
 	"github.com/edwinlomolo/uzi-api/store/sqlc"
 	"github.com/sirupsen/logrus"
 )
@@ -16,8 +15,8 @@ type RouteRepository struct {
 	log   *logrus.Logger
 }
 
-func (r *RouteRepository) Init() {
-	r.store = sqlStore.GetDb()
+func (r *RouteRepository) Init(q *sqlc.Queries) {
+	r.store = q
 	r.log = internal.GetLogger()
 }
 

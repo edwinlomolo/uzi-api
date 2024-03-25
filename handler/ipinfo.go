@@ -4,18 +4,18 @@ import (
 	"encoding/json"
 	"net/http"
 
+	"github.com/edwinlomolo/uzi-api/controllers"
 	"github.com/edwinlomolo/uzi-api/internal"
-	"github.com/edwinlomolo/uzi-api/services"
 )
 
 func Ipinfo() http.HandlerFunc {
-	ipinfoService := services.GetIpinfoService()
+	ipinfoController := controllers.GetIpinfoController()
 	log := internal.GetLogger()
 
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		ip := r.Context().Value("ip").(string)
 
-		ipinfo, err := ipinfoService.GetIpinfo(ip)
+		ipinfo, err := ipinfoController.GetIpinfo(ip)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return

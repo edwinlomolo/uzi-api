@@ -1,4 +1,4 @@
-package services
+package controllers
 
 import (
 	"bytes"
@@ -21,10 +21,10 @@ import (
 )
 
 var (
-	tService TripService
+	tService TripController
 )
 
-type TripService interface {
+type TripController interface {
 	FindAvailableCourier(pickup model.GpsInput) (*model.Courier, error)
 	GetCourierNearPickupPoint(pickup model.GpsInput) ([]*model.Courier, error)
 	AssignCourierToTrip(tripID, courierID uuid.UUID) error
@@ -50,9 +50,9 @@ type tripClient struct {
 	p     internal.Pricing
 }
 
-func NewTripService() {
+func NewTripController(q *sqlc.Queries) {
 	t := &r.TripRepository{}
-	t.Init()
+	t.Init(q)
 	tService = &tripClient{
 		t,
 		sync.Mutex{},
@@ -62,7 +62,7 @@ func NewTripService() {
 	}
 }
 
-func GetTripService() TripService {
+func GetTripController() TripController {
 	return tService
 }
 

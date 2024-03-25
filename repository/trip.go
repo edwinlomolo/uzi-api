@@ -9,7 +9,6 @@ import (
 
 	"github.com/edwinlomolo/uzi-api/gql/model"
 	"github.com/edwinlomolo/uzi-api/internal"
-	sqlStore "github.com/edwinlomolo/uzi-api/store"
 	"github.com/edwinlomolo/uzi-api/store/sqlc"
 	"github.com/google/uuid"
 	"github.com/redis/go-redis/v9"
@@ -23,7 +22,7 @@ var (
 
 type TripRepository struct {
 	redis    *redis.Client
-	location internal.LocationService
+	location internal.LocationController
 	cache    internal.Cache
 	mu       sync.Mutex
 	p        internal.Pricing
@@ -31,15 +30,15 @@ type TripRepository struct {
 	log      *logrus.Logger
 }
 
-func (t *TripRepository) Init() {
+func (t *TripRepository) Init(q *sqlc.Queries) {
 	pr := &PricerRepository{}
-	pr.Init()
+	pr.Init(q)
 	t.redis = internal.GetCache().GetRedis()
-	t.location = internal.GetLocationService()
+	t.location = internal.GetLocationController()
 	t.cache = internal.GetCache()
 	t.mu = sync.Mutex{}
 	t.p = internal.GetPricer()
-	t.store = sqlStore.GetDb()
+	t.store = q
 	t.log = internal.GetLogger()
 }
 

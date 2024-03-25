@@ -70,11 +70,11 @@ func (r *mutationResolver) CreateTrip(ctx context.Context, input model.CreateTri
 			input.ConfirmedPickup.Location.Lat,
 		),
 	}
-	pickup, pickupErr := r.tripService.ParsePickupDropoff(*input.TripInput.Pickup)
+	pickup, pickupErr := r.tripController.ParsePickupDropoff(*input.TripInput.Pickup)
 	if pickupErr != nil {
 		return nil, pickupErr
 	}
-	dropoff, dropErr := r.tripService.ParsePickupDropoff(*input.TripInput.Dropoff)
+	dropoff, dropErr := r.tripController.ParsePickupDropoff(*input.TripInput.Dropoff)
 	if dropErr != nil {
 		return nil, dropErr
 	}
@@ -89,23 +89,23 @@ func (r *mutationResolver) CreateTrip(ctx context.Context, input model.CreateTri
 		dropoff.Location.Lat,
 	)
 
-	trip, err := r.tripService.CreateTrip(params)
+	trip, err := r.tripController.CreateTrip(params)
 
 	go func() {
-		err := r.tripService.CreateTripRecipient(trip.ID, *input.Recipient)
+		err := r.tripController.CreateTripRecipient(trip.ID, *input.Recipient)
 		if err != nil {
 			return
 		}
 	}()
 
-	r.tripService.MatchCourier(trip.ID, *input.TripInput.Pickup)
+	r.tripController.MatchCourier(trip.ID, *input.TripInput.Pickup)
 
 	return trip, err
 }
 
 // ReportTripStatus is the resolver for the reportTripStatus field.
 func (r *mutationResolver) ReportTripStatus(ctx context.Context, tripID uuid.UUID, status model.TripStatus) (bool, error) {
-	err := r.tripService.ReportTripStatus(tripID, status)
+	err := r.tripController.ReportTripStatus(tripID, status)
 	if err != nil {
 		return false, err
 	}
@@ -142,17 +142,17 @@ func (r *queryResolver) ReverseGeocode(ctx context.Context, place model.GpsInput
 
 // GetRoute is the resolver for the getRoute field.
 func (r *queryResolver) ComputeTripRoute(ctx context.Context, input model.TripRouteInput) (*model.TripRoute, error) {
-	return r.tripService.ComputeTripRoute(input)
+	return r.tripController.ComputeTripRoute(input)
 }
 
 // GetCourierNearPickupPoint is the resolver for the getCourierNearPickupPoint field.
 func (r *queryResolver) GetCourierNearPickupPoint(ctx context.Context, point model.GpsInput) ([]*model.Courier, error) {
-	return r.tripService.GetCourierNearPickupPoint(point)
+	return r.tripController.GetCourierNearPickupPoint(point)
 }
 
 // GetTripDetails is the resolver for the getTripDetails field.
 func (r *queryResolver) GetTripDetails(ctx context.Context, tripID uuid.UUID) (*model.Trip, error) {
-	return r.tripService.GetTripDetails(tripID)
+	return r.tripController.GetTripDetails(tripID)
 }
 
 // TripUpdates is the resolver for the tripUpdates field.

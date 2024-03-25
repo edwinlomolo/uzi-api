@@ -7,7 +7,6 @@ import (
 
 	"github.com/edwinlomolo/uzi-api/gql/model"
 	"github.com/edwinlomolo/uzi-api/internal"
-	sqlStore "github.com/edwinlomolo/uzi-api/store"
 	"github.com/edwinlomolo/uzi-api/store/sqlc"
 	"github.com/google/uuid"
 	"github.com/sirupsen/logrus"
@@ -18,9 +17,9 @@ type CourierRepository struct {
 	log   *logrus.Logger
 }
 
-func (c *CourierRepository) Init() {
+func (c *CourierRepository) Init(q *sqlc.Queries) {
 	c.log = internal.GetLogger()
-	c.store = sqlStore.GetDb()
+	c.store = q
 }
 
 func (c *CourierRepository) FindOrCreate(userID uuid.UUID) (*model.Courier, error) {

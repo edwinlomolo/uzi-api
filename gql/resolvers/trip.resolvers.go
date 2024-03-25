@@ -13,7 +13,7 @@ import (
 
 // Trip is the resolver for the trip field.
 func (r *recipientResolver) Trip(ctx context.Context, obj *model.Recipient) (*model.Trip, error) {
-	return r.tripService.GetTripDetails(obj.TripID)
+	return r.tripController.GetTripDetails(obj.TripID)
 }
 
 // Courier is the resolver for the courier field.
@@ -23,7 +23,7 @@ func (r *tripResolver) Courier(ctx context.Context, obj *model.Trip) (*model.Cou
 
 // Recipient is the resolver for the recipient field.
 func (r *tripResolver) Recipient(ctx context.Context, obj *model.Trip) (*model.Recipient, error) {
-	return r.tripService.GetTripRecipient(obj.ID)
+	return r.tripController.GetTripRecipient(obj.ID)
 }
 
 // Recipient returns gql.RecipientResolver implementation.

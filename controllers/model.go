@@ -1,4 +1,4 @@
-package services
+package controllers
 
 type routepoint struct {
 	Location latlng `json:"latLng"`

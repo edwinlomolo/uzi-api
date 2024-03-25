@@ -1,4 +1,4 @@
-package services
+package controllers
 
 import (
 	"context"
@@ -15,10 +15,10 @@ import (
 )
 
 var (
-	iService IpInfoService
+	iService IpInfoController
 )
 
-type IpInfoService interface {
+type IpInfoController interface {
 	GetIpinfo(ip string) (*ipinfo.Core, error)
 }
 
@@ -28,7 +28,7 @@ type ipinfoClient struct {
 	client *ipinfo.Client
 }
 
-func NewIpinfoService() {
+func NewIpinfoController() {
 	cache := newCache()
 	c := ipinfo.NewCache(cache)
 	client := ipinfo.NewClient(
@@ -44,7 +44,7 @@ func NewIpinfoService() {
 	}
 }
 
-func GetIpinfoService() IpInfoService {
+func GetIpinfoController() IpInfoController {
 	return iService
 }
 
@@ -54,9 +54,8 @@ func (ipc *ipinfoClient) GetIpinfo(
 	info, err := ipc.client.GetIPInfo(net.ParseIP(ip))
 	if err != nil {
 		ipc.log.WithFields(logrus.Fields{
-			"ip":    ip,
-			"error": err,
-		}).Errorf("get ip info")
+			"ip": ip,
+		}).WithError(err).Errorf("get ip info")
 		return nil, err
 	}
 
@@ -79,9 +78,8 @@ func (ipc *ipinfoCache) Get(
 	).Result()
 	if err != redis.Nil && err != nil {
 		ipc.log.WithFields(logrus.Fields{
-			"key":   key,
-			"error": err,
-		}).Errorf("get: ipinfo cache value")
+			"key": key,
+		}).WithError(err).Errorf("get: ipinfo cache value")
 		return nil, err
 	}
 
@@ -112,8 +110,7 @@ func (ipc *ipinfoCache) Set(
 		ipc.log.WithFields(logrus.Fields{
 			"key":   key,
 			"value": value,
-			"error": err,
-		}).Errorf("set: ipinfo cache value")
+		}).WithError(err).Errorf("set: ipinfo cache value")
 		return err
 	}
 

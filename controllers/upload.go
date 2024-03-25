@@ -1,16 +1,17 @@
-package services
+package controllers
 
 import (
 	"github.com/edwinlomolo/uzi-api/gql/model"
 	r "github.com/edwinlomolo/uzi-api/repository"
+	"github.com/edwinlomolo/uzi-api/store/sqlc"
 	"github.com/google/uuid"
 )
 
 var (
-	upldService UploadService
+	upldService UploadController
 )
 
-type UploadService interface {
+type UploadController interface {
 	CreateCourierUpload(reason, uri string, courierID uuid.UUID) error
 	CreateUserUpload(reason, uri string, userID uuid.UUID) error
 	GetCourierUploads(courierID uuid.UUID) ([]*model.Uploads, error)
@@ -20,12 +21,13 @@ type uploadClient struct {
 	r r.UploadRepository
 }
 
-func NewUploadService() {
+func NewUploadController(q *sqlc.Queries) {
 	ur := r.UploadRepository{}
+	ur.Init(q)
 	upldService = &uploadClient{ur}
 }
 
-func GetUploadService() UploadService {
+func GetUploadController() UploadController {
 	return upldService
 }
 

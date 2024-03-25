@@ -5,13 +5,13 @@ import (
 	"io"
 	"net/http"
 
+	"github.com/edwinlomolo/uzi-api/controllers"
 	"github.com/edwinlomolo/uzi-api/internal"
 	repo "github.com/edwinlomolo/uzi-api/repository"
-	"github.com/edwinlomolo/uzi-api/services"
 )
 
 func Signin() http.HandlerFunc {
-	userService := services.GetUserService()
+	userController := controllers.GetUserController()
 	log := internal.GetLogger()
 
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -31,7 +31,7 @@ func Signin() http.HandlerFunc {
 			return
 		}
 
-		findSession, findSessionErr := userService.SignIn(loginInput, userIp, r.UserAgent())
+		findSession, findSessionErr := userController.SignIn(loginInput, userIp, r.UserAgent())
 		if findSessionErr != nil {
 			http.Error(w, findSessionErr.Error(), http.StatusInternalServerError)
 			return

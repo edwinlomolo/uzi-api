@@ -7,7 +7,6 @@ import (
 
 	"github.com/edwinlomolo/uzi-api/gql/model"
 	"github.com/edwinlomolo/uzi-api/internal"
-	sqlStore "github.com/edwinlomolo/uzi-api/store"
 	"github.com/edwinlomolo/uzi-api/store/sqlc"
 	"github.com/google/uuid"
 	"github.com/sirupsen/logrus"
@@ -18,8 +17,8 @@ type UploadRepository struct {
 	log   *logrus.Logger
 }
 
-func (u *UploadRepository) Init() {
-	u.store = sqlStore.GetDb()
+func (u *UploadRepository) Init(q *sqlc.Queries) {
+	u.store = q
 	u.log = internal.GetLogger()
 }
 
@@ -55,20 +54,18 @@ func (u *UploadRepository) createCourierUpload(reason, uri string, id uuid.UUID)
 		_, createErr := u.store.CreateCourierUpload(context.Background(), createArgs)
 		if createErr != nil {
 			u.log.WithFields(logrus.Fields{
-				"error":      createErr,
 				"type":       createArgs.Type,
 				"courier_id": createArgs.CourierID.UUID,
-			}).Errorf("create courier upload")
+			}).WithError(createErr).Errorf("create courier upload")
 			return createErr
 		}
 
 		return nil
 	} else if getErr != nil {
 		u.log.WithFields(logrus.Fields{
-			"error":      getErr,
 			"courier_id": courierArgs.CourierID.UUID,
 			"type":       courierArgs.Type,
-		}).Errorf("get courier upload")
+		}).WithError(getErr).Errorf("get courier upload")
 		return getErr
 	}
 
@@ -92,9 +89,8 @@ func (u *UploadRepository) updateUploadUri(uri string, ID uuid.UUID) error {
 		context.Background(),
 		updateParams); updateErr != nil {
 		u.log.WithFields(logrus.Fields{
-			"error":     updateErr,
 			"upload_id": ID,
-		}).Errorf("update upload")
+		}).WithError(updateErr).Errorf("update upload")
 		return updateErr
 	}
 
@@ -114,10 +110,9 @@ func (u *UploadRepository) updateUploadVerificationStatus(
 	}
 	if _, updateErr := u.store.UpdateUpload(context.Background(), args); updateErr != nil {
 		u.log.WithFields(logrus.Fields{
-			"error":     updateErr,
 			"upload_id": id,
 			"status":    status.String(),
-		}).Errorf("update upload verification status")
+		}).WithError(updateErr).Errorf("update upload verification status")
 		return updateErr
 	}
 
@@ -146,19 +141,17 @@ func (u *UploadRepository) createUserUpload(reason, uri string, ID uuid.UUID) er
 		_, createErr := u.store.CreateUserUpload(context.Background(), createParams)
 		if createErr != nil {
 			u.log.WithFields(logrus.Fields{
-				"error":   createErr,
 				"type":    createParams.Type,
 				"user_id": createParams.UserID.UUID,
-			}).Errorf("create user upload")
+			}).WithError(createErr).Errorf("create user upload")
 			return createErr
 		}
 	} else if foundErr != nil {
 		uziErr := fmt.Errorf("%s:%v", "user upload", foundErr)
 		u.log.WithFields(logrus.Fields{
-			"error":   foundErr,
 			"type":    getParams.Type,
 			"user_id": getParams.UserID.UUID,
-		}).Errorf("found user upload")
+		}).WithError(foundErr).Errorf("found user upload")
 		return uziErr
 	}
 
@@ -174,9 +167,8 @@ func (u *UploadRepository) GetCourierUploads(
 	uplds, uploadsErr := u.store.GetCourierUploads(context.Background(), args)
 	if uploadsErr != nil {
 		u.log.WithFields(logrus.Fields{
-			"error":      uploadsErr,
 			"courier_id": courierID,
-		}).Errorf("get courier uploads")
+		}).WithError(uploadsErr).Errorf("get courier uploads")
 		return nil, uploadsErr
 	}
 

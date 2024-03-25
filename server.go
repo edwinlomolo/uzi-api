@@ -18,7 +18,6 @@ import (
 	"github.com/edwinlomolo/uzi-api/handler"
 	"github.com/edwinlomolo/uzi-api/internal"
 	"github.com/edwinlomolo/uzi-api/middleware"
-	"github.com/edwinlomolo/uzi-api/services"
 	"github.com/edwinlomolo/uzi-api/store"
 	"github.com/getsentry/sentry-go"
 	"github.com/go-chi/chi/v5"
@@ -31,11 +30,10 @@ import (
 func main() {
 	// Config
 	config.LoadConfig()
-
 	// Logger
 	log := internal.NewLogger()
 	// Database queries
-	store.InitializeStorage()
+	q, _ := store.InitializeStorage()
 	// Redis cache client
 	internal.NewCache()
 
@@ -55,18 +53,11 @@ func main() {
 		}
 	}
 
-	// Services
+	// Internal services
 	internal.NewPricer()
 	internal.NewUploader()
-	internal.NewUploader()
-	internal.NewLocationService()
-	services.NewIpinfoService()
-	services.NewUserService()
-	services.NewUploadService()
-	services.NewCourierService()
-	services.NewTripService()
 
-	srv := gqlHandler.New(gql.NewExecutableSchema(resolvers.New()))
+	srv := gqlHandler.New(gql.NewExecutableSchema(resolvers.New(q)))
 	srv.AddTransport(transport.Options{})
 	srv.AddTransport(transport.GET{})
 	srv.AddTransport(transport.POST{})

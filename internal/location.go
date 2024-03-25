@@ -2,7 +2,6 @@ package internal
 
 import (
 	"context"
-	"fmt"
 	"time"
 
 	"github.com/edwinlomolo/uzi-api/config"
@@ -14,10 +13,10 @@ import (
 const nominatimApi = "https://nominatim.openstreetmap.org"
 
 var (
-	lctn LocationService
+	lctn LocationController
 )
 
-type LocationService interface {
+type LocationController interface {
 	GeocodeLatLng(input model.GpsInput) (*model.Geocode, error)
 	AutocompletePlace(query string) ([]*model.Place, error)
 	GetPlaceDetails(placeID string) (*model.Geocode, error)
@@ -30,7 +29,7 @@ type locationClient struct {
 	log             *logrus.Logger
 }
 
-func NewLocationService() {
+func NewLocationController() {
 	places, placesErr := maps.NewClient(maps.WithAPIKey(config.Config.Google.GooglePlacesApiKey))
 	if placesErr != nil {
 		log.WithError(placesErr).Errorf("new places client")
@@ -50,7 +49,7 @@ func NewLocationService() {
 	}
 }
 
-func GetLocationService() LocationService {
+func GetLocationController() LocationController {
 	return lctn
 }
 
@@ -146,12 +145,10 @@ func (l *locationClient) GetPlaceDetails(
 
 	res, resErr := l.places.PlaceDetails(context.Background(), req)
 	if resErr != nil {
-		uziErr := fmt.Errorf("%s:%v", "place details", resErr)
 		l.log.WithFields(logrus.Fields{
-			"error":    resErr,
 			"place_id": placeID,
-		}).Errorf("place details")
-		return nil, uziErr
+		}).WithError(resErr).Errorf("place details")
+		return nil, resErr
 	}
 
 	placeDetails = &model.Geocode{

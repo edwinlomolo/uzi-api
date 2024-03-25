@@ -1,4 +1,4 @@
-package services
+package controllers
 
 import (
 	"context"
@@ -8,6 +8,7 @@ import (
 	"github.com/edwinlomolo/uzi-api/gql/model"
 	"github.com/edwinlomolo/uzi-api/internal"
 	"github.com/edwinlomolo/uzi-api/repository"
+	"github.com/edwinlomolo/uzi-api/store/sqlc"
 	"github.com/google/uuid"
 	"github.com/sirupsen/logrus"
 )
@@ -15,10 +16,10 @@ import (
 var (
 	ErrNoCourierErr        = errors.New("courier service: no courier found")
 	ErrCourierTripNotFound = errors.New("courier service: courier trip not found")
-	cService               CourierService
+	cService               CourierController
 )
 
-type CourierService interface {
+type CourierController interface {
 	FindOrCreate(userID uuid.UUID) (*model.Courier, error)
 	IsCourier(userID uuid.UUID) (bool, error)
 	GetCourierStatus(userID uuid.UUID) (model.CourierStatus, error)
@@ -35,9 +36,9 @@ type courierClient struct {
 	cache internal.Cache
 }
 
-func NewCourierService() {
+func NewCourierController(q *sqlc.Queries) {
 	cr := &repository.CourierRepository{}
-	cr.Init()
+	cr.Init(q)
 	cService = &courierClient{
 		cr,
 		internal.GetLogger(),
@@ -45,7 +46,7 @@ func NewCourierService() {
 	}
 }
 
-func GetCourierService() CourierService {
+func GetCourierController() CourierController {
 	return cService
 }
 

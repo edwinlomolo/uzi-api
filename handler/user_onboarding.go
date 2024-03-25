@@ -5,13 +5,13 @@ import (
 	"io"
 	"net/http"
 
+	"github.com/edwinlomolo/uzi-api/controllers"
 	"github.com/edwinlomolo/uzi-api/internal"
 	repo "github.com/edwinlomolo/uzi-api/repository"
-	"github.com/edwinlomolo/uzi-api/services"
 )
 
 func UserOnboarding() http.HandlerFunc {
-	userService := services.GetUserService()
+	userController := controllers.GetUserController()
 	log := internal.GetLogger()
 
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -31,12 +31,12 @@ func UserOnboarding() http.HandlerFunc {
 			return
 		}
 
-		if _, onboardErr := userService.OnboardUser(bodyReq); onboardErr != nil {
+		if _, onboardErr := userController.OnboardUser(bodyReq); onboardErr != nil {
 			http.Error(w, onboardErr.Error(), http.StatusInternalServerError)
 			return
 		}
 
-		session, sessionErr := userService.SignIn(bodyReq, ip, r.UserAgent())
+		session, sessionErr := userController.SignIn(bodyReq, ip, r.UserAgent())
 		if sessionErr != nil {
 			http.Error(w, sessionErr.Error(), http.StatusInternalServerError)
 			return

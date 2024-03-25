@@ -1,9 +1,10 @@
 package resolvers
 
 import (
+	"github.com/edwinlomolo/uzi-api/controllers"
 	"github.com/edwinlomolo/uzi-api/gql"
 	"github.com/edwinlomolo/uzi-api/internal"
-	"github.com/edwinlomolo/uzi-api/services"
+	"github.com/edwinlomolo/uzi-api/store/sqlc"
 	"github.com/redis/go-redis/v9"
 )
 
@@ -16,21 +17,28 @@ import (
 var log = internal.GetLogger()
 
 type Resolver struct {
-	services.UploadService
-	services.CourierService
-	internal.LocationService
-	tripService services.TripService
-	userService services.UserService
-	redisClient *redis.Client
+	controllers.UploadController
+	controllers.CourierController
+	internal.LocationController
+	tripController controllers.TripController
+	userController controllers.UserController
+	redisClient    *redis.Client
 }
 
-func New() gql.Config {
+func New(q *sqlc.Queries) gql.Config {
+	controllers.NewIpinfoController()
+	controllers.NewUserController(q)
+	controllers.NewUploadController(q)
+	controllers.NewCourierController(q)
+	controllers.NewTripController(q)
+	internal.NewLocationController()
+
 	c := gql.Config{Resolvers: &Resolver{
-		services.GetUploadService(),
-		services.GetCourierService(),
-		internal.GetLocationService(),
-		services.GetTripService(),
-		services.GetUserService(),
+		controllers.GetUploadController(),
+		controllers.GetCourierController(),
+		internal.GetLocationController(),
+		controllers.GetTripController(),
+		controllers.GetUserController(),
 		internal.GetCache().GetRedis(),
 	}}
 

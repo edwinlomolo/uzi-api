@@ -13,12 +13,12 @@ import (
 
 // User is the resolver for the user field.
 func (r *courierResolver) User(ctx context.Context, obj *model.Courier) (*model.User, error) {
-	return r.userService.FindUserByID(obj.UserID)
+	return r.userController.FindUserByID(obj.UserID)
 }
 
 // Trip is the resolver for the trip field.
 func (r *courierResolver) Trip(ctx context.Context, obj *model.Courier) (*model.Trip, error) {
-	return r.tripService.GetTripDetails(obj.ID)
+	return r.tripController.GetTripDetails(obj.ID)
 }
 
 // Product is the resolver for the product field.

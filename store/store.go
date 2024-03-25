@@ -6,6 +6,7 @@ import (
 
 	"github.com/edwinlomolo/uzi-api/config"
 	"github.com/edwinlomolo/uzi-api/internal"
+	"github.com/edwinlomolo/uzi-api/store/sqlc"
 	sqlStore "github.com/edwinlomolo/uzi-api/store/sqlc"
 	"github.com/golang-migrate/migrate/v4"
 	"github.com/golang-migrate/migrate/v4/database/postgres"
@@ -15,14 +16,13 @@ import (
 
 var (
 	log = internal.GetLogger()
-	dB  *sqlStore.Queries
 )
 
-func InitializeStorage() error {
+func InitializeStorage() (*sqlc.Queries, error) {
 	db, err := sql.Open(config.Config.Database.Rdbms.Env.Driver, config.Config.Database.Rdbms.Uri)
 	if err != nil {
 		log.WithError(err).Errorf("open database connection")
-		return err
+		return nil, err
 	}
 
 	db.Exec(fmt.Sprintf("CREATE EXTENSION IF NOT EXISTS %q;", "uuid-ossp"))
@@ -32,7 +32,7 @@ func InitializeStorage() error {
 
 	if err := db.Ping(); err != nil {
 		log.WithError(err).Fatalln("ping database connection")
-		return err
+		return nil, err
 	} else if err == nil {
 		log.Infoln("Database connection...OK")
 	}
@@ -42,13 +42,9 @@ func InitializeStorage() error {
 		log.Infoln("Database migration...DONE")
 	}
 
-	dB = sqlStore.New(db)
+	dB := sqlStore.New(db)
 
-	return nil
-}
-
-func GetDb() *sqlStore.Queries {
-	return dB
+	return dB, nil
 }
 
 // runDbMigration - setup database tables
