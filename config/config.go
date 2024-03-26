@@ -53,8 +53,8 @@ func serverConfig() Server {
 
 	Env()
 
-	config.Env = strings.TrimSpace(os.Getenv("SERVERENV"))
-	config.Port = strings.TrimSpace(os.Getenv("SERVERPORT"))
+	config.Env = strings.TrimSpace(os.Getenv("ENV"))
+	config.Port = strings.TrimSpace(os.Getenv("PORT"))
 
 	return config
 }
